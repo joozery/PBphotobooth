@@ -1,10 +1,12 @@
 import React, { useState } from "react";
 import { FaPenNib, FaReceipt } from "react-icons/fa";
 import { MdTranslate } from "react-icons/md";
+import { useNavigate } from "react-router-dom"; // ✅ เพิ่มตรงนี้
 import bgFlower from "../assets/bgflower.jpg";
 
 export default function WeddingLanding() {
   const [lang, setLang] = useState("th");
+  const navigate = useNavigate(); // ✅ ใช้งาน
 
   const texts = {
     th: {
@@ -75,7 +77,10 @@ export default function WeddingLanding() {
 
         {/* 🔘 Action Buttons */}
         <div className="w-full px-6 mb-10 z-10 flex flex-col gap-3 bg-white/80 backdrop-blur-sm pt-4 pb-6">
-          <button className="w-full bg-blue-700 text-white py-3 rounded-full shadow-lg flex items-center justify-center gap-2 text-sm font-semibold">
+          <button
+            onClick={() => navigate("/wish")} // ✅ ลิงก์ไปหน้า WishForm
+            className="w-full bg-blue-700 text-white py-3 rounded-full shadow-lg flex items-center justify-center gap-2 text-sm font-semibold"
+          >
             <FaPenNib className="text-base" />
             {t.startWish}
           </button>
