@@ -26,7 +26,7 @@ export default function WishForm() {
 
   return (
     <div className="w-screen h-[100svh] bg-gradient-to-b from-yellow-100 to-white flex justify-center items-center font-prompt">
-      <div className="w-full max-w-sm h-[100svh] bg-white overflow-auto shadow-xl border border-gray-200 animate-fade-in">
+      <div className="w-full max-w-xl h-[100svh] bg-white overflow-auto shadow-xl border border-gray-200 animate-fade-in">
         <div className="p-4">
           <h1 className="text-center text-lg font-semibold text-yellow-600 mb-4">
             ส่งคำอวยพรของคุณ

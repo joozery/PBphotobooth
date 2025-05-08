@@ -34,7 +34,7 @@ export default function WeddingLanding() {
   return (
     <div className="w-screen h-screen flex items-center justify-center font-prompt bg-[#eee]">
       <div
-        className="w-full max-w-sm h-[100svh] bg-cover bg-center bg-no-repeat flex flex-col justify-between relative shadow-xl rounded-none"
+        className="w-full max-w-lg h-[100svh] bg-cover bg-center bg-no-repeat flex flex-col justify-between relative shadow-xl rounded-none"
         style={{ backgroundImage: `url(${bgFlower})` }}
       >
         {/* 🌐 Language Switch */}

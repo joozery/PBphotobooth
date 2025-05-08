@@ -17,7 +17,7 @@ export default function TemplateSelect() {
 
   return (
     <div className="w-screen h-[100svh] bg-gray-50 flex justify-center items-center font-prompt">
-      <div className="w-full max-w-sm h-[100svh] overflow-auto bg-white shadow-md border">
+      <div className="w-full max-w-lg h-[100svh] overflow-auto bg-white shadow-md border">
         <div className="p-4">
           {/* Header */}
           <div className="text-sm text-blue-700 font-medium mb-1">

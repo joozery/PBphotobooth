@@ -9,7 +9,7 @@ export default function ThankYou() {
   return (
     <div className="w-screen h-screen font-prompt flex justify-center items-center bg-[#eee]">
       <div
-        className="w-full max-w-sm h-[100svh] bg-cover bg-center bg-no-repeat flex flex-col justify-between px-6 py-10 shadow-xl rounded-none border border-white"
+        className="w-full max-w-xl h-[100svh] bg-cover bg-center bg-no-repeat flex flex-col justify-between px-6 py-10 shadow-xl rounded-none border border-white"
         style={{ backgroundImage: `url(${bgFlower})` }}
       >
         {/* ✅ เพิ่มพื้นหลังโปร่งทับเพื่ออ่านง่าย */}
