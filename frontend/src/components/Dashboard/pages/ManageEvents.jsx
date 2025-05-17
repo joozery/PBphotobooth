@@ -1,4 +1,3 @@
-// components/Dashboard/pages/ManageEvents.jsx
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { FaPlus, FaExternalLinkAlt } from 'react-icons/fa';
@@ -21,13 +20,16 @@ const dummyEvents = [
   },
 ];
 
-function ManageEvents() {
+function ManageEvents({ onSelectPage }) {
   return (
     <div className="p-6">
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">จัดการงานอีเว้นต์</h1>
-        <button className="flex items-center gap-2 bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 transition">
+        <button
+          onClick={() => onSelectPage('create-event')}
+          className="flex items-center gap-2 bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 transition"
+        >
           <FaPlus size={14} />
           สร้างงานใหม่
         </button>

@@ -18,7 +18,8 @@ function Dashboard() {
   return (
     <div className="flex h-screen bg-gray-50">
       <Sidebar onSelectPage={setSelectedPage} selectedPage={selectedPage} />
-      <MainContent selectedPage={selectedPage} />
+      <MainContent selectedPage={selectedPage} onSelectPage={setSelectedPage} />
+
     </div>
   );
 }
