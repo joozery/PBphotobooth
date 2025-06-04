@@ -8,6 +8,7 @@ import ThankYou from "./components/ThankYou";
 import Dashboard from "./components/Dashboard/Dashboard";
 import EventDetail from "./components/EventDetail";
 import AdminLogin from "./components/AdminLogin"; // ✅ เพิ่มหน้า Login
+import CreateEvent from "./components/Dashboard/pages/CreateEvent";
 
 
 function App() {
@@ -16,6 +17,7 @@ function App() {
       <Routes>
         <Route path="/" element={<WeddingLanding />} />
         <Route path="/event/:eventId" element={<EventDetail />} />
+        <Route path="/event/:eventId/edit" element={<CreateEvent />} />
         <Route path="/wish" element={<WishForm />} />
         <Route path="/template" element={<TemplateSelect />} />
         <Route path="/preview" element={<CardPreview />} />

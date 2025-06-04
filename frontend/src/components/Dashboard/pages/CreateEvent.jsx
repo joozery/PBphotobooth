@@ -1,11 +1,23 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import axios from 'axios';
 import { FaSave, FaRegImage } from 'react-icons/fa';
+
+// 🔧 แปลงวันที่จาก ISO → YYYY-MM-DD สำหรับ input[type="date"]
+const formatDate = (dateString) => {
+  if (!dateString) return '';
+  const date = new Date(dateString);
+  const year = date.getFullYear();
+  const month = `${date.getMonth() + 1}`.padStart(2, '0');
+  const day = `${date.getDate()}`.padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://pbphoto-api-fae29207c672.herokuapp.com";
 
 function CreateEvent() {
+  const { eventId } = useParams();
   const [form, setForm] = useState({
     title: '',
     eventDate: '',
@@ -13,17 +25,56 @@ function CreateEvent() {
     wishButtonText: 'เริ่มเขียนคำอวยพร',
     wishButtonBg: '#1d4ed8',
     wishButtonTextColor: '#ffffff',
-
     showSlipButton: true,
     slipButtonText: 'แนบสลิปพร้อมเพย์',
     slipButtonBg: '#ffffff',
     slipButtonTextColor: '#1d4ed8',
+    showViewWishesButton: true,
+    viewWishesButtonText: 'ดูคำอวยพร',
+    viewWishesButtonBg: '#f97316',
+    viewWishesButtonTextColor: '#ffffff',
   });
 
   const [coverImage, setCoverImage] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (eventId) {
+      const fetchEvent = async () => {
+        try {
+          const res = await axios.get(`${BASE_URL}/api/events/${eventId}`);
+          const data = res.data;
+  
+          setForm({
+            title: data.title || '',
+            eventDate: formatDate(data.event_date),
+            showWishButton: !!data.show_wish_button,
+            wishButtonText: data.wish_button_text,
+            wishButtonBg: data.wish_button_bg,
+            wishButtonTextColor: data.wish_button_text_color,
+            showSlipButton: !!data.show_slip_button,
+            slipButtonText: data.slip_button_text,
+            slipButtonBg: data.slip_button_bg,
+            slipButtonTextColor: data.slip_button_text_color,
+            showViewWishesButton: !!data.show_view_wishes_button,
+            viewWishesButtonText: data.view_wishes_button_text,
+            viewWishesButtonBg: data.view_wishes_button_bg,
+            viewWishesButtonTextColor: data.view_wishes_button_text_color,
+          });
+  
+          if (data.cover_image) {
+            setPreviewUrl(data.cover_image);
+            setCoverImage(null); // <-- อย่าตั้งใหม่ถ้าใช้ URL เดิม
+          }
+        } catch (err) {
+          console.error("❌ โหลดข้อมูล event ผิดพลาด:", err);
+        }
+      };
+      fetchEvent();
+    }
+  }, [eventId]);
 
   const handleChange = (e) => {
     const { name, type, value, checked } = e.target;
@@ -44,24 +95,34 @@ function CreateEvent() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-
+  
     try {
       const formData = new FormData();
       Object.entries(form).forEach(([key, value]) => {
         formData.append(key, value);
       });
-      if (coverImage) {
+  
+      // อัปโหลดเฉพาะตอนมีรูปใหม่
+      if (!eventId || coverImage) {
         formData.append("cover", coverImage);
       }
-
-      await axios.post(`${BASE_URL}/api/events`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
-
+  
+      if (eventId) {
+        // แก้ไข event เดิม
+        await axios.put(`${BASE_URL}/api/events/${eventId}`, formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        });
+      } else {
+        // สร้าง event ใหม่
+        await axios.post(`${BASE_URL}/api/events`, formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        });
+      }
+  
       navigate('/dashboard');
     } catch (error) {
-      console.error('❌ Create Event Error:', error);
-      alert('ไม่สามารถสร้างงานได้');
+      console.error('❌ Event Save Error:', error);
+      alert('ไม่สามารถบันทึกงานได้');
     } finally {
       setLoading(false);
     }
@@ -180,9 +241,6 @@ function CreateEvent() {
       </button>
     </div>
   </div>
-
-
-          
 
            {/* Slip Button */}
   <div className="space-y-2">

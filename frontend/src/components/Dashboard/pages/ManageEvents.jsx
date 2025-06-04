@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { FaPlus, FaExternalLinkAlt } from 'react-icons/fa';
+import { FaPlus, FaExternalLinkAlt, FaEdit, FaTrash } from 'react-icons/fa';
 import axios from 'axios';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://pbphoto-api-fae29207c672.herokuapp.com";
@@ -8,18 +8,29 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://pbphoto-api-fae29
 function ManageEvents({ onSelectPage }) {
   const [events, setEvents] = useState([]);
 
-  useEffect(() => {
-    const fetchEvents = async () => {
-      try {
-        const res = await axios.get(`${BASE_URL}/api/events`);
-        setEvents(res.data || []);
-      } catch (error) {
-        console.error("❌ ดึงข้อมูล events ล้มเหลว:", error);
-      }
-    };
+  const fetchEvents = async () => {
+    try {
+      const res = await axios.get(`${BASE_URL}/api/events`);
+      setEvents(res.data || []);
+    } catch (error) {
+      console.error("❌ ดึงข้อมูล events ล้มเหลว:", error);
+    }
+  };
 
+  useEffect(() => {
     fetchEvents();
   }, []);
+
+  const handleDelete = async (id) => {
+    if (confirm("คุณแน่ใจว่าต้องการลบงานนี้?")) {
+      try {
+        await axios.delete(`${BASE_URL}/api/events/${id}`);
+        fetchEvents(); // รีเฟรชข้อมูล
+      } catch (error) {
+        console.error("❌ ลบงานไม่สำเร็จ:", error);
+      }
+    }
+  };
 
   return (
     <div className="p-6">
@@ -45,12 +56,14 @@ function ManageEvents({ onSelectPage }) {
               <th className="px-4 py-3 font-medium text-gray-600">วันที่จัดงาน</th>
               <th className="px-4 py-3 font-medium text-gray-600">ลิงก์งาน</th>
               <th className="px-4 py-3 font-medium text-gray-600">QR Code</th>
+              <th className="px-4 py-3 font-medium text-gray-600">จัดการ</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
             {events.map((event, index) => {
-              const localLink = `/event/${event.id}`; // สำหรับ <Link>
-              const qrLink = `${window.location.origin}/event/${event.id}`; // สำหรับ QR
+              const localLink = `/event/${event.id}`;
+              const qrLink = `${window.location.origin}/event/${event.id}`;
+
               return (
                 <tr key={event.id} className="hover:bg-gray-50 transition">
                   <td className="px-4 py-3">{index + 1}</td>
@@ -80,6 +93,25 @@ function ManageEvents({ onSelectPage }) {
                       className="w-20 h-20 mx-auto border rounded"
                     />
                   </td>
+                  <td className="px-4 py-3 flex justify-center gap-2">
+  {/* ✅ ปุ่มแก้ไข ไปหน้า /event/:id/edit */}
+  <Link
+    to={`/event/${event.id}/edit`}
+    className="bg-yellow-400 text-white px-3 py-1 rounded hover:bg-yellow-500"
+    title="แก้ไข"
+  >
+    <FaEdit />
+  </Link>
+
+  {/* ✅ ปุ่มลบ */}
+  <button
+    onClick={() => handleDelete(event.id)}
+    className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
+    title="ลบ"
+  >
+    <FaTrash />
+  </button>
+</td>
                 </tr>
               );
             })}
