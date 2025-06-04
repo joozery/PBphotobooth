@@ -7,6 +7,7 @@ import {
   FaBell,
   FaUserShield,
   FaAngleDown,
+  FaMoneyBillWave,
 } from 'react-icons/fa';
 import { FiLogOut } from 'react-icons/fi';
 import { BsCamera } from 'react-icons/bs';
@@ -58,8 +59,9 @@ function Sidebar({ onSelectPage, selectedPage }) {
   const menu = [
     { label: 'หน้าหลัก', icon: <FaHome />, page: '' },
     { label: 'จัดการงานอีเว้นต์', icon: <FaCalendarAlt />, page: 'events' },
-    { label: 'สร้างเทมมเพต', icon: <FaRegEnvelopeOpen />, page: 'wishes' },
+    { label: 'เทมเพลตคำอวยพร', icon: <FaRegEnvelopeOpen />, page: 'manage-templates' },
     { label: 'อัพโหลด', icon: <FaCog />, page: 'settings-event' }, // ✅ เพิ่มตรงนี้
+    { label: 'ดูยอดโอนสลิป', icon: <FaMoneyBillWave />, page: 'slip-summary' },
   ];
 
   const settings = [
