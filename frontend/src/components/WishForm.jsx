@@ -175,7 +175,7 @@ export default function WishForm() {
               onChange={() => setAgree(!agree)}
               className="accent-yellow-400"
             />
-            ยืนยันว่าคำอวยพรของฉันเหมาะสมต่อการแสดงผล
+            คำอวยพรจะถูกแสดงในสไลด์โชว์
           </label>
 
           {/* ✅ Submit Button */}
