@@ -1,23 +1,36 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { FaRegCalendarPlus, FaSave } from 'react-icons/fa';
+import { FaSave, FaRegImage } from 'react-icons/fa';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://pbphoto-api-fae29207c672.herokuapp.com";
 
 function CreateEvent() {
   const [form, setForm] = useState({
-    name: '',
-    date: '',
-    location: '',
+    title: '',
+    eventDate: '',
+    showWishButton: true,
+    wishButtonText: 'เริ่มเขียนคำอวยพร',
+    wishButtonBg: '#1d4ed8',
+    wishButtonTextColor: '#ffffff',
+
+    showSlipButton: true,
+    slipButtonText: 'แนบสลิปพร้อมเพย์',
+    slipButtonBg: '#ffffff',
+    slipButtonTextColor: '#1d4ed8',
   });
+
   const [coverImage, setCoverImage] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    const { name, type, value, checked } = e.target;
+    setForm((prev) => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value,
+    }));
   };
 
   const handleImageChange = (e) => {
@@ -34,9 +47,9 @@ function CreateEvent() {
 
     try {
       const formData = new FormData();
-      formData.append("name", form.name);
-      formData.append("date", form.date);
-      formData.append("location", form.location);
+      Object.entries(form).forEach(([key, value]) => {
+        formData.append(key, value);
+      });
       if (coverImage) {
         formData.append("cover", coverImage);
       }
@@ -57,50 +70,40 @@ function CreateEvent() {
   return (
     <div className="w-full min-h-screen bg-gray-50 py-10 px-4 font-prompt">
       <div className="max-w-4xl mx-auto bg-white rounded-xl shadow-lg p-8">
-        <h2 className="text-3xl font-bold text-purple-700 mb-6 flex items-center gap-2">
-          <FaRegCalendarPlus className="text-purple-500" /> สร้างงานอีเว้นต์ใหม่
+        <h2 className="text-2xl font-bold text-purple-700 mb-6 flex items-center gap-2">
+          <FaRegImage className="text-purple-500" /> สร้างงานอีเว้นต์
         </h2>
 
-        <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="col-span-1 md:col-span-2">
-            <label className="block text-sm font-medium mb-1">ชื่องาน</label>
-            <input
-              type="text"
-              name="name"
-              value={form.name}
-              onChange={handleChange}
-              required
-              className="w-full px-4 py-2 border rounded"
-              placeholder="เช่น งานแต่งคุณเอ & คุณบี"
-            />
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Title and Date */}
+          <div className="grid md:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-sm font-medium mb-1">ชื่องาน</label>
+              <input
+                type="text"
+                name="title"
+                value={form.title}
+                onChange={handleChange}
+                className="w-full px-4 py-2 border rounded"
+                placeholder="เช่น งานแต่งคุณเอ & คุณบี"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">วันที่จัดงาน</label>
+              <input
+                type="date"
+                name="eventDate"
+                value={form.eventDate}
+                onChange={handleChange}
+                className="w-full px-4 py-2 border rounded"
+                required
+              />
+            </div>
           </div>
 
+          {/* Cover Upload */}
           <div>
-            <label className="block text-sm font-medium mb-1">วันที่จัด</label>
-            <input
-              type="date"
-              name="date"
-              value={form.date}
-              onChange={handleChange}
-              required
-              className="w-full px-4 py-2 border rounded"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium mb-1">สถานที่จัดงาน</label>
-            <input
-              type="text"
-              name="location"
-              value={form.location}
-              onChange={handleChange}
-              required
-              className="w-full px-4 py-2 border rounded"
-              placeholder="เช่น โรงแรม The Grand Bangkok"
-            />
-          </div>
-
-          <div className="col-span-1 md:col-span-2">
             <label className="block text-sm font-medium mb-1">อัปโหลดภาพหน้าปก</label>
             <input
               type="file"
@@ -109,18 +112,209 @@ function CreateEvent() {
               className="w-full"
             />
             {previewUrl && (
-              <img src={previewUrl} alt="Preview" className="mt-3 max-h-64 w-auto rounded-md shadow-md" />
+              <img
+                src={previewUrl}
+                alt="Preview"
+                className="mt-3 max-h-64 w-auto rounded-md shadow-md"
+              />
             )}
           </div>
 
-          <div className="col-span-1 md:col-span-2">
+          {/* Wish Button */}
+<div className="grid md:grid-cols-2 gap-6">
+  <div className="space-y-2">
+    <label className="flex items-center gap-2 text-sm">
+      <input
+        type="checkbox"
+        name="showWishButton"
+        checked={form.showWishButton}
+        onChange={handleChange}
+      />
+      แสดงปุ่ม “คำอวยพร”
+    </label>
+
+    <input
+      type="text"
+      name="wishButtonText"
+      className="w-full px-3 py-2 border rounded"
+      placeholder="ข้อความบนปุ่มคำอวยพร"
+      value={form.wishButtonText}
+      onChange={handleChange}
+    />
+
+    <div className="flex items-center gap-4">
+      <div>
+        <label className="text-xs block">สีพื้นหลัง</label>
+        <input
+          type="color"
+          name="wishButtonBg"
+          value={form.wishButtonBg}
+          onChange={handleChange}
+          className="w-10 h-10"
+        />
+      </div>
+      <div>
+        <label className="text-xs block">สีข้อความ</label>
+        <input
+          type="color"
+          name="wishButtonTextColor"
+          value={form.wishButtonTextColor}
+          onChange={handleChange}
+          className="w-10 h-10"
+        />
+      </div>
+    </div>
+
+    {/* ✅ Live Preview */}
+    <div className="pt-2">
+      <span className="text-xs text-gray-500">Preview:</span>
+      <button
+        type="button"
+        className="w-full px-4 py-2 mt-2 rounded shadow"
+        style={{
+          backgroundColor: form.wishButtonBg,
+          color: form.wishButtonTextColor,
+        }}
+      >
+        {form.wishButtonText}
+      </button>
+    </div>
+  </div>
+
+
+          
+
+           {/* Slip Button */}
+  <div className="space-y-2">
+    <label className="flex items-center gap-2 text-sm">
+      <input
+        type="checkbox"
+        name="showSlipButton"
+        checked={form.showSlipButton}
+        onChange={handleChange}
+      />
+      แสดงปุ่ม “แนบสลิป”
+    </label>
+
+    <input
+      type="text"
+      name="slipButtonText"
+      className="w-full px-3 py-2 border rounded"
+      placeholder="ข้อความบนปุ่มแนบสลิป"
+      value={form.slipButtonText}
+      onChange={handleChange}
+    />
+
+    <div className="flex items-center gap-4">
+      <div>
+        <label className="text-xs block">สีพื้นหลัง</label>
+        <input
+          type="color"
+          name="slipButtonBg"
+          value={form.slipButtonBg}
+          onChange={handleChange}
+          className="w-10 h-10"
+        />
+      </div>
+      <div>
+        <label className="text-xs block">สีข้อความ</label>
+        <input
+          type="color"
+          name="slipButtonTextColor"
+          value={form.slipButtonTextColor}
+          onChange={handleChange}
+          className="w-10 h-10"
+        />
+      </div>
+    </div>
+
+    {/* ✅ Live Preview */}
+    <div className="pt-2">
+      <span className="text-xs text-gray-500">Preview:</span>
+      <button
+        type="button"
+        className="w-full px-4 py-2 mt-2 rounded shadow"
+        style={{
+          backgroundColor: form.slipButtonBg,
+          color: form.slipButtonTextColor,
+        }}
+      >
+        {form.slipButtonText}
+      </button>
+    </div>
+  </div>
+</div>
+
+{/* View Wishes Button */}
+<div className="space-y-2">
+  <label className="flex items-center gap-2 text-sm">
+    <input
+      type="checkbox"
+      name="showViewWishesButton"
+      checked={form.showViewWishesButton}
+      onChange={handleChange}
+    />
+    แสดงปุ่ม “ดูคำอวยพร”
+  </label>
+
+  <input
+    type="text"
+    name="viewWishesButtonText"
+    className="w-full px-3 py-2 border rounded"
+    placeholder="ข้อความบนปุ่มดูคำอวยพร"
+    value={form.viewWishesButtonText}
+    onChange={handleChange}
+  />
+
+  <div className="flex items-center gap-4">
+    <div>
+      <label className="text-xs block">สีพื้นหลัง</label>
+      <input
+        type="color"
+        name="viewWishesButtonBg"
+        value={form.viewWishesButtonBg}
+        onChange={handleChange}
+        className="w-10 h-10"
+      />
+    </div>
+    <div>
+      <label className="text-xs block">สีข้อความ</label>
+      <input
+        type="color"
+        name="viewWishesButtonTextColor"
+        value={form.viewWishesButtonTextColor}
+        onChange={handleChange}
+        className="w-10 h-10"
+      />
+    </div>
+  </div>
+
+  {/* ✅ Live Preview */}
+  <div className="pt-2">
+    <span className="text-xs text-gray-500">Preview:</span>
+    <button
+      type="button"
+      className="w-full px-4 py-2 mt-2 rounded shadow"
+      style={{
+        backgroundColor: form.viewWishesButtonBg,
+        color: form.viewWishesButtonTextColor,
+      }}
+    >
+      {form.viewWishesButtonText}
+    </button>
+  </div>
+</div>
+
+
+          {/* Save Button */}
+          <div>
             <button
               type="submit"
               disabled={loading}
               className="bg-purple-600 text-white px-6 py-2 rounded hover:bg-purple-700 transition flex items-center gap-2"
             >
               <FaSave />
-              {loading ? 'กำลังบันทึก...' : 'บันทึกงาน'}
+              {loading ? 'กำลังบันทึก...' : 'บันทึก'}
             </button>
           </div>
         </form>

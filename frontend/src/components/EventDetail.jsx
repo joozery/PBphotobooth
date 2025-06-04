@@ -1,18 +1,68 @@
-// components/EventDetail.jsx
-import React from 'react';
-import { useParams } from 'react-router-dom';
+// src/pages/EventDetail.jsx
+import React, { useState, useEffect } from "react";
+import { FaPenNib, FaReceipt } from "react-icons/fa";
+import { useNavigate, useParams } from "react-router-dom";
+import axios from "axios";
+import bgFlower from "../assets/bgflower.jpg";
 
-function EventDetail() {
+const BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
+export default function EventDetail() {
   const { eventId } = useParams();
+  const navigate = useNavigate();
+  const [event, setEvent] = useState(null);
+
+  useEffect(() => {
+    const fetchEvent = async () => {
+      try {
+        const res = await axios.get(`${BASE_URL}/api/events/${eventId}`);
+        setEvent(res.data);
+      } catch (err) {
+        console.error("❌ ไม่พบข้อมูลงาน:", err);
+      }
+    };
+
+    fetchEvent();
+  }, [eventId]);
+
+  if (!event) return <div className="p-6">กำลังโหลดข้อมูล...</div>;
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold">รายละเอียดงาน: {eventId}</h1>
-      <p className="mt-2 text-gray-600">
-        (คุณสามารถโหลดข้อมูลจาก API หรือฐานข้อมูลได้ที่นี่โดยใช้ eventId)
-      </p>
+    <div className="w-screen h-screen flex items-center justify-center font-prompt bg-[#eee]">
+      <div
+        className="w-full max-w-lg h-[100svh] relative bg-cover bg-center bg-no-repeat flex flex-col justify-end shadow-xl"
+        style={{ backgroundImage: `url(${event.cover_image || bgFlower})` }}
+      >
+        {/* 🔘 Action Buttons (Fixed Bottom) */}
+        <div className="w-full px-6 z-10 flex flex-col gap-3  backdrop-blur-sm pt-4 pb-6">
+          {event.show_wish_button && (
+            <button
+              onClick={() => navigate("/wish")}
+              className="w-full py-3 rounded-full shadow-lg flex items-center justify-center gap-2 text-sm font-semibold"
+              style={{
+                backgroundColor: event.wish_button_bg || "#1d4ed8",
+                color: event.wish_button_text_color || "#ffffff",
+              }}
+            >
+              <FaPenNib className="text-base" />
+              {event.wish_button_text || "เริ่มเขียนคำอวยพร"}
+            </button>
+          )}
+          {event.show_slip_button && (
+            <button
+              onClick={() => navigate("/slip")}
+              className="w-full py-3 rounded-full shadow flex items-center justify-center gap-2 text-sm font-medium border"
+              style={{
+                backgroundColor: event.slip_button_bg || "#ffffff",
+                color: event.slip_button_text_color || "#1d4ed8",
+              }}
+            >
+              <FaReceipt className="text-base" />
+              {event.slip_button_text || "แนบสลิปพร้อมเพย์"}
+            </button>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
-
-export default EventDetail;

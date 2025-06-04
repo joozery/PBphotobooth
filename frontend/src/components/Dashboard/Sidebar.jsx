@@ -58,8 +58,8 @@ function Sidebar({ onSelectPage, selectedPage }) {
   const menu = [
     { label: 'หน้าหลัก', icon: <FaHome />, page: '' },
     { label: 'จัดการงานอีเว้นต์', icon: <FaCalendarAlt />, page: 'events' },
-    { label: 'จัดการคำอวยพร', icon: <FaRegEnvelopeOpen />, page: 'wishes' },
-    { label: 'ตั้งค่างาน', icon: <FaCog />, page: 'settings-event' }, // ✅ เพิ่มตรงนี้
+    { label: 'สร้างเทมมเพต', icon: <FaRegEnvelopeOpen />, page: 'wishes' },
+    { label: 'อัพโหลด', icon: <FaCog />, page: 'settings-event' }, // ✅ เพิ่มตรงนี้
   ];
 
   const settings = [

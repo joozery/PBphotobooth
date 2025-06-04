@@ -1,26 +1,26 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { FaPlus, FaExternalLinkAlt } from 'react-icons/fa';
+import axios from 'axios';
 
-const dummyEvents = [
-  {
-    id: 'event001',
-    name: 'พิธีแต่งงานคุณนัท & คุณเจน',
-    date: '12 พฤษภาคม 2025',
-  },
-  {
-    id: 'event002',
-    name: 'พิธีแต่งงานคุณฟ้า & คุณมิกซ์',
-    date: '20 พฤษภาคม 2025',
-  },
-  {
-    id: 'event003',
-    name: 'พิธีแต่งงานคุณตาล & คุณต้น',
-    date: '28 พฤษภาคม 2025',
-  },
-];
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://pbphoto-api-fae29207c672.herokuapp.com";
 
 function ManageEvents({ onSelectPage }) {
+  const [events, setEvents] = useState([]);
+
+  useEffect(() => {
+    const fetchEvents = async () => {
+      try {
+        const res = await axios.get(`${BASE_URL}/api/events`);
+        setEvents(res.data || []);
+      } catch (error) {
+        console.error("❌ ดึงข้อมูล events ล้มเหลว:", error);
+      }
+    };
+
+    fetchEvents();
+  }, []);
+
   return (
     <div className="p-6">
       {/* Header */}
@@ -37,32 +37,52 @@ function ManageEvents({ onSelectPage }) {
 
       {/* Table */}
       <div className="overflow-x-auto bg-white rounded shadow">
-        <table className="min-w-full divide-y divide-gray-200 text-sm">
-          <thead className="bg-gray-100 text-left">
+        <table className="min-w-full divide-y divide-gray-200 text-sm text-center">
+          <thead className="bg-gray-100">
             <tr>
-              <th className="px-6 py-3 font-medium text-gray-600">ลำดับ</th>
-              <th className="px-6 py-3 font-medium text-gray-600">ชื่องาน</th>
-              <th className="px-6 py-3 font-medium text-gray-600">วันที่จัดงาน</th>
-              <th className="px-6 py-3 font-medium text-gray-600">การจัดการ</th>
+              <th className="px-4 py-3 font-medium text-gray-600">ลำดับ</th>
+              <th className="px-4 py-3 font-medium text-gray-600">ชื่องาน</th>
+              <th className="px-4 py-3 font-medium text-gray-600">วันที่จัดงาน</th>
+              <th className="px-4 py-3 font-medium text-gray-600">ลิงก์งาน</th>
+              <th className="px-4 py-3 font-medium text-gray-600">QR Code</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
-            {dummyEvents.map((event, index) => (
-              <tr key={event.id} className="hover:bg-gray-50 transition">
-                <td className="px-6 py-4 text-gray-700">{index + 1}</td>
-                <td className="px-6 py-4 text-purple-700 font-medium">{event.name}</td>
-                <td className="px-6 py-4 text-gray-600">{event.date}</td>
-                <td className="px-6 py-4">
-                  <Link
-                    to={`/event/${event.id}`}
-                    className="flex items-center text-sm text-blue-600 hover:underline"
-                  >
-                    <FaExternalLinkAlt className="mr-1" size={12} />
-                    ดูงาน
-                  </Link>
-                </td>
-              </tr>
-            ))}
+            {events.map((event, index) => {
+              const localLink = `/event/${event.id}`; // สำหรับ <Link>
+              const qrLink = `${window.location.origin}/event/${event.id}`; // สำหรับ QR
+              return (
+                <tr key={event.id} className="hover:bg-gray-50 transition">
+                  <td className="px-4 py-3">{index + 1}</td>
+                  <td className="px-4 py-3 text-purple-700 font-medium">{event.title}</td>
+                  <td className="px-4 py-3 text-gray-600">
+                    {event.event_date
+                      ? new Date(event.event_date).toLocaleDateString('th-TH', {
+                          day: '2-digit',
+                          month: 'long',
+                          year: 'numeric',
+                        })
+                      : '-'}
+                  </td>
+                  <td className="px-4 py-3">
+                    <Link
+                      to={localLink}
+                      className="text-blue-600 hover:underline flex items-center justify-center gap-1"
+                    >
+                      <FaExternalLinkAlt size={12} />
+                      ไปยังลิงก์
+                    </Link>
+                  </td>
+                  <td className="px-4 py-3">
+                    <img
+                      src={`https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(qrLink)}`}
+                      alt="QR Code"
+                      className="w-20 h-20 mx-auto border rounded"
+                    />
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
