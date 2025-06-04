@@ -1,4 +1,6 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { Toaster } from "react-hot-toast";
+
 import WeddingLanding from "./components/WeddingLanding";
 import WishForm from "./components/WishForm";
 import TemplateSelect from "./components/TemplateSelect";
@@ -7,18 +9,23 @@ import WishConfirm from "./components/WishConfirm";
 import ThankYou from "./components/ThankYou";
 import Dashboard from "./components/Dashboard/Dashboard";
 import EventDetail from "./components/EventDetail";
-import AdminLogin from "./components/AdminLogin"; // ✅ เพิ่มหน้า Login
+import AdminLogin from "./components/AdminLogin";
 import CreateEvent from "./components/Dashboard/pages/CreateEvent";
-
 
 function App() {
   return (
     <Router>
+      {/* ✅ ใส่ toaster ให้แสดง toast ได้ทั่วแอป */}
+      <Toaster position="top-center" toastOptions={{ duration: 3000 }} />
+
       <Routes>
         <Route path="/" element={<WeddingLanding />} />
         <Route path="/event/:eventId" element={<EventDetail />} />
         <Route path="/event/:eventId/edit" element={<CreateEvent />} />
-        <Route path="/wish" element={<WishForm />} />
+        
+        {/* ✅ ปรับให้ WishForm รองรับ eventId */}
+        <Route path="/wish/:eventId" element={<WishForm />} />
+        
         <Route path="/template" element={<TemplateSelect />} />
         <Route path="/preview" element={<CardPreview />} />
         <Route path="/confirm" element={<WishConfirm />} />

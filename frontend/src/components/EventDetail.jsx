@@ -40,7 +40,7 @@ export default function EventDetail() {
         <div className="w-full px-6 z-10 flex flex-col gap-3  pt-4 pb-6 ">
           {event.show_wish_button && (
             <button
-              onClick={() => navigate("/wish")}
+            onClick={() => navigate(`/wish/${eventId}`)}
               className="w-full py-3 rounded-full shadow-lg flex items-center justify-center gap-2 text-sm font-semibold"
               style={{
                 backgroundColor: event.wish_button_bg || "#1d4ed8",

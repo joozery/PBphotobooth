@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { FaPlus, FaExternalLinkAlt, FaEdit, FaTrash, FaDownload } from 'react-icons/fa';
 import axios from 'axios';
+import toast from 'react-hot-toast';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://pbphoto-api-fae29207c672.herokuapp.com";
 
@@ -13,7 +14,8 @@ function ManageEvents({ onSelectPage }) {
       const res = await axios.get(`${BASE_URL}/api/events`);
       setEvents(res.data || []);
     } catch (error) {
-      console.error("❌ ดึงข้อมูล events ล้มเหลว:", error);
+      toast.error("❌ โหลดข้อมูลไม่สำเร็จ");
+      console.error(error);
     }
   };
 
@@ -25,9 +27,11 @@ function ManageEvents({ onSelectPage }) {
     if (confirm("คุณแน่ใจว่าต้องการลบงานนี้?")) {
       try {
         await axios.delete(`${BASE_URL}/api/events/${id}`);
+        toast.success("✅ ลบงานเรียบร้อยแล้ว");
         fetchEvents();
       } catch (error) {
-        console.error("❌ ลบงานไม่สำเร็จ:", error);
+        toast.error("❌ ลบงานไม่สำเร็จ");
+        console.error(error);
       }
     }
   };
@@ -38,6 +42,7 @@ function ManageEvents({ onSelectPage }) {
     a.href = qrUrl;
     a.download = `qr_${title}.png`;
     a.click();
+    toast.success("✅ ดาวน์โหลด QR สำเร็จ");
   };
 
   return (
@@ -89,18 +94,20 @@ function ManageEvents({ onSelectPage }) {
                       <FaExternalLinkAlt size={12} /> ไปยังลิงก์
                     </Link>
                   </td>
-                  <td className="px-2 py-3 space-y-2">
-                    <img
-                      src={`https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(qrLink)}`}
-                      alt="QR Code"
-                      className="w-20 h-20 mx-auto border rounded"
-                    />
-                    <button
-                      onClick={() => handleDownloadQR(qrLink, event.title)}
-                      className="text-xs text-blue-500 hover:underline flex items-center justify-center gap-1"
-                    >
-                      <FaDownload size={12} /> ดาวน์โหลด
-                    </button>
+                  <td className="px-2 py-3">
+                    <div className="flex flex-col items-center gap-2">
+                      <img
+                        src={`https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(qrLink)}`}
+                        alt="QR Code"
+                        className="w-24 h-24 border rounded"
+                      />
+                      <button
+                        onClick={() => handleDownloadQR(qrLink, event.title)}
+                        className="text-xs text-blue-600 hover:underline flex items-center gap-1"
+                      >
+                        <FaDownload size={12} /> ดาวน์โหลด
+                      </button>
+                    </div>
                   </td>
                   <td className="px-2 py-3 flex justify-center gap-2 flex-wrap">
                     <Link

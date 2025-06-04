@@ -2,7 +2,22 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useParams } from 'react-router-dom';
 import axios from 'axios';
-import { FaSave, FaRegImage } from 'react-icons/fa';
+import { IoIosFemale, IoMdFemale } from "react-icons/io";
+import { FaUser, FaStar, FaUserTie, FaHeart, FaSmile, FaCat, FaDog, FaRing, FaSave, FaRegImage } from 'react-icons/fa';
+
+// 🔧 ตั้งค่าicon
+const iconOptions = {
+  FaUser: <FaUser />,
+  FaUserTie: <FaUserTie />,
+  FaHeart: <FaHeart />,
+  FaStar: <FaStar />,
+  FaSmile: <FaSmile />,
+  FaCat: <FaCat />,
+  FaDog: <FaDog />,
+  FaRing: <FaRing />,
+  IoIosFemale: <IoIosFemale />,     // ✅ เพิ่ม
+  IoMdFemale: <IoMdFemale />,       // ✅ เพิ่ม
+};
 
 // 🔧 แปลงวันที่จาก ISO → YYYY-MM-DD สำหรับ input[type="date"]
 const formatDate = (dateString) => {
@@ -33,6 +48,10 @@ function CreateEvent() {
     viewWishesButtonText: 'ดูคำอวยพร',
     viewWishesButtonBg: '#f97316',
     viewWishesButtonTextColor: '#ffffff',
+    groom_label: 'ฝ่ายเจ้าบ่าว',
+    bride_label: 'ฝ่ายเจ้าสาว',
+    groom_icon: 'FaUserTie',
+    bride_icon: 'FaUser',
   });
 
   const [coverImage, setCoverImage] = useState(null);
@@ -62,6 +81,11 @@ function CreateEvent() {
             viewWishesButtonText: data.view_wishes_button_text,
             viewWishesButtonBg: data.view_wishes_button_bg,
             viewWishesButtonTextColor: data.view_wishes_button_text_color,
+            // ✅ เพิ่มบรรทัดเหล่านี้:
+            groomLabel: data.groom_label || 'ฝ่ายเจ้าบ่าว',
+            brideLabel: data.bride_label || 'ฝ่ายเจ้าสาว',
+            groomIcon: data.groom_icon || 'FaUserTie',
+            brideIcon: data.bride_icon || 'FaUser'
           });
   
           if (data.cover_image) {
@@ -101,6 +125,12 @@ function CreateEvent() {
       Object.entries(form).forEach(([key, value]) => {
         formData.append(key, value);
       });
+      
+      // ✅ เพิ่มเฉพาะกรณีจำเป็น (เช่น key ไม่อยู่ใน form)
+      formData.set("groom_label", form.groomLabel);
+      formData.set("bride_label", form.brideLabel);
+      formData.set("groom_icon", form.groomIcon);
+      formData.set("bride_icon", form.brideIcon);
   
       // อัปโหลดเฉพาะตอนมีรูปใหม่
       if (!eventId || coverImage) {
@@ -127,6 +157,13 @@ function CreateEvent() {
       setLoading(false);
     }
   };
+
+  const [wishSettings, setWishSettings] = useState({
+    enableImageUpload: true,
+    maxNameLength: 20,
+    maxMessageLength: 200,
+    requireAgreement: true,
+  });
 
   return (
     <div className="w-full min-h-screen bg-gray-50 py-10 px-4 font-prompt">
@@ -363,6 +400,72 @@ function CreateEvent() {
   </div>
 </div>
 
+{/* View Wishes Button */}
+<hr className="my-8" />
+<h3 className="text-lg font-semibold text-gray-700">ตั้งค่าปุ่มเลือกฝ่าย</h3>
+
+<div className="grid md:grid-cols-2 gap-4 mt-4">
+  <div>
+    <label className="text-sm block mb-1">ข้อความฝ่ายเจ้าบ่าว</label>
+    <input
+      type="text"
+      name="groomLabel"
+      value={form.groomLabel}
+      onChange={handleChange}
+      className="w-full px-3 py-2 border rounded"
+      placeholder="ฝ่ายเจ้าบ่าว"
+    />
+  </div>
+  <div>
+    <label className="text-sm block mb-1">ข้อความฝ่ายเจ้าสาว</label>
+    <input
+      type="text"
+      name="brideLabel"
+      value={form.brideLabel}
+      onChange={handleChange}
+      className="w-full px-3 py-2 border rounded"
+      placeholder="ฝ่ายเจ้าสาว"
+    />
+  </div>
+
+  <div>
+    <label className="text-sm block mb-1">เลือกไอคอนฝ่ายเจ้าบ่าว</label>
+    <div className="flex items-center gap-2">
+      <select
+        name="groomIcon"
+        value={form.groomIcon}
+        onChange={handleChange}
+        className="w-full px-3 py-2 border rounded"
+      >
+        {Object.keys(iconOptions).map((key) => (
+          <option key={key} value={key}>
+            {key}
+          </option>
+        ))}
+      </select>
+      <div className="text-xl">{iconOptions[form.groomIcon]}</div>
+    </div>
+  </div>
+
+  <div>
+    <label className="text-sm block mb-1">เลือกไอคอนฝ่ายเจ้าสาว</label>
+    <div className="flex items-center gap-2">
+      <select
+        name="brideIcon"
+        value={form.brideIcon}
+        onChange={handleChange}
+        className="w-full px-3 py-2 border rounded"
+      >
+        {Object.keys(iconOptions).map((key) => (
+          <option key={key} value={key}>
+            {key}
+          </option>
+        ))}
+      </select>
+      <div className="text-xl">{iconOptions[form.brideIcon]}</div>
+    </div>
+  </div>
+</div>
 
           {/* Save Button */}
           <div>
