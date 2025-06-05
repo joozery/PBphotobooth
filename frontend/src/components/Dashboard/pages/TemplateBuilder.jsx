@@ -7,7 +7,7 @@ const BASE_URL =
   import.meta.env.VITE_API_BASE_URL ||
   "https://pbphoto-api-fae29207c672.herokuapp.com";
 
-export default function TemplateBuilder() {
+  export default function TemplateBuilder({ templateId }) {
   const [elements, setElements] = useState([]);
   const [selected, setSelected] = useState(null);
 
@@ -30,21 +30,51 @@ export default function TemplateBuilder() {
   const [frameSize, setFrameSize] = useState({ width: 200, height: 200 });
 
   useEffect(() => {
+    if (templateId) {
+      fetchTemplate(templateId);
+    }
+  }, [templateId]);
+
+  useEffect(() => {
+    const fetchAssets = async () => {
+      try {
+        const res = await axios.get(`${BASE_URL}/api/card-assets`);
+        const allAssets = res.data;
+  
+        setBackgrounds(allAssets.filter((item) => item.type === "background"));
+        setTextboxes(allAssets.filter((item) => item.type === "textbox"));
+        setFrames(allAssets.filter((item) => item.type === "frame"));
+      } catch (err) {
+        console.error("❌ โหลด assets ไม่สำเร็จ:", err);
+      }
+    };
+  
     fetchAssets();
   }, []);
-
-  const fetchAssets = async () => {
-    try {
-      const res = await axios.get(`${BASE_URL}/api/card-assets`);
-      const bg = res.data.filter((item) => item.type === "background");
-      const frame = res.data.filter((item) => item.type === "frame");
-      const textbox = res.data.filter((item) => item.type === "textbox");
-      setBackgrounds(bg);
-      setFrames(frame);
-      setTextboxes(textbox);
-    } catch (err) {
-      console.error("❌ โหลด assets ไม่สำเร็จ:", err);
-    }
+  
+  const fetchTemplate = async (id) => {
+    const res = await axios.get(`${BASE_URL}/api/templates/${id}`);
+    const tpl = res.data;
+  
+    setTemplateName(tpl.name);
+    setSelectedBg(tpl.background);
+    setSelectedTextbox(tpl.textbox);
+    setSelectedFrame(tpl.frame);
+    setElements(tpl.elements || []);
+  
+    // โหลดตำแหน่ง frame
+    setFramePos({ x: tpl.frame_x || 0, y: tpl.frame_y || 0 });
+    setFrameSize({ width: tpl.frame_width || 200, height: tpl.frame_height || 200 });
+  
+    // โหลดตำแหน่ง textbox
+    setTextboxProps({
+      x: tpl.textbox_x || 50,
+      y: tpl.textbox_y || 50,
+      width: tpl.textbox_width || 300,
+      height: tpl.textbox_height || 100,
+      rotate: tpl.textbox_rotate || 0,
+      flipped: false,
+    });
   };
 
   const addText = () => {
@@ -80,6 +110,41 @@ export default function TemplateBuilder() {
     const updated = [...elements];
     updated[index] = { ...updated[index], ...updates };
     setElements(updated);
+  };
+
+  const [templateName, setTemplateName] = useState("");
+
+  const handleSaveTemplate = async () => {
+    if (!templateName.trim()) {
+      alert("กรุณาตั้งชื่อเทมเพลตก่อน");
+      return;
+    }
+  
+    const payload = {
+      name: templateName,
+      background: selectedBg,
+      frame: selectedFrame,
+      textbox: selectedTextbox,
+      elements,
+      framePosition: framePos,     // ✅ เพิ่มตรงนี้
+      frameSize: frameSize,        // ✅ เพิ่มตรงนี้
+      textboxProps: textboxProps,  // ✅ เพิ่มตรงนี้
+    };
+  
+    try {
+      if (templateId) {
+        // ✅ แก้ไขเทมเพลตเดิม
+        await axios.put(`${BASE_URL}/api/templates/${templateId}`, payload);
+        alert("✅ แก้ไขเทมเพลตเรียบร้อยแล้ว!");
+      } else {
+        // ✅ สร้างใหม่
+        await axios.post(`${BASE_URL}/api/templates`, payload);
+        alert("✅ บันทึกเทมเพลตเรียบร้อยแล้ว!");
+      }
+    } catch (err) {
+      console.error("❌ บันทึกไม่สำเร็จ:", err);
+      alert("เกิดข้อผิดพลาดในการบันทึก");
+    }
   };
 
   return (
@@ -133,17 +198,38 @@ export default function TemplateBuilder() {
         >
           <FaUndo /> หมุน
         </button>
-        <button
-          onClick={() =>
-            setTextboxProps((prev) => ({
-              ...prev,
-              flipped: !prev.flipped,
-            }))
-          }
-          className="bg-orange-500 text-white px-3 py-1 rounded"
-        >
-          <FaExchangeAlt /> พลิก
-        </button>
+       
+        {selected !== null && (
+  <button
+    onClick={() => {
+      const updated = [...elements];
+      updated.splice(selected, 1); // ลบ element ที่เลือก
+      setElements(updated);
+      setSelected(null);
+    }}
+    className="bg-red-600 text-white px-3 py-2 rounded"
+  >
+    ลบองค์ประกอบ
+  </button>
+)}
+
+{selectedTextbox && (
+  <button
+    onClick={() => setSelectedTextbox("")}
+    className="bg-red-500 text-white px-3 py-2 rounded"
+  >
+    ลบ Textbox
+  </button>
+)}
+
+{selectedFrame && (
+  <button
+    onClick={() => setSelectedFrame("")}
+    className="bg-red-500 text-white px-3 py-2 rounded"
+  >
+    ลบ Frame
+  </button>
+)}
 
         <select
           onChange={(e) => setSelectedFrame(e.target.value)}
@@ -157,7 +243,16 @@ export default function TemplateBuilder() {
           ))}
         </select>
 
-        <button className="ml-auto bg-green-600 text-white px-4 py-2 rounded flex items-center gap-2">
+        <input
+  type="text"
+  value={templateName}
+  onChange={(e) => setTemplateName(e.target.value)}
+  placeholder="ตั้งชื่อเทมเพลต"
+  className="px-3 py-2 rounded border w-60"
+/>
+
+        <button onClick={handleSaveTemplate}
+        className="ml-auto bg-green-600 text-white px-4 py-2 rounded flex items-center gap-2">
           <FaSave /> บันทึกเทมเพลต
         </button>
       </div>

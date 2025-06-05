@@ -4,18 +4,23 @@ import ManageWishes from './pages/ManageWishes';
 import DashboardOverview from './pages/DashboardOverview';
 import SettingsEvent from './pages/SettingsEvent';
 import CreateEvent from './pages/CreateEvent';
-import ManageTemplates from './pages/ManageTemplates'; // ✅ เพิ่มหน้านี้แทน
-import TemplateBuilder from './pages/TemplateBuilder'; // ✅ หน้าสร้างจริง
+import ManageTemplates from './pages/ManageTemplates';
+import TemplateBuilder from './pages/TemplateBuilder';
+import ManageEventSlips from './pages/ManageEventSlips'; // ✅ เพิ่มตรงนี้
 
 function MainContent({ selectedPage, onSelectPage }) {
+  const page = typeof selectedPage === 'string' ? selectedPage : selectedPage?.page;
+  const templateId = selectedPage?.templateId;
+  const eventId = selectedPage?.eventId;
+
   let content;
 
-  switch (selectedPage) {
+  switch (page) {
     case 'events':
       content = <ManageEvents onSelectPage={onSelectPage} />;
       break;
-      case 'wishes': // แก้จาก ManageWishes → ManageTemplates
-      content = <ManageTemplates />;
+    case 'wishes':
+      content = <ManageWishes />;
       break;
     case 'settings-event':
       content = <SettingsEvent />;
@@ -23,11 +28,19 @@ function MainContent({ selectedPage, onSelectPage }) {
     case 'create-event':
       content = <CreateEvent />;
       break;
-    case 'manage-templates': // ✅ list เทมเพลต
-    content = <ManageTemplates onSelectPage={onSelectPage} />;
+    case 'manage-templates':
+      content = <ManageTemplates onSelectPage={onSelectPage} />;
       break;
-    case 'template-builder': // ✅ หน้าสร้าง template
-      content = <TemplateBuilder />;
+    case 'template-builder':
+      content = (
+        <TemplateBuilder
+          templateId={templateId}
+          onSelectPage={onSelectPage}
+        />
+      );
+      break;
+    case 'slip-summary': // ✅ แก้ตรงนี้ให้ตรงกับ Sidebar
+      content = <ManageEventSlips eventId={eventId} />;
       break;
     default:
       content = <DashboardOverview />;

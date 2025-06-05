@@ -50,7 +50,7 @@ export default function WishForm() {
     if (!agree) return;
 
     const formData = new FormData();
-    formData.append("side", side);
+    formData.append("side", side === "groom" ? "เจ้าบ่าว" : "เจ้าสาว");
     formData.append("name", name);
     formData.append("message", message);
     formData.append("agree", agree);
@@ -66,7 +66,7 @@ export default function WishForm() {
       });
 
       if (res.ok) {
-        navigate("/template");
+        navigate(`/template/${eventId}`);
       } else {
         alert("❌ ส่งคำอวยพรไม่สำเร็จ");
       }

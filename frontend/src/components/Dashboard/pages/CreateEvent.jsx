@@ -60,9 +60,10 @@ function CreateEvent() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (eventId) {
-      const fetchEvent = async () => {
-        try {
+    const fetchEventAndTemplates = async () => {
+      try {
+        // ถ้าแก้ไข event → โหลดข้อมูล event
+        if (eventId) {
           const res = await axios.get(`${BASE_URL}/api/events/${eventId}`);
           const data = res.data;
   
@@ -81,25 +82,47 @@ function CreateEvent() {
             viewWishesButtonText: data.view_wishes_button_text,
             viewWishesButtonBg: data.view_wishes_button_bg,
             viewWishesButtonTextColor: data.view_wishes_button_text_color,
-            // ✅ เพิ่มบรรทัดเหล่านี้:
             groomLabel: data.groom_label || 'ฝ่ายเจ้าบ่าว',
             brideLabel: data.bride_label || 'ฝ่ายเจ้าสาว',
             groomIcon: data.groom_icon || 'FaUserTie',
-            brideIcon: data.bride_icon || 'FaUser'
+            brideIcon: data.bride_icon || 'FaUser',
           });
   
           if (data.cover_image) {
             setPreviewUrl(data.cover_image);
-            setCoverImage(null); // <-- อย่าตั้งใหม่ถ้าใช้ URL เดิม
           }
-        } catch (err) {
-          console.error("❌ โหลดข้อมูล event ผิดพลาด:", err);
+  
+          // โหลด template ที่เลือกไว้ใน event
+          const selectedTemplateRes = await axios.get(`${BASE_URL}/api/templates/event/${eventId}`);
+          const selectedTemplateIds = selectedTemplateRes.data.map(tpl => tpl.template_id);
+          
+          // โหลด template ทั้งหมด
+          const allTemplatesRes = await axios.get(`${BASE_URL}/api/templates`);
+          const allTemplates = allTemplatesRes.data.map(tpl => ({
+            ...tpl,
+            show_template: selectedTemplateIds.includes(tpl.id),
+          }));
+  
+          setTemplateOptions(allTemplates);
+        } else {
+          // ถ้าเป็นหน้าสร้างใหม่ → โหลด template ทั้งหมด (ไม่ติ๊ก)
+          const allTemplatesRes = await axios.get(`${BASE_URL}/api/templates`);
+          const allTemplates = allTemplatesRes.data.map(tpl => ({
+            ...tpl,
+            show_template: false,
+          }));
+  
+          setTemplateOptions(allTemplates);
         }
-      };
-      fetchEvent();
-    }
+      } catch (err) {
+        console.error("❌ โหลดข้อมูล event/template ผิดพลาด:", err);
+      }
+    };
+  
+    fetchEventAndTemplates();
   }, [eventId]);
 
+  
   const handleChange = (e) => {
     const { name, type, value, checked } = e.target;
     setForm((prev) => ({
@@ -136,6 +159,12 @@ function CreateEvent() {
       if (!eventId || coverImage) {
         formData.append("cover", coverImage);
       }
+
+      // ✅ เพิ่มตรงนี้เพื่อส่ง templateIds
+    const selectedTemplateIds = templateOptions
+    .filter(tpl => tpl.show_template)
+    .map(tpl => tpl.id);
+    formData.append("templateIds", JSON.stringify(selectedTemplateIds));
   
       if (eventId) {
         // แก้ไข event เดิม
@@ -164,6 +193,8 @@ function CreateEvent() {
     maxMessageLength: 200,
     requireAgreement: true,
   });
+
+  const [templateOptions, setTemplateOptions] = useState([]);
 
   return (
     <div className="w-full min-h-screen bg-gray-50 py-10 px-4 font-prompt">
@@ -464,6 +495,26 @@ function CreateEvent() {
       </select>
       <div className="text-xl">{iconOptions[form.brideIcon]}</div>
     </div>
+  </div>
+</div>
+
+<div className="mt-6">
+  <h3 className="text-lg font-semibold mb-2 text-gray-700">เลือกเทมเพลตที่ใช้ในงาน</h3>
+  <div className="grid md:grid-cols-2 gap-3">
+    {templateOptions.map(tpl => (
+      <label key={tpl.id} className="flex items-center gap-2 text-sm border px-3 py-2 rounded shadow-sm">
+        <input
+          type="checkbox"
+          checked={tpl.show_template}
+          onChange={(e) =>
+            setTemplateOptions(prev =>
+              prev.map(t => t.id === tpl.id ? { ...t, show_template: e.target.checked } : t)
+            )
+          }
+        />
+        {tpl.name}
+      </label>
+    ))}
   </div>
 </div>
 
