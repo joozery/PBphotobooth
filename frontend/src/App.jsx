@@ -12,6 +12,7 @@ import EventDetail from "./components/EventDetail";
 import AdminLogin from "./components/AdminLogin";
 import CreateEvent from "./components/Dashboard/pages/CreateEvent";
 import TemplateBuilder from "./components/Dashboard/pages/TemplateBuilder"; // ✅ เพิ่มตรงนี้
+import UploadSlipForm from "./components/UploadSlipForm";
 
 function App() {
   return (
@@ -25,9 +26,10 @@ function App() {
         <Route path="/wish/:eventId" element={<WishForm />} />
         <Route path="/preview" element={<CardPreview />} />
         <Route path="/confirm" element={<WishConfirm />} />
-        <Route path="/thankyou" element={<ThankYou />} />
+        <Route path="/thankyou/:eventId" element={<ThankYou />} /> {/* ✅ แก้ตรงนี้ */}
         <Route path="/template/:eventId" element={<TemplateSelect />} />
         <Route path="/select-template/:eventId" element={<TemplateSelect />} />
+        <Route path="/upload-slip" element={<UploadSlipForm />} />
 
         {/* ✅ เส้นทางแอดมิน */}
         <Route path="/admin/login" element={<AdminLogin />} />

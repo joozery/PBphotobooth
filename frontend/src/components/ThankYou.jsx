@@ -1,25 +1,38 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { FaImage, FaQrcode } from "react-icons/fa";
-import { useNavigate } from "react-router-dom";
-import bgFlower from "../assets/bgflower.jpg";
+import { useNavigate, useParams } from "react-router-dom";
+import axios from "axios";
+
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://pbphoto-api-fae29207c672.herokuapp.com";
 
 export default function ThankYou() {
   const navigate = useNavigate();
+  const { eventId } = useParams();
+  const [cover, setCover] = useState("");
+
+  useEffect(() => {
+    if (eventId) {
+      axios.get(`${BASE_URL}/api/events/${eventId}`)
+        .then((res) => {
+          setCover(res.data.cover_image);
+        })
+        .catch((err) => {
+          console.error("❌ โหลด cover_image ไม่สำเร็จ:", err);
+        });
+    }
+  }, [eventId]);
 
   return (
     <div className="w-screen h-screen font-prompt flex justify-center items-center bg-[#eee]">
       <div
         className="w-full max-w-xl h-[100svh] bg-cover bg-center bg-no-repeat flex flex-col justify-between px-6 py-10 shadow-xl rounded-none border border-white"
-        style={{ backgroundImage: `url(${bgFlower})` }}
+        style={{
+          backgroundImage: `url(${cover || "/default-bg.jpg"})`,
+        }}
       >
-        {/* ✅ เพิ่มพื้นหลังโปร่งทับเพื่ออ่านง่าย */}
-        <div className="flex flex-col justify-between h-full w-full  backdrop-blur-sm px-4 py-6 rounded">
+        <div className="flex flex-col justify-between h-full w-full  px-4 py-6 rounded">
           {/* 💌 Heading */}
           <div className="text-center">
-            <h1 className="text-3xl font-bold text-[#4d3b30] tracking-widest mb-1">
-              THANK YOU
-            </h1>
-            <p className="text-sm text-gray-700">FOR JOINING US!</p>
           </div>
 
           {/* 🎁 Action Buttons */}
@@ -35,7 +48,7 @@ export default function ThankYou() {
           {/* ⬅️ Return */}
           <div className="mt-10">
             <button
-              onClick={() => navigate("/")}
+              onClick={() => navigate(`/event/${eventId}`)}
               className="w-full bg-blue-700 text-white py-3 rounded-full font-semibold shadow-lg hover:bg-blue-800 transition"
             >
               กลับหน้าแรก

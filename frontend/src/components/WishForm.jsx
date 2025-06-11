@@ -8,7 +8,6 @@ import { IoIosFemale, IoMdFemale } from "react-icons/io";
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://pbphoto-api-fae29207c672.herokuapp.com";
 
-// ✅ map สำหรับชื่อ → icon
 const iconMap = {
   FaUser, FaUserTie, FaStar, FaHeart, FaSmile, FaCat, FaDog, FaRing,
   IoIosFemale, IoMdFemale,
@@ -41,13 +40,22 @@ export default function WishForm() {
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
+      const previewURL = URL.createObjectURL(file);
       setImageFile(file);
-      setImage(URL.createObjectURL(file));
+      setImage(previewURL);
     }
   };
 
   const handleSubmit = async () => {
     if (!agree) return;
+
+    // ✅ เก็บไว้ใช้หน้า template/preview
+    localStorage.setItem("wishName", name);
+    localStorage.setItem("wishMessage", message);
+    localStorage.setItem("eventId", eventId); // ✅ เพิ่มบรรทัดนี้
+    if (image) {
+      localStorage.setItem("wishImage", image);
+    }
 
     const formData = new FormData();
     formData.append("side", side === "groom" ? "เจ้าบ่าว" : "เจ้าสาว");
@@ -71,7 +79,6 @@ export default function WishForm() {
         alert("❌ ส่งคำอวยพรไม่สำเร็จ");
       }
     } catch (err) {
-      console.error("API error:", err);
       alert("❌ เกิดข้อผิดพลาดในการเชื่อมต่อ API");
     }
   };
@@ -88,13 +95,13 @@ export default function WishForm() {
 
   return (
     <div
-    className="w-screen h-[100svh] bg-cover bg-center flex justify-center items-center font-prompt"
-    style={{
-      backgroundImage: event?.cover_image
-        ? `url(${event.cover_image})`
-        : "linear-gradient(to bottom, #fef3c7, #ffffff)", // fallback gradient
-    }}
-  >
+      className="w-screen h-[100svh] bg-cover bg-center flex justify-center items-center font-prompt"
+      style={{
+        backgroundImage: event?.cover_image
+          ? `url(${event.cover_image})`
+          : "linear-gradient(to bottom, #fef3c7, #ffffff)",
+      }}
+    >
       <div className="w-full max-w-xl h-[100svh] bg-white overflow-auto shadow-xl border border-gray-200 animate-fade-in">
         <div className="p-4">
           <h1 className="text-center text-lg font-semibold text-black-600 mb-4">ส่งคำอวยพรของคุณ</h1>

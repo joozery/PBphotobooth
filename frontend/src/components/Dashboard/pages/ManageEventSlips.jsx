@@ -1,5 +1,12 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import {
+  FaFemale,
+  FaMale,
+  FaMoneyBillWave,
+  FaFileInvoiceDollar,
+  FaInfoCircle,
+} from "react-icons/fa";
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
 
@@ -21,24 +28,46 @@ export default function ManageEventSlips() {
 
   return (
     <div className="p-6 font-prompt">
-      <h2 className="text-2xl font-bold mb-4">📊 สรุปยอดใส่ซองแต่ละงานอีเวนต์</h2>
+      <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
+        <FaMoneyBillWave className="text-green-600" /> สรุปยอดใส่ซองแต่ละงานอีเวนต์
+      </h2>
 
       <div className="overflow-x-auto bg-white rounded-xl shadow">
         <table className="min-w-full text-sm">
           <thead className="bg-gray-100 text-gray-700">
             <tr>
               <th className="p-3 text-left">ชื่องาน</th>
-              <th className="p-3 text-center">เจ้าสาว 👰</th>
-              <th className="p-3 text-center">เจ้าบ่าว 🤵</th>
-              <th className="p-3 text-center">รวมทั้งหมด</th>
-              <th className="p-3 text-center">จำนวนรายการ</th>
-              <th className="p-3 text-center">ดูรายละเอียด</th>
+              <th className="p-3 text-center">
+                <div className="flex items-center justify-center gap-1">
+                  <FaFemale className="text-pink-500" /> เจ้าสาว
+                </div>
+              </th>
+              <th className="p-3 text-center">
+                <div className="flex items-center justify-center gap-1">
+                  <FaMale className="text-blue-500" /> เจ้าบ่าว
+                </div>
+              </th>
+              <th className="p-3 text-center">
+                <div className="flex items-center justify-center gap-1">
+                  <FaMoneyBillWave /> รวมทั้งหมด
+                </div>
+              </th>
+              <th className="p-3 text-center">
+                <div className="flex items-center justify-center gap-1">
+                  <FaFileInvoiceDollar /> รายการ
+                </div>
+              </th>
+              <th className="p-3 text-center">
+                <div className="flex items-center justify-center gap-1">
+                  <FaInfoCircle /> รายละเอียด
+                </div>
+              </th>
             </tr>
           </thead>
           <tbody>
             {events.map((ev) => (
               <tr key={ev.event_id} className="border-t hover:bg-gray-50">
-                <td className="p-3">{ev.event_name}</td>
+                <td className="p-3 font-medium">{ev.event_name}</td>
                 <td className="p-3 text-center text-pink-600 font-semibold">
                   {ev.total_bride.toLocaleString()} บาท
                 </td>

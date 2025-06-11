@@ -7,6 +7,7 @@ import CreateEvent from './pages/CreateEvent';
 import ManageTemplates from './pages/ManageTemplates';
 import TemplateBuilder from './pages/TemplateBuilder';
 import ManageEventSlips from './pages/ManageEventSlips'; // ✅ เพิ่มตรงนี้
+import WishGallery from './pages/WishGallery'; // ✅ เพิ่มหน้าใหม่
 
 function MainContent({ selectedPage, onSelectPage }) {
   const page = typeof selectedPage === 'string' ? selectedPage : selectedPage?.page;
@@ -41,6 +42,9 @@ function MainContent({ selectedPage, onSelectPage }) {
       break;
     case 'slip-summary': // ✅ แก้ตรงนี้ให้ตรงกับ Sidebar
       content = <ManageEventSlips eventId={eventId} />;
+      break;
+      case 'wish-gallery':
+  content = <WishGallery onSelectPage={onSelectPage} />;
       break;
     default:
       content = <DashboardOverview />;

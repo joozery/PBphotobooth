@@ -62,6 +62,7 @@ function Sidebar({ onSelectPage, selectedPage }) {
     { label: 'เทมเพลตคำอวยพร', icon: <FaRegEnvelopeOpen />, page: 'manage-templates' },
     { label: 'อัพโหลด', icon: <FaCog />, page: 'settings-event' }, // ✅ เพิ่มตรงนี้
     { label: 'ดูยอดโอนสลิป', icon: <FaMoneyBillWave />, page: 'slip-summary' },
+    { label: 'อัลบั้มคำอวยพร', icon: <FaRegEnvelopeOpen />, page: 'wish-gallery' }
   ];
 
   const settings = [

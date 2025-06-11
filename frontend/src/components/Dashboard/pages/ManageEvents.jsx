@@ -1,6 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { FaPlus, FaExternalLinkAlt, FaEdit, FaTrash, FaDownload } from 'react-icons/fa';
+import {
+  FaPlus,
+  FaExternalLinkAlt,
+  FaEdit,
+  FaTrash,
+  FaDownload,
+  FaRegEye,
+} from 'react-icons/fa';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 
@@ -46,7 +53,7 @@ function ManageEvents({ onSelectPage }) {
   };
 
   return (
-    <div className="p-4 md:p-6">
+    <div className="p-4 md:p-6 font-prompt">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
         <h1 className="text-2xl font-bold">จัดการงานอีเว้นต์</h1>
         <button
@@ -67,6 +74,7 @@ function ManageEvents({ onSelectPage }) {
               <th className="px-2 py-3">วันที่จัดงาน</th>
               <th className="px-2 py-3">ลิงก์งาน</th>
               <th className="px-2 py-3">QR Code</th>
+              <th className="px-2 py-3">ดูสไลด์การ์ด</th>
               <th className="px-2 py-3">จัดการ</th>
             </tr>
           </thead>
@@ -74,6 +82,7 @@ function ManageEvents({ onSelectPage }) {
             {events.map((event, index) => {
               const localLink = `/event/${event.id}`;
               const qrLink = `${window.location.origin}/event/${event.id}`;
+              const viewWishLink = `/wishes?eventId=${event.id}`;
 
               return (
                 <tr key={event.id} className="hover:bg-gray-50">
@@ -82,7 +91,9 @@ function ManageEvents({ onSelectPage }) {
                   <td className="px-2 py-3 text-gray-600">
                     {event.event_date
                       ? new Date(event.event_date).toLocaleDateString('th-TH', {
-                          day: '2-digit', month: 'long', year: 'numeric',
+                          day: '2-digit',
+                          month: 'long',
+                          year: 'numeric',
                         })
                       : '-'}
                   </td>
@@ -108,6 +119,15 @@ function ManageEvents({ onSelectPage }) {
                         <FaDownload size={12} /> ดาวน์โหลด
                       </button>
                     </div>
+                  </td>
+                  <td className="px-2 py-3">
+                    <Link
+                      to={viewWishLink}
+                      className="text-orange-600 hover:underline flex items-center justify-center gap-1 text-sm"
+                    >
+                      <FaRegEye size={12} />
+                      ดูสไลด์การ์ด
+                    </Link>
                   </td>
                   <td className="px-2 py-3 flex justify-center gap-2 flex-wrap">
                     <Link
