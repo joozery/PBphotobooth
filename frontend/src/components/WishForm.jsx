@@ -111,7 +111,8 @@ export default function WishForm() {
             <p className="text-sm text-center text-gray-500 mb-2">📷 *เลือกรูปแนวตั้ง 300x300px</p>
             <div className="flex justify-center">
               <img
-                src={image || "/sample-image.png"}
+                // src={image || "/sample-image.png"}
+                src={image || "https://placehold.co/300x300"}
                 alt="Uploaded"
                 className="w-32 h-32 rounded-lg object-cover border shadow"
               />

@@ -6,6 +6,62 @@ const BASE_URL =
   import.meta.env.VITE_API_BASE_URL ||
   "https://pbphoto-api-fae29207c672.herokuapp.com";
 
+const MockData = [
+  {
+    id: 2,
+    name: "test05",
+    background:
+      "https://res.cloudinary.com/dvwcxskzi/image/upload/v1747454837/pbphotobooth/background/7abdfaf3-853c-4ba3-9743-4505cc166958.jpg",
+    frame:
+      "https://res.cloudinary.com/dvwcxskzi/image/upload/v1747454876/pbphotobooth/frame/b2e6d45d-f80f-4455-a751-2a09f5cb954a.png",
+    textbox:
+      "https://res.cloudinary.com/dvwcxskzi/image/upload/v1747974322/pbphotobooth/textbox/3733128f-eb39-4738-b617-1da79b032cc0.png",
+    textbox_x: 283,
+    textbox_y: 68,
+    textbox_width: 300,
+    textbox_height: 257,
+    textbox_rotate: 0,
+    frame_x: 19,
+    frame_y: 63,
+    frame_width: 284,
+    frame_height: 256,
+  },
+  {
+    id: 3,
+    name: "test 2",
+    background:
+      "https://res.cloudinary.com/dvwcxskzi/image/upload/v1747454837/pbphotobooth/background/7abdfaf3-853c-4ba3-9743-4505cc166958.jpg",
+    frame: "",
+    textbox: "",
+    textbox_x: 300,
+    textbox_y: 87,
+    textbox_width: 300,
+    textbox_height: 220,
+    textbox_rotate: 0,
+    frame_x: 0,
+    frame_y: 99,
+    frame_width: 556,
+    frame_height: 211,
+  },
+  {
+    id: 24,
+    name: "001",
+    background:
+      "https://res.cloudinary.com/dvwcxskzi/image/upload/v1749653755/pbphotobooth/background/d6145c1f-31b6-43f9-a419-e3c739682989.jpg",
+    frame: "",
+    textbox: "",
+    textbox_x: 283,
+    textbox_y: 125,
+    textbox_width: 300,
+    textbox_height: 100,
+    textbox_rotate: 0,
+    frame_x: 48,
+    frame_y: 104,
+    frame_width: 200,
+    frame_height: 200,
+  },
+];
+
 export default function TemplateSelect() {
   const navigate = useNavigate();
   const { eventId } = useParams();
@@ -13,13 +69,16 @@ export default function TemplateSelect() {
 
   // ✅ ดึงข้อมูลอวยพรจาก localStorage
   const name = localStorage.getItem("wishName") || "ชื่อของคุณ";
-  const message = localStorage.getItem("wishMessage") || "ข้อความอวยพรของคุณ...";
+  const message =
+    localStorage.getItem("wishMessage") || "ข้อความอวยพรของคุณ...";
   const userImage = localStorage.getItem("wishImage") || "/sample-image.png";
 
   useEffect(() => {
     const fetchTemplates = async () => {
       try {
-        const res = await axios.get(`${BASE_URL}/api/templates/event/${eventId}`);
+        const res = await axios.get(
+          `${BASE_URL}/api/templates/event/${eventId}`
+        );
         setTemplates(res.data);
       } catch (err) {
         console.error("❌ ไม่สามารถโหลด template ได้:", err);
@@ -29,6 +88,10 @@ export default function TemplateSelect() {
     if (eventId) fetchTemplates();
   }, [eventId]);
 
+  useEffect(() => {
+    console.log(templates);
+  });
+
   const handleSelect = (id) => {
     localStorage.setItem("templateId", id);
     navigate("/preview");
@@ -37,7 +100,7 @@ export default function TemplateSelect() {
   const getValidImage = (url) =>
     url && (url.startsWith("http") || url.startsWith("blob:"))
       ? url
-      : "https://via.placeholder.com/600x400?text=No+Preview";
+      : "https://placehold.co/600x400";
 
   return (
     <div className="w-screen h-[100svh] bg-gray-50 flex justify-center items-center font-prompt">
@@ -51,7 +114,7 @@ export default function TemplateSelect() {
             – เทมเพลตที่ใช้ในงานนี้ –
           </p>
 
-          {templates.map((tpl) => (
+          {MockData.map((tpl) => (
             <div
               key={tpl.id}
               className="mb-6 rounded-xl overflow-hidden border border-gray-200 shadow"
@@ -65,15 +128,34 @@ export default function TemplateSelect() {
                 />
 
                 {/* ข้อความอวยพร */}
-                <div className="absolute top-[20%] left-[10%] w-[50%] text-sm text-gray-800 z-20">
-                  <p className="leading-snug break-words whitespace-pre-line">{message}</p>
-                  <p className="mt-2 font-semibold text-xs text-gray-500">– {name}</p>
+                <div
+                  style={{
+                    transform: `rotate(${tpl.textbox_rotate}deg)`,
+                    top: `${tpl.textbox_y}px`,
+                    left: `${tpl.textbox_x}px`,
+                    width: `${tpl.textbox_width}px`,
+                    height: `${tpl.textbox_height}px`,
+                  }}
+                  className={`absolute text-sm text-gray-800 z-20`}
+                >
+                  <p className="leading-snug break-words whitespace-pre-line">
+                    {message}
+                  </p>
+                  <p className="mt-2 font-semibold text-xs text-gray-500">
+                    – {name}
+                  </p>
                 </div>
 
                 {/* รูปภาพผู้ใช้อัปโหลด */}
                 <img
                   src={getValidImage(userImage)}
                   alt="user"
+                  style={{
+                    top: `${tpl.frame_y}px`,
+                    left: `${tpl.frame_x}px`,
+                    width: `${tpl.frame_width}px`,
+                    height: `${tpl.frame_height}px`,
+                  }}
                   className="absolute bottom-[12%] right-[8%] w-24 h-24 object-cover rounded shadow border-2 border-white z-20"
                 />
 

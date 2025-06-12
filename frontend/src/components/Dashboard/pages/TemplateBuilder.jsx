@@ -97,7 +97,7 @@ const BASE_URL =
       ...prev,
       {
         type: "image",
-        src: "/sample-image.png",
+        src: "https://placehold.co/100x100",
         x: 100,
         y: 100,
         width: 100,
@@ -146,6 +146,10 @@ const BASE_URL =
       alert("เกิดข้อผิดพลาดในการบันทึก");
     }
   };
+
+  useEffect(() => {
+    console.log('elements',elements)
+  });
 
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col font-prompt">
@@ -323,7 +327,7 @@ const BASE_URL =
                     style={{ fontSize: el.fontSize }}
                   />
                 </div>
-              ) : (
+              ) : el.type === "image" && (
                 <img
                   src={el.src}
                   className="w-full h-full object-cover rounded"
