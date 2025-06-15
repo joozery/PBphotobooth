@@ -1,16 +1,15 @@
 import React, { useState, useEffect } from "react";
 import { Rnd } from "react-rnd";
-import { FaImage, FaFont, FaSave, FaUndo, FaExchangeAlt } from "react-icons/fa";
+import { FaImage, FaFont, FaSave, FaUndo } from "react-icons/fa";
 import axios from "axios";
 
 const BASE_URL =
   import.meta.env.VITE_API_BASE_URL ||
   "https://pbphoto-api-fae29207c672.herokuapp.com";
 
-  export default function TemplateBuilder({ templateId }) {
+export default function TemplateBuilder({ templateId }) {
   const [elements, setElements] = useState([]);
   const [selected, setSelected] = useState(null);
-
   const [backgrounds, setBackgrounds] = useState([]);
   const [frames, setFrames] = useState([]);
   const [textboxes, setTextboxes] = useState([]);
@@ -24,87 +23,128 @@ const BASE_URL =
     rotate: 0,
     flipped: false,
   });
-
   const [selectedFrame, setSelectedFrame] = useState("");
   const [framePos, setFramePos] = useState({ x: 0, y: 0 });
   const [frameSize, setFrameSize] = useState({ width: 200, height: 200 });
+  const [templateName, setTemplateName] = useState("");
 
   useEffect(() => {
-    if (templateId) {
-      fetchTemplate(templateId);
-    }
+    if (templateId) fetchTemplate(templateId);
   }, [templateId]);
 
   useEffect(() => {
     const fetchAssets = async () => {
       try {
         const res = await axios.get(`${BASE_URL}/api/card-assets`);
-        const allAssets = res.data;
-  
-        setBackgrounds(allAssets.filter((item) => item.type === "background"));
-        setTextboxes(allAssets.filter((item) => item.type === "textbox"));
-        setFrames(allAssets.filter((item) => item.type === "frame"));
+        const all = res.data;
+        setBackgrounds(all.filter((i) => i.type === "background"));
+        setTextboxes(all.filter((i) => i.type === "textbox"));
+        setFrames(all.filter((i) => i.type === "frame"));
       } catch (err) {
         console.error("❌ โหลด assets ไม่สำเร็จ:", err);
       }
     };
-  
     fetchAssets();
   }, []);
-  
+
   const fetchTemplate = async (id) => {
-    const res = await axios.get(`${BASE_URL}/api/templates/${id}`);
-    const tpl = res.data;
-  
-    setTemplateName(tpl.name);
-    setSelectedBg(tpl.background);
-    setSelectedTextbox(tpl.textbox);
-    setSelectedFrame(tpl.frame);
-    setElements(tpl.elements || []);
-  
-    // โหลดตำแหน่ง frame
-    setFramePos({ x: tpl.frame_x || 0, y: tpl.frame_y || 0 });
-    setFrameSize({ width: tpl.frame_width || 200, height: tpl.frame_height || 200 });
-  
-    // โหลดตำแหน่ง textbox
-    setTextboxProps({
-      x: tpl.textbox_x || 50,
-      y: tpl.textbox_y || 50,
-      width: tpl.textbox_width || 300,
-      height: tpl.textbox_height || 100,
-      rotate: tpl.textbox_rotate || 0,
-      flipped: false,
-    });
+    try {
+      const res = await axios.get(`${BASE_URL}/api/templates/${id}`);
+      const tpl = res.data;
+      setTemplateName(tpl.name);
+      setSelectedBg(tpl.background);
+      setSelectedTextbox(tpl.textbox);
+      setSelectedFrame(tpl.frame);
+      setElements(tpl.elements || []);
+      setFramePos({ x: tpl.frame_x || 0, y: tpl.frame_y || 0 });
+      setFrameSize({
+        width: tpl.frame_width || 200,
+        height: tpl.frame_height || 200,
+      });
+      setTextboxProps({
+        x: tpl.textbox_x || 50,
+        y: tpl.textbox_y || 50,
+        width: tpl.textbox_width || 300,
+        height: tpl.textbox_height || 100,
+        rotate: tpl.textbox_rotate || 0,
+        flipped: false,
+      });
+    } catch (err) {
+      console.error("❌ โหลดเทมเพลตไม่สำเร็จ:", err);
+    }
   };
+
+  // const addText = () => {
+  //   setElements((prev) => [
+  //     ...prev,
+  //     {
+  //       type: "text",
+  //       text: "ข้อความใหม่",
+  //       x: 50,
+  //       y: 50,
+  //       width: 150,
+  //       height: 40,
+  //       fontSize: 16,
+  //     },
+  //   ]);
+  // };
 
   const addText = () => {
-    setElements((prev) => [
-      ...prev,
-      {
-        type: "text",
-        text: "ข้อความใหม่",
-        x: 50,
-        y: 50,
-        width: 150,
-        height: 40,
-        fontSize: 16,
-      },
-    ]);
-  };
+  const hasText = elements.some(el => el.type === "text");
+  if (hasText) {
+    alert("คุณเพิ่มข้อความได้เพียง 1 ชิ้นเท่านั้น");
+    return;
+  }
+  setElements((prev) => [
+    ...prev,
+    {
+      type: "text",
+      text: "ข้อความใหม่",
+      x: 50,
+      y: 50,
+      width: 150,
+      height: 40,
+      fontSize: 16,
+    },
+  ]);
+};
+
+  // const addImage = () => {
+  //   setElements((prev) => [
+  //     ...prev,
+  //     {
+  //       type: "image",
+  //       src: "https://placehold.co/100x100",
+  //       x: 100,
+  //       y: 100,
+  //       width: 100,
+  //       height: 100,
+  //     },
+  //   ]);
+  // };
 
   const addImage = () => {
-    setElements((prev) => [
-      ...prev,
-      {
-        type: "image",
-        src: "https://placehold.co/100x100",
-        x: 100,
-        y: 100,
-        width: 100,
-        height: 100,
-      },
-    ]);
-  };
+  const hasImage = elements.some(el => el.type === "image");
+  if (hasImage) {
+    alert("คุณเพิ่มรูปภาพได้เพียง 1 ชิ้นเท่านั้น");
+    return;
+  }
+  setElements((prev) => [
+    ...prev,
+    {
+      type: "image",
+      src: "https://placehold.co/100x100",
+      x: 100,
+      y: 100,
+      width: 100,
+      height: 100,
+    },
+  ]);
+};
+
+  useEffect(() => {
+    console.log('addImage', elements)
+  })
 
   const updateElement = (index, updates) => {
     const updated = [...elements];
@@ -112,32 +152,26 @@ const BASE_URL =
     setElements(updated);
   };
 
-  const [templateName, setTemplateName] = useState("");
-
   const handleSaveTemplate = async () => {
     if (!templateName.trim()) {
       alert("กรุณาตั้งชื่อเทมเพลตก่อน");
       return;
     }
-  
     const payload = {
       name: templateName,
       background: selectedBg,
       frame: selectedFrame,
       textbox: selectedTextbox,
       elements,
-      framePosition: framePos,     // ✅ เพิ่มตรงนี้
-      frameSize: frameSize,        // ✅ เพิ่มตรงนี้
-      textboxProps: textboxProps,  // ✅ เพิ่มตรงนี้
+      framePosition: framePos,
+      frameSize,
+      textboxProps,
     };
-  
     try {
       if (templateId) {
-        // ✅ แก้ไขเทมเพลตเดิม
         await axios.put(`${BASE_URL}/api/templates/${templateId}`, payload);
         alert("✅ แก้ไขเทมเพลตเรียบร้อยแล้ว!");
       } else {
-        // ✅ สร้างใหม่
         await axios.post(`${BASE_URL}/api/templates`, payload);
         alert("✅ บันทึกเทมเพลตเรียบร้อยแล้ว!");
       }
@@ -146,10 +180,6 @@ const BASE_URL =
       alert("เกิดข้อผิดพลาดในการบันทึก");
     }
   };
-
-  useEffect(() => {
-    console.log('elements',elements)
-  });
 
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col font-prompt">
@@ -166,7 +196,6 @@ const BASE_URL =
         >
           <FaImage /> เพิ่มรูปภาพ
         </button>
-
         <select
           onChange={(e) => setSelectedBg(e.target.value)}
           className="px-3 py-2 rounded border"
@@ -178,7 +207,6 @@ const BASE_URL =
             </option>
           ))}
         </select>
-
         <select
           onChange={(e) => setSelectedTextbox(e.target.value)}
           className="px-3 py-2 rounded border"
@@ -190,51 +218,6 @@ const BASE_URL =
             </option>
           ))}
         </select>
-
-        <button
-          onClick={() =>
-            setTextboxProps((prev) => ({
-              ...prev,
-              rotate: (prev.rotate + 15) % 360,
-            }))
-          }
-          className="bg-yellow-500 text-white px-3 py-1 rounded"
-        >
-          <FaUndo /> หมุน
-        </button>
-       
-        {selected !== null && (
-  <button
-    onClick={() => {
-      const updated = [...elements];
-      updated.splice(selected, 1); // ลบ element ที่เลือก
-      setElements(updated);
-      setSelected(null);
-    }}
-    className="bg-red-600 text-white px-3 py-2 rounded"
-  >
-    ลบองค์ประกอบ
-  </button>
-)}
-
-{selectedTextbox && (
-  <button
-    onClick={() => setSelectedTextbox("")}
-    className="bg-red-500 text-white px-3 py-2 rounded"
-  >
-    ลบ Textbox
-  </button>
-)}
-
-{selectedFrame && (
-  <button
-    onClick={() => setSelectedFrame("")}
-    className="bg-red-500 text-white px-3 py-2 rounded"
-  >
-    ลบ Frame
-  </button>
-)}
-
         <select
           onChange={(e) => setSelectedFrame(e.target.value)}
           className="px-3 py-2 rounded border"
@@ -246,23 +229,58 @@ const BASE_URL =
             </option>
           ))}
         </select>
+        {typeof selected === "number" && (
+          <button
+            onClick={() => {
+              const updated = [...elements];
+              updated.splice(selected, 1);
+              setElements(updated);
+              setSelected(null);
+            }}
+            className="bg-red-600 text-white px-3 py-2 rounded cursor-pointer"
+          >
+            ลบองค์ประกอบ
+          </button>
+        )}
 
+        {selected === "frame" && (
+          <button
+            onClick={() => {
+              setSelectedFrame("");
+              setSelected(null);
+            }}
+            className="bg-red-500 text-white px-3 py-2 rounded cursor-pointer"
+          >
+            ลบ Frame
+          </button>
+        )}
+        {selected === "textbox" && (
+          <button
+            onClick={() => {
+              setSelectedTextbox("");
+              setSelected(null);
+            }}
+            className="bg-red-500 text-white px-3 py-2 rounded cursor-pointer"
+          >
+            ลบ Textbox
+          </button>
+        )}
         <input
-  type="text"
-  value={templateName}
-  onChange={(e) => setTemplateName(e.target.value)}
-  placeholder="ตั้งชื่อเทมเพลต"
-  className="px-3 py-2 rounded border w-60"
-/>
-
-        <button onClick={handleSaveTemplate}
-        className="ml-auto bg-green-600 text-white px-4 py-2 rounded flex items-center gap-2">
+          type="text"
+          value={templateName}
+          onChange={(e) => setTemplateName(e.target.value)}
+          placeholder="ตั้งชื่อเทมเพลต"
+          className="px-3 py-2 rounded border w-60"
+        />
+        <button
+          onClick={handleSaveTemplate}
+          className="ml-auto bg-green-600 text-white px-4 py-2 rounded flex items-center gap-2"
+        >
           <FaSave /> บันทึกเทมเพลต
         </button>
       </div>
-
       <div className="flex justify-center items-center flex-1 p-6 bg-gradient-to-br from-pink-50 to-purple-100">
-        <div className="relative w-[600px] h-[400px] bg-white border shadow-lg overflow-hidden">
+        <div className="relative w-[420px] h-[280px] bg-white border shadow-lg overflow-hidden">
           {selectedBg && (
             <img
               src={selectedBg}
@@ -271,12 +289,14 @@ const BASE_URL =
               style={{ zIndex: 0 }}
             />
           )}
-
           {selectedTextbox && (
             <Rnd
               size={{ width: textboxProps.width, height: textboxProps.height }}
               position={{ x: textboxProps.x, y: textboxProps.y }}
-              onDragStop={(e, d) => setTextboxProps((prev) => ({ ...prev, x: d.x, y: d.y }))}
+              onDragStop={(e, d) => {
+                setTextboxProps((prev) => ({ ...prev, x: d.x, y: d.y }));
+                setSelected("textbox");
+              }}
               onResizeStop={(e, dir, ref, delta, pos) => {
                 setTextboxProps({
                   ...textboxProps,
@@ -285,11 +305,15 @@ const BASE_URL =
                   x: pos.x,
                   y: pos.y,
                 });
+                setSelected("textbox");
               }}
               bounds="parent"
               style={{
                 zIndex: 2,
-                transform: `rotate(${textboxProps.rotate}deg) scaleX(${textboxProps.flipped ? -1 : 1})`,
+                border: selected === "textbox" ? "2px solid #3b82f6" : "none",
+                transform: `rotate(${textboxProps.rotate}deg) scaleX(${
+                  textboxProps.flipped ? -1 : 1
+                })`,
               }}
             >
               <img
@@ -299,58 +323,109 @@ const BASE_URL =
               />
             </Rnd>
           )}
-
           {elements.map((el, index) => (
+            // <Rnd
+            //   key={index}
+            //   size={{ width: el.width, height: el.height }}
+            //   position={{ x: el.x, y: el.y }}
+            //   onDragStop={(e, d) => {
+            //     updateElement(index, { x: d.x, y: d.y });
+            //     // setSelected(index);
+            //   }}
+            //   onResizeStop={(e, dir, ref, delta, pos) => {
+            //     updateElement(index, {
+            //       width: parseInt(ref.style.width),
+            //       height: parseInt(ref.style.height),
+            //       x: pos.x,
+            //       y: pos.y,
+            //     });
+            //     // setSelected(index);
+            //   }}
+            //   onMouseDown={() => setSelected(index)}  // ✅ เพิ่มตรงนี้
+            //   bounds="parent"
+            //   style={{
+            //     zIndex: 2,
+            //     border: selected === index ? "2px solid #3b82f6" : "none",
+            //   }}
+            // >
+            //   {el.type === "text" ? (
+            //     <input
+            //       className="w-full h-full text-center border-none outline-none text-black bg-transparent"
+            //       value={el.text}
+            //       onChange={(e) =>
+            //         updateElement(index, { text: e.target.value })
+            //       }
+            //       style={{ fontSize: el.fontSize }}
+            //     />
+            //   ) : (
+            //     <img
+            //       src={el.src}
+            //       className="w-full h-full object-cover rounded"
+            //       alt="element"
+            //     />
+            //   )}
+            // </Rnd>
             <Rnd
-              key={index}
-              size={{ width: el.width, height: el.height }}
-              position={{ x: el.x, y: el.y }}
-              onDragStop={(e, d) => updateElement(index, { x: d.x, y: d.y })}
-              onResizeStop={(e, dir, ref, delta, pos) => {
-                updateElement(index, {
-                  width: parseInt(ref.style.width),
-                  height: parseInt(ref.style.height),
-                  x: pos.x,
-                  y: pos.y,
-                });
-              }}
-              bounds="parent"
-              onClick={() => setSelected(index)}
-              style={{ zIndex: 2 }}
-            >
-              {el.type === "text" ? (
-                <div className="bg-transparent w-full h-full">
-                  <input
-                    className="w-full h-full text-center border-none outline-none text-black bg-transparent"
-                    value={el.text}
-                    onChange={(e) => updateElement(index, { text: e.target.value })}
-                    style={{ fontSize: el.fontSize }}
-                  />
-                </div>
-              ) : el.type === "image" && (
-                <img
-                  src={el.src}
-                  className="w-full h-full object-cover rounded"
-                  alt="element"
-                />
-              )}
-            </Rnd>
-          ))}
+  key={index}
+  size={{ width: el.width, height: el.height }}
+  position={{ x: el.x, y: el.y }}
+  onDragStart={() => setSelected(index)}   // ✅ set ตอนเริ่มลากจริง
+  onDragStop={(e, d) => {
+    updateElement(index, { x: d.x, y: d.y });
+  }}
+  onResizeStop={(e, dir, ref, delta, pos) => {
+    updateElement(index, {
+      width: parseInt(ref.style.width),
+      height: parseInt(ref.style.height),
+      x: pos.x,
+      y: pos.y,
+    });
+  }}
+  onClick={() => setSelected(index)}       // ✅ set ตอนคลิกจริง
+  bounds="parent"
+  style={{
+    zIndex: 2,
+    border: selected === index ? '2px solid #3b82f6' : 'none',
+  }}
+>
+  {el.type === 'text' ? (
+    <input
+      className="w-full h-full text-center border-none outline-none text-black bg-transparent"
+      value={el.text}
+      onChange={(e) => updateElement(index, { text: e.target.value })}
+      style={{ fontSize: el.fontSize }}
+    />
+  ) : (
+    <img
+      src={el.src}
+      className="w-full h-full object-contain rounded pointer-events-none"
+      alt="element"
+    />
+  )}
+</Rnd>
 
+          ))}
           {selectedFrame && (
             <Rnd
               size={frameSize}
               position={framePos}
-              onDragStop={(e, d) => setFramePos({ x: d.x, y: d.y })}
+              onDragStop={(e, d) => {
+                setFramePos({ x: d.x, y: d.y });
+                setSelected("frame");
+              }}
               onResizeStop={(e, dir, ref, delta, pos) => {
                 setFrameSize({
                   width: parseInt(ref.style.width),
                   height: parseInt(ref.style.height),
                 });
                 setFramePos({ x: pos.x, y: pos.y });
+                setSelected("frame");
               }}
               bounds="parent"
-              style={{ zIndex: 3 }}
+              style={{
+                zIndex: 3,
+                border: selected === "frame" ? "2px solid #3b82f6" : "none",
+              }}
             >
               <img
                 src={selectedFrame}
