@@ -26,6 +26,10 @@ export default function EventDetail() {
     fetchEvent();
   }, [eventId]);
 
+  useEffect(() => {
+    console.log("🌈 Event Data:", event);
+  }, [event]);
+
   if (!event) return <div className="p-6">กำลังโหลดข้อมูล...</div>;
 
   return (
@@ -38,7 +42,7 @@ export default function EventDetail() {
       >
         {/* 🔘 Action Buttons */}
         <div className="w-full px-6 z-10 flex flex-col gap-3  pt-4 pb-6 ">
-          {event.show_wish_button && (
+          {event.show_wish_button === 1 && (
             <button
             onClick={() => navigate(`/wish/${eventId}`)}
               className="w-full py-3 rounded-full shadow-lg flex items-center justify-center gap-2 text-sm font-semibold"
@@ -52,7 +56,7 @@ export default function EventDetail() {
             </button>
           )}
 
-          {event.show_slip_button && (
+          {event.show_slip_button === 1 && (
             <button
               onClick={() => navigate("/slip")}
               className="w-full py-3 rounded-full shadow flex items-center justify-center gap-2 text-sm font-medium border"
@@ -66,7 +70,7 @@ export default function EventDetail() {
             </button>
           )}
 
-          {event.show_view_wishes_button && (
+          {event.show_view_wishes_button === 1 && (
             <button
               onClick={() => navigate("/wishes")}
               className="w-full py-3 rounded-full shadow flex items-center justify-center gap-2 text-sm font-medium border"

@@ -1,9 +1,21 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useParams } from 'react-router-dom';
-import axios from 'axios';
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
+import axios from "axios";
 import { IoIosFemale, IoMdFemale } from "react-icons/io";
-import { FaUser, FaStar, FaUserTie, FaHeart, FaSmile, FaCat, FaDog, FaRing, FaSave, FaRegImage } from 'react-icons/fa';
+import {
+  FaUser,
+  FaStar,
+  FaUserTie,
+  FaHeart,
+  FaSmile,
+  FaCat,
+  FaDog,
+  FaRing,
+  FaSave,
+  FaRegImage,
+} from "react-icons/fa";
+import Swal from "sweetalert2";
 
 // 🔧 ตั้งค่าicon
 const iconOptions = {
@@ -15,43 +27,45 @@ const iconOptions = {
   FaCat: <FaCat />,
   FaDog: <FaDog />,
   FaRing: <FaRing />,
-  IoIosFemale: <IoIosFemale />,     // ✅ เพิ่ม
-  IoMdFemale: <IoMdFemale />,       // ✅ เพิ่ม
+  IoIosFemale: <IoIosFemale />, // ✅ เพิ่ม
+  IoMdFemale: <IoMdFemale />, // ✅ เพิ่ม
 };
 
 // 🔧 แปลงวันที่จาก ISO → YYYY-MM-DD สำหรับ input[type="date"]
 const formatDate = (dateString) => {
-  if (!dateString) return '';
+  if (!dateString) return "";
   const date = new Date(dateString);
   const year = date.getFullYear();
-  const month = `${date.getMonth() + 1}`.padStart(2, '0');
-  const day = `${date.getDate()}`.padStart(2, '0');
+  const month = `${date.getMonth() + 1}`.padStart(2, "0");
+  const day = `${date.getDate()}`.padStart(2, "0");
   return `${year}-${month}-${day}`;
 };
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://pbphoto-api-fae29207c672.herokuapp.com";
+const BASE_URL =
+  import.meta.env.VITE_API_BASE_URL ||
+  "https://pbphoto-api-fae29207c672.herokuapp.com";
 
 function CreateEvent() {
   const { eventId } = useParams();
   const [form, setForm] = useState({
-    title: '',
-    eventDate: '',
+    title: "",
+    eventDate: "",
     showWishButton: true,
-    wishButtonText: 'เริ่มเขียนคำอวยพร',
-    wishButtonBg: '#1d4ed8',
-    wishButtonTextColor: '#ffffff',
+    wishButtonText: "เริ่มเขียนคำอวยพร",
+    wishButtonBg: "#1d4ed8",
+    wishButtonTextColor: "#ffffff",
     showSlipButton: true,
-    slipButtonText: 'แนบสลิปพร้อมเพย์',
-    slipButtonBg: '#ffffff',
-    slipButtonTextColor: '#1d4ed8',
+    slipButtonText: "แนบสลิปพร้อมเพย์",
+    slipButtonBg: "#ffffff",
+    slipButtonTextColor: "#1d4ed8",
     showViewWishesButton: true,
-    viewWishesButtonText: 'ดูคำอวยพร',
-    viewWishesButtonBg: '#f97316',
-    viewWishesButtonTextColor: '#ffffff',
-    groom_label: 'ฝ่ายเจ้าบ่าว',
-    bride_label: 'ฝ่ายเจ้าสาว',
-    groom_icon: 'FaUserTie',
-    bride_icon: 'FaUser',
+    viewWishesButtonText: "ดูคำอวยพร",
+    viewWishesButtonBg: "#f97316",
+    viewWishesButtonTextColor: "#ffffff",
+    groom_label: "ฝ่ายเจ้าบ่าว",
+    bride_label: "ฝ่ายเจ้าสาว",
+    groom_icon: "FaUserTie",
+    bride_icon: "FaUser",
   });
 
   const [coverImage, setCoverImage] = useState(null);
@@ -66,9 +80,9 @@ function CreateEvent() {
         if (eventId) {
           const res = await axios.get(`${BASE_URL}/api/events/${eventId}`);
           const data = res.data;
-  
+
           setForm({
-            title: data.title || '',
+            title: data.title || "",
             eventDate: formatDate(data.event_date),
             showWishButton: !!data.show_wish_button,
             wishButtonText: data.wish_button_text,
@@ -82,52 +96,55 @@ function CreateEvent() {
             viewWishesButtonText: data.view_wishes_button_text,
             viewWishesButtonBg: data.view_wishes_button_bg,
             viewWishesButtonTextColor: data.view_wishes_button_text_color,
-            groomLabel: data.groom_label || 'ฝ่ายเจ้าบ่าว',
-            brideLabel: data.bride_label || 'ฝ่ายเจ้าสาว',
-            groomIcon: data.groom_icon || 'FaUserTie',
-            brideIcon: data.bride_icon || 'FaUser',
+            groomLabel: data.groom_label || "ฝ่ายเจ้าบ่าว",
+            brideLabel: data.bride_label || "ฝ่ายเจ้าสาว",
+            groomIcon: data.groom_icon || "FaUserTie",
+            brideIcon: data.bride_icon || "FaUser",
           });
-  
+
           if (data.cover_image) {
             setPreviewUrl(data.cover_image);
           }
-  
+
           // โหลด template ที่เลือกไว้ใน event
-          const selectedTemplateRes = await axios.get(`${BASE_URL}/api/templates/event/${eventId}`);
-          const selectedTemplateIds = selectedTemplateRes.data.map(tpl => tpl.template_id);
-          
+          const selectedTemplateRes = await axios.get(
+            `${BASE_URL}/api/templates/event/${eventId}`
+          );
+          const selectedTemplateIds = selectedTemplateRes.data.map(
+            (tpl) => tpl.template_id
+          );
+
           // โหลด template ทั้งหมด
           const allTemplatesRes = await axios.get(`${BASE_URL}/api/templates`);
-          const allTemplates = allTemplatesRes.data.map(tpl => ({
+          const allTemplates = allTemplatesRes.data.map((tpl) => ({
             ...tpl,
             show_template: selectedTemplateIds.includes(tpl.id),
           }));
-  
+
           setTemplateOptions(allTemplates);
         } else {
           // ถ้าเป็นหน้าสร้างใหม่ → โหลด template ทั้งหมด (ไม่ติ๊ก)
           const allTemplatesRes = await axios.get(`${BASE_URL}/api/templates`);
-          const allTemplates = allTemplatesRes.data.map(tpl => ({
+          const allTemplates = allTemplatesRes.data.map((tpl) => ({
             ...tpl,
             show_template: false,
           }));
-  
+
           setTemplateOptions(allTemplates);
         }
       } catch (err) {
         console.error("❌ โหลดข้อมูล event/template ผิดพลาด:", err);
       }
     };
-  
+
     fetchEventAndTemplates();
   }, [eventId]);
 
-  
   const handleChange = (e) => {
     const { name, type, value, checked } = e.target;
     setForm((prev) => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value,
+      [name]: type === "checkbox" ? checked : value,
     }));
   };
 
@@ -142,46 +159,57 @@ function CreateEvent() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-  
+
     try {
       const formData = new FormData();
       Object.entries(form).forEach(([key, value]) => {
         formData.append(key, value);
       });
-      
-      // ✅ เพิ่มเฉพาะกรณีจำเป็น (เช่น key ไม่อยู่ใน form)
+
       formData.set("groom_label", form.groomLabel);
       formData.set("bride_label", form.brideLabel);
       formData.set("groom_icon", form.groomIcon);
       formData.set("bride_icon", form.brideIcon);
-  
-      // อัปโหลดเฉพาะตอนมีรูปใหม่
+
       if (!eventId || coverImage) {
         formData.append("cover", coverImage);
       }
 
-      // ✅ เพิ่มตรงนี้เพื่อส่ง templateIds
-    const selectedTemplateIds = templateOptions
-    .filter(tpl => tpl.show_template)
-    .map(tpl => tpl.id);
-    formData.append("templateIds", JSON.stringify(selectedTemplateIds));
-  
+      const selectedTemplateIds = templateOptions
+        .filter((tpl) => tpl.show_template)
+        .map((tpl) => tpl.id);
+      formData.append("templateIds", JSON.stringify(selectedTemplateIds));
+
       if (eventId) {
-        // แก้ไข event เดิม
         await axios.put(`${BASE_URL}/api/events/${eventId}`, formData, {
-          headers: { 'Content-Type': 'multipart/form-data' },
+          headers: { "Content-Type": "multipart/form-data" },
+        });
+        await Swal.fire({
+          icon: "success",
+          title: "แก้ไขงานสำเร็จ",
+          showConfirmButton: false,
+          timer: 1500,
         });
       } else {
-        // สร้าง event ใหม่
         await axios.post(`${BASE_URL}/api/events`, formData, {
-          headers: { 'Content-Type': 'multipart/form-data' },
+          headers: { "Content-Type": "multipart/form-data" },
+        });
+        await Swal.fire({
+          icon: "success",
+          title: "สร้างงานสำเร็จ",
+          showConfirmButton: false,
+          timer: 1500,
         });
       }
-  
-      navigate('/dashboard');
+
+      navigate("/dashboard");
     } catch (error) {
-      console.error('❌ Event Save Error:', error);
-      alert('ไม่สามารถบันทึกงานได้');
+      console.error("❌ Event Save Error:", error);
+      Swal.fire({
+        icon: "error",
+        title: "เกิดข้อผิดพลาด",
+        text: "ไม่สามารถบันทึกงานได้",
+      });
     } finally {
       setLoading(false);
     }
@@ -219,7 +247,9 @@ function CreateEvent() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">วันที่จัดงาน</label>
+              <label className="block text-sm font-medium mb-1">
+                วันที่จัดงาน
+              </label>
               <input
                 type="date"
                 name="eventDate"
@@ -233,7 +263,9 @@ function CreateEvent() {
 
           {/* Cover Upload */}
           <div>
-            <label className="block text-sm font-medium mb-1">อัปโหลดภาพหน้าปก</label>
+            <label className="block text-sm font-medium mb-1">
+              อัปโหลดภาพหน้าปก
+            </label>
             <input
               type="file"
               accept="image/*"
@@ -250,273 +282,288 @@ function CreateEvent() {
           </div>
 
           {/* Wish Button */}
-<div className="grid md:grid-cols-2 gap-6">
-  <div className="space-y-2">
-    <label className="flex items-center gap-2 text-sm">
-      <input
-        type="checkbox"
-        name="showWishButton"
-        checked={form.showWishButton}
-        onChange={handleChange}
-      />
-      แสดงปุ่ม “คำอวยพร”
-    </label>
+          <div className="grid md:grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  name="showWishButton"
+                  checked={form.showWishButton}
+                  onChange={handleChange}
+                />
+                แสดงปุ่ม “คำอวยพร”
+              </label>
 
-    <input
-      type="text"
-      name="wishButtonText"
-      className="w-full px-3 py-2 border rounded"
-      placeholder="ข้อความบนปุ่มคำอวยพร"
-      value={form.wishButtonText}
-      onChange={handleChange}
-    />
+              <input
+                type="text"
+                name="wishButtonText"
+                className="w-full px-3 py-2 border rounded"
+                placeholder="ข้อความบนปุ่มคำอวยพร"
+                value={form.wishButtonText}
+                onChange={handleChange}
+              />
 
-    <div className="flex items-center gap-4">
-      <div>
-        <label className="text-xs block">สีพื้นหลัง</label>
-        <input
-          type="color"
-          name="wishButtonBg"
-          value={form.wishButtonBg}
-          onChange={handleChange}
-          className="w-10 h-10"
-        />
-      </div>
-      <div>
-        <label className="text-xs block">สีข้อความ</label>
-        <input
-          type="color"
-          name="wishButtonTextColor"
-          value={form.wishButtonTextColor}
-          onChange={handleChange}
-          className="w-10 h-10"
-        />
-      </div>
-    </div>
+              <div className="flex items-center gap-4">
+                <div>
+                  <label className="text-xs block">สีพื้นหลัง</label>
+                  <input
+                    type="color"
+                    name="wishButtonBg"
+                    value={form.wishButtonBg}
+                    onChange={handleChange}
+                    className="w-10 h-10"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs block">สีข้อความ</label>
+                  <input
+                    type="color"
+                    name="wishButtonTextColor"
+                    value={form.wishButtonTextColor}
+                    onChange={handleChange}
+                    className="w-10 h-10"
+                  />
+                </div>
+              </div>
 
-    {/* ✅ Live Preview */}
-    <div className="pt-2">
-      <span className="text-xs text-gray-500">Preview:</span>
-      <button
-        type="button"
-        className="w-full px-4 py-2 mt-2 rounded shadow"
-        style={{
-          backgroundColor: form.wishButtonBg,
-          color: form.wishButtonTextColor,
-        }}
-      >
-        {form.wishButtonText}
-      </button>
-    </div>
-  </div>
+              {/* ✅ Live Preview */}
+              <div className="pt-2">
+                <span className="text-xs text-gray-500">Preview:</span>
+                <button
+                  type="button"
+                  className="w-full px-4 py-2 mt-2 rounded shadow"
+                  style={{
+                    backgroundColor: form.wishButtonBg,
+                    color: form.wishButtonTextColor,
+                  }}
+                >
+                  {form.wishButtonText}
+                </button>
+              </div>
+            </div>
 
-           {/* Slip Button */}
-  <div className="space-y-2">
-    <label className="flex items-center gap-2 text-sm">
-      <input
-        type="checkbox"
-        name="showSlipButton"
-        checked={form.showSlipButton}
-        onChange={handleChange}
-      />
-      แสดงปุ่ม “แนบสลิป”
-    </label>
+            {/* Slip Button */}
+            <div className="space-y-2">
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  name="showSlipButton"
+                  checked={form.showSlipButton}
+                  onChange={handleChange}
+                />
+                แสดงปุ่ม “แนบสลิป”
+              </label>
 
-    <input
-      type="text"
-      name="slipButtonText"
-      className="w-full px-3 py-2 border rounded"
-      placeholder="ข้อความบนปุ่มแนบสลิป"
-      value={form.slipButtonText}
-      onChange={handleChange}
-    />
+              <input
+                type="text"
+                name="slipButtonText"
+                className="w-full px-3 py-2 border rounded"
+                placeholder="ข้อความบนปุ่มแนบสลิป"
+                value={form.slipButtonText}
+                onChange={handleChange}
+              />
 
-    <div className="flex items-center gap-4">
-      <div>
-        <label className="text-xs block">สีพื้นหลัง</label>
-        <input
-          type="color"
-          name="slipButtonBg"
-          value={form.slipButtonBg}
-          onChange={handleChange}
-          className="w-10 h-10"
-        />
-      </div>
-      <div>
-        <label className="text-xs block">สีข้อความ</label>
-        <input
-          type="color"
-          name="slipButtonTextColor"
-          value={form.slipButtonTextColor}
-          onChange={handleChange}
-          className="w-10 h-10"
-        />
-      </div>
-    </div>
+              <div className="flex items-center gap-4">
+                <div>
+                  <label className="text-xs block">สีพื้นหลัง</label>
+                  <input
+                    type="color"
+                    name="slipButtonBg"
+                    value={form.slipButtonBg}
+                    onChange={handleChange}
+                    className="w-10 h-10"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs block">สีข้อความ</label>
+                  <input
+                    type="color"
+                    name="slipButtonTextColor"
+                    value={form.slipButtonTextColor}
+                    onChange={handleChange}
+                    className="w-10 h-10"
+                  />
+                </div>
+              </div>
 
-    {/* ✅ Live Preview */}
-    <div className="pt-2">
-      <span className="text-xs text-gray-500">Preview:</span>
-      <button
-        type="button"
-        className="w-full px-4 py-2 mt-2 rounded shadow"
-        style={{
-          backgroundColor: form.slipButtonBg,
-          color: form.slipButtonTextColor,
-        }}
-      >
-        {form.slipButtonText}
-      </button>
-    </div>
-  </div>
-</div>
+              {/* ✅ Live Preview */}
+              <div className="pt-2">
+                <span className="text-xs text-gray-500">Preview:</span>
+                <button
+                  type="button"
+                  className="w-full px-4 py-2 mt-2 rounded shadow"
+                  style={{
+                    backgroundColor: form.slipButtonBg,
+                    color: form.slipButtonTextColor,
+                  }}
+                >
+                  {form.slipButtonText}
+                </button>
+              </div>
+            </div>
+          </div>
 
-{/* View Wishes Button */}
-<div className="space-y-2">
-  <label className="flex items-center gap-2 text-sm">
-    <input
-      type="checkbox"
-      name="showViewWishesButton"
-      checked={form.showViewWishesButton}
-      onChange={handleChange}
-    />
-    แสดงปุ่ม “ดูคำอวยพร”
-  </label>
+          {/* View Wishes Button */}
+          <div className="space-y-2">
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                name="showViewWishesButton"
+                checked={form.showViewWishesButton}
+                onChange={handleChange}
+              />
+              แสดงปุ่ม “ดูคำอวยพร”
+            </label>
 
-  <input
-    type="text"
-    name="viewWishesButtonText"
-    className="w-full px-3 py-2 border rounded"
-    placeholder="ข้อความบนปุ่มดูคำอวยพร"
-    value={form.viewWishesButtonText}
-    onChange={handleChange}
-  />
+            <input
+              type="text"
+              name="viewWishesButtonText"
+              className="w-full px-3 py-2 border rounded"
+              placeholder="ข้อความบนปุ่มดูคำอวยพร"
+              value={form.viewWishesButtonText}
+              onChange={handleChange}
+            />
 
-  <div className="flex items-center gap-4">
-    <div>
-      <label className="text-xs block">สีพื้นหลัง</label>
-      <input
-        type="color"
-        name="viewWishesButtonBg"
-        value={form.viewWishesButtonBg}
-        onChange={handleChange}
-        className="w-10 h-10"
-      />
-    </div>
-    <div>
-      <label className="text-xs block">สีข้อความ</label>
-      <input
-        type="color"
-        name="viewWishesButtonTextColor"
-        value={form.viewWishesButtonTextColor}
-        onChange={handleChange}
-        className="w-10 h-10"
-      />
-    </div>
-  </div>
+            <div className="flex items-center gap-4">
+              <div>
+                <label className="text-xs block">สีพื้นหลัง</label>
+                <input
+                  type="color"
+                  name="viewWishesButtonBg"
+                  value={form.viewWishesButtonBg}
+                  onChange={handleChange}
+                  className="w-10 h-10"
+                />
+              </div>
+              <div>
+                <label className="text-xs block">สีข้อความ</label>
+                <input
+                  type="color"
+                  name="viewWishesButtonTextColor"
+                  value={form.viewWishesButtonTextColor}
+                  onChange={handleChange}
+                  className="w-10 h-10"
+                />
+              </div>
+            </div>
 
-  {/* ✅ Live Preview */}
-  <div className="pt-2">
-    <span className="text-xs text-gray-500">Preview:</span>
-    <button
-      type="button"
-      className="w-full px-4 py-2 mt-2 rounded shadow"
-      style={{
-        backgroundColor: form.viewWishesButtonBg,
-        color: form.viewWishesButtonTextColor,
-      }}
-    >
-      {form.viewWishesButtonText}
-    </button>
-  </div>
-</div>
+            {/* ✅ Live Preview */}
+            <div className="pt-2">
+              <span className="text-xs text-gray-500">Preview:</span>
+              <button
+                type="button"
+                className="w-full px-4 py-2 mt-2 rounded shadow"
+                style={{
+                  backgroundColor: form.viewWishesButtonBg,
+                  color: form.viewWishesButtonTextColor,
+                }}
+              >
+                {form.viewWishesButtonText}
+              </button>
+            </div>
+          </div>
 
-{/* View Wishes Button */}
-<hr className="my-8" />
-<h3 className="text-lg font-semibold text-gray-700">ตั้งค่าปุ่มเลือกฝ่าย</h3>
+          {/* View Wishes Button */}
+          <hr className="my-8" />
+          <h3 className="text-lg font-semibold text-gray-700">
+            ตั้งค่าปุ่มเลือกฝ่าย
+          </h3>
 
-<div className="grid md:grid-cols-2 gap-4 mt-4">
-  <div>
-    <label className="text-sm block mb-1">ข้อความฝ่ายเจ้าบ่าว</label>
-    <input
-      type="text"
-      name="groomLabel"
-      value={form.groomLabel}
-      onChange={handleChange}
-      className="w-full px-3 py-2 border rounded"
-      placeholder="ฝ่ายเจ้าบ่าว"
-    />
-  </div>
-  <div>
-    <label className="text-sm block mb-1">ข้อความฝ่ายเจ้าสาว</label>
-    <input
-      type="text"
-      name="brideLabel"
-      value={form.brideLabel}
-      onChange={handleChange}
-      className="w-full px-3 py-2 border rounded"
-      placeholder="ฝ่ายเจ้าสาว"
-    />
-  </div>
+          <div className="grid md:grid-cols-2 gap-4 mt-4">
+            <div>
+              <label className="text-sm block mb-1">ข้อความฝ่ายเจ้าบ่าว</label>
+              <input
+                type="text"
+                name="groomLabel"
+                value={form.groomLabel}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border rounded"
+                placeholder="ฝ่ายเจ้าบ่าว"
+              />
+            </div>
+            <div>
+              <label className="text-sm block mb-1">ข้อความฝ่ายเจ้าสาว</label>
+              <input
+                type="text"
+                name="brideLabel"
+                value={form.brideLabel}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border rounded"
+                placeholder="ฝ่ายเจ้าสาว"
+              />
+            </div>
 
-  <div>
-    <label className="text-sm block mb-1">เลือกไอคอนฝ่ายเจ้าบ่าว</label>
-    <div className="flex items-center gap-2">
-      <select
-        name="groomIcon"
-        value={form.groomIcon}
-        onChange={handleChange}
-        className="w-full px-3 py-2 border rounded"
-      >
-        {Object.keys(iconOptions).map((key) => (
-          <option key={key} value={key}>
-            {key}
-          </option>
-        ))}
-      </select>
-      <div className="text-xl">{iconOptions[form.groomIcon]}</div>
-    </div>
-  </div>
+            <div>
+              <label className="text-sm block mb-1">
+                เลือกไอคอนฝ่ายเจ้าบ่าว
+              </label>
+              <div className="flex items-center gap-2">
+                <select
+                  name="groomIcon"
+                  value={form.groomIcon}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border rounded"
+                >
+                  {Object.keys(iconOptions).map((key) => (
+                    <option key={key} value={key}>
+                      {key}
+                    </option>
+                  ))}
+                </select>
+                <div className="text-xl">{iconOptions[form.groomIcon]}</div>
+              </div>
+            </div>
 
-  <div>
-    <label className="text-sm block mb-1">เลือกไอคอนฝ่ายเจ้าสาว</label>
-    <div className="flex items-center gap-2">
-      <select
-        name="brideIcon"
-        value={form.brideIcon}
-        onChange={handleChange}
-        className="w-full px-3 py-2 border rounded"
-      >
-        {Object.keys(iconOptions).map((key) => (
-          <option key={key} value={key}>
-            {key}
-          </option>
-        ))}
-      </select>
-      <div className="text-xl">{iconOptions[form.brideIcon]}</div>
-    </div>
-  </div>
-</div>
+            <div>
+              <label className="text-sm block mb-1">
+                เลือกไอคอนฝ่ายเจ้าสาว
+              </label>
+              <div className="flex items-center gap-2">
+                <select
+                  name="brideIcon"
+                  value={form.brideIcon}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border rounded"
+                >
+                  {Object.keys(iconOptions).map((key) => (
+                    <option key={key} value={key}>
+                      {key}
+                    </option>
+                  ))}
+                </select>
+                <div className="text-xl">{iconOptions[form.brideIcon]}</div>
+              </div>
+            </div>
+          </div>
 
-<div className="mt-6">
-  <h3 className="text-lg font-semibold mb-2 text-gray-700">เลือกเทมเพลตที่ใช้ในงาน</h3>
-  <div className="grid md:grid-cols-2 gap-3">
-    {templateOptions.map(tpl => (
-      <label key={tpl.id} className="flex items-center gap-2 text-sm border px-3 py-2 rounded shadow-sm">
-        <input
-          type="checkbox"
-          checked={tpl.show_template}
-          onChange={(e) =>
-            setTemplateOptions(prev =>
-              prev.map(t => t.id === tpl.id ? { ...t, show_template: e.target.checked } : t)
-            )
-          }
-        />
-        {tpl.name}
-      </label>
-    ))}
-  </div>
-</div>
+          <div className="mt-6">
+            <h3 className="text-lg font-semibold mb-2 text-gray-700">
+              เลือกเทมเพลตที่ใช้ในงาน
+            </h3>
+            <div className="grid md:grid-cols-2 gap-3">
+              {templateOptions.map((tpl) => (
+                <label
+                  key={tpl.id}
+                  className="flex items-center gap-2 text-sm border px-3 py-2 rounded shadow-sm"
+                >
+                  <input
+                    type="checkbox"
+                    checked={tpl.show_template}
+                    onChange={(e) =>
+                      setTemplateOptions((prev) =>
+                        prev.map((t) =>
+                          t.id === tpl.id
+                            ? { ...t, show_template: e.target.checked }
+                            : t
+                        )
+                      )
+                    }
+                  />
+                  {tpl.name}
+                </label>
+              ))}
+            </div>
+          </div>
 
           {/* Save Button */}
           <div>
@@ -526,7 +573,7 @@ function CreateEvent() {
               className="bg-purple-600 text-white px-6 py-2 rounded hover:bg-purple-700 transition flex items-center gap-2"
             >
               <FaSave />
-              {loading ? 'กำลังบันทึก...' : 'บันทึก'}
+              {loading ? "กำลังบันทึก..." : "บันทึก"}
             </button>
           </div>
         </form>
