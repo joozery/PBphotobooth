@@ -1,6 +1,13 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { Group, Stage, Layer, Image as KonvaImage, Text } from "react-konva";
+import {
+  Group,
+  Stage,
+  Layer,
+  Image as KonvaImage,
+  Text,
+  Rect,
+} from "react-konva";
 import { MdRefresh } from "react-icons/md";
 import { AiOutlineZoomIn, AiOutlineZoomOut } from "react-icons/ai";
 import { FaCheck } from "react-icons/fa";
@@ -32,6 +39,11 @@ export default function CardPreview() {
   const [wishName, setWishName] = useState("");
   const [wishMessage, setWishMessage] = useState("");
   const [eventId, setEventId] = useState("");
+
+  const [fontFamily, setFontFamily] = useState("Prompt"); // ฟอนต์เริ่มต้น
+  const [fontColor, setFontColor] = useState("#333333"); // สีข้อความเริ่มต้น
+  const [frameShape, setFrameShape] = useState("rectangle"); // rectangle, circle, star
+  const [showBackground, setShowBackground] = useState(true); // ควบคุมการแสดง BG
 
   const imageElement = template?.elements?.find((el) => el.type === "image");
   const textElement = template?.elements?.find((el) => el.type === "text");
@@ -93,10 +105,10 @@ export default function CardPreview() {
     if (template) {
       // const storedPos = localStorage.getItem("wishPosition");
       // if (!storedPos) {
-        setPosition({
-          x: imageElement?.x,
-          y: imageElement?.y,
-        });
+      setPosition({
+        x: imageElement?.x,
+        y: imageElement?.y,
+      });
       // }
     }
   }, [imageElement?.x, imageElement?.y, template]);
@@ -114,7 +126,7 @@ export default function CardPreview() {
           <div className="relative w-full flex justify-center items-center overflow-hidden mb-3">
             <Stage width={420} height={280} className="border">
               <Layer>
-                {bgImage && (
+                {bgImage && showBackground && (
                   <KonvaImage image={bgImage} width={420} height={280} />
                 )}
                 {textboxImage && template && (
@@ -141,14 +153,14 @@ export default function CardPreview() {
                 {wishMessage && template && (
                   <Text
                     ref={messageRef}
-                    fontFamily="Prompt"
+                    fontFamily={fontFamily} // 👈 เพิ่มตรงนี้
                     text={wishMessage}
                     x={textElement?.x} // เลียนแบบ padding-left / ml-3 ถ้าต้องการ
                     y={textElement?.y}
                     width={textElement?.width} // ลดให้ balance กับ x + ml
                     // height={100}
                     fontSize={textElement?.fontSize || 16}
-                    fill="#333"
+                    fill={fontColor}
                     align="center" // คล้าย <p> ปกติใน HTML ที่ align left
                     lineHeight={1.5} // ปรับให้ดูสบายตา
                     wrap="word" // ตัดคำอัตโนมัติ
@@ -157,7 +169,7 @@ export default function CardPreview() {
 
                 {wishName && template && (
                   <Text
-                    fontFamily="Prompt"
+                    fontFamily={fontFamily} // 👈 เพิ่มตรงนี้
                     text={`– ${wishName}`}
                     x={
                       textElement?.x + 42 // ml-3
@@ -171,7 +183,7 @@ export default function CardPreview() {
                     }
                     width={textElement?.width || 300}
                     fontSize={12}
-                    fill="#6b7280"
+                    fill={fontColor}
                     fontStyle="600"
                     align="left"
                   />
@@ -187,67 +199,103 @@ export default function CardPreview() {
                     clipFunc={(ctx) => {
                       const w = imageElement.width;
                       const h = imageElement.height;
-                      const r = 4;
+
                       ctx.beginPath();
-                      ctx.moveTo(r, 0);
-                      ctx.lineTo(w - r, 0);
-                      ctx.quadraticCurveTo(w, 0, w, r);
-                      ctx.lineTo(w, h - r);
-                      ctx.quadraticCurveTo(w, h, w - r, h);
-                      ctx.lineTo(r, h);
-                      ctx.quadraticCurveTo(0, h, 0, h - r);
-                      ctx.lineTo(0, r);
-                      ctx.quadraticCurveTo(0, 0, r, 0);
+                      if (frameShape === "circle") {
+                        const radius = Math.min(w, h) / 2;
+                        ctx.arc(w / 2, h / 2, radius, 0, Math.PI * 2, false);
+                      } else if (frameShape === "star") {
+                        const cx = w / 2;
+                        const cy = h / 2;
+                        const spikes = 5;
+                        const outerRadius = Math.min(w, h) / 2;
+                        const innerRadius = outerRadius / 2.5;
+                        let rot = (Math.PI / 2) * 3;
+                        let step = Math.PI / spikes;
+
+                        ctx.moveTo(cx, cy - outerRadius);
+                        for (let i = 0; i < spikes; i++) {
+                          ctx.lineTo(
+                            cx + Math.cos(rot) * outerRadius,
+                            cy + Math.sin(rot) * outerRadius
+                          );
+                          rot += step;
+
+                          ctx.lineTo(
+                            cx + Math.cos(rot) * innerRadius,
+                            cy + Math.sin(rot) * innerRadius
+                          );
+                          rot += step;
+                        }
+                        ctx.lineTo(cx, cy - outerRadius);
+                      } else {
+                        const r = 4;
+                        ctx.moveTo(r, 0);
+                        ctx.lineTo(w - r, 0);
+                        ctx.quadraticCurveTo(w, 0, w, r);
+                        ctx.lineTo(w, h - r);
+                        ctx.quadraticCurveTo(w, h, w - r, h);
+                        ctx.lineTo(r, h);
+                        ctx.quadraticCurveTo(0, h, 0, h - r);
+                        ctx.lineTo(0, r);
+                        ctx.quadraticCurveTo(0, 0, r, 0);
+                      }
                       ctx.closePath();
                     }}
                   >
-                    {userImage &&
-                      (() => {
-                        // คำนวณ object-cover
-                        const iw = userImage.width;
-                        const ih = userImage.height;
-                        const cw = imageElement.width;
-                        const ch = imageElement.height;
+                    {/* วาด userImage ด้วย object-cover เหมือนเดิม */}
+                    {(() => {
+                      const iw = userImage.width;
+                      const ih = userImage.height;
+                      const cw = imageElement.width;
+                      const ch = imageElement.height;
 
-                        const imageRatio = iw / ih;
-                        const containerRatio = cw / ch;
+                      const imageRatio = iw / ih;
+                      const containerRatio = cw / ch;
 
-                        let width, height, offsetX, offsetY;
+                      let width, height, offsetX, offsetY;
 
-                        if (imageRatio > containerRatio) {
-                          // ภาพกว้างเกินไป → fit height
-                          height = ch;
-                          width = ch * imageRatio;
-                          offsetX = (cw - width) / 2;
-                          offsetY = 0;
-                        } else {
-                          // ภาพแคบเกินไป → fit width
-                          width = cw;
-                          height = cw / imageRatio;
-                          offsetX = 0;
-                          offsetY = (ch - height) / 2;
-                        }
+                      if (imageRatio > containerRatio) {
+                        height = ch;
+                        width = ch * imageRatio;
+                        offsetX = (cw - width) / 2;
+                        offsetY = 0;
+                      } else {
+                        width = cw;
+                        height = cw / imageRatio;
+                        offsetX = 0;
+                        offsetY = (ch - height) / 2;
+                      }
 
-                        return (
-                          <KonvaImage
-                            image={userImage}
-                            x={offsetX}
-                            y={offsetY}
-                            width={width}
-                            height={height}
-                          />
-                        );
-                      })()}
+                      return (
+                        <KonvaImage
+                          image={userImage}
+                          x={offsetX}
+                          y={offsetY}
+                          width={width}
+                          height={height}
+                        />
+                      );
+                    })()}
                   </Group>
                 )}
                 {frameImage && template && (
-                  <KonvaImage
-                    image={frameImage}
-                    x={template.frame_x}
-                    y={template.frame_y}
-                    width={template.frame_width}
-                    height={template.frame_height}
-                  />
+                  <>
+                    <KonvaImage
+                      image={frameImage}
+                      x={template.frame_x}
+                      y={template.frame_y}
+                      width={template.frame_width}
+                      height={template.frame_height}
+                    />
+                    <Rect
+                      x={template.frame_x}
+                      y={template.frame_y}
+                      width={template.frame_width}
+                      height={template.frame_height}
+                      strokeWidth={4}
+                    />
+                  </>
                 )}
               </Layer>
             </Stage>
@@ -284,6 +332,61 @@ export default function CardPreview() {
             >
               <AiOutlineZoomIn /> ขยายรูป
             </button>
+          </div>
+          <div className="flex flex-wrap justify-center gap-2 mb-4">
+            {/* เลือกรูปร่างเฟรม */}
+            <div className="flex items-center gap-1">
+              <label className="text-sm">เฟรม:</label>
+              <select
+                value={frameShape}
+                onChange={(e) => {
+                  setFrameShape(e.target.value);
+                  localStorage.setItem("FrameShape", e.target.value);
+                }}
+                className="text-sm border rounded p-1"
+              >
+                <option value="rectangle">สี่เหลี่ยม</option>
+                <option value="circle">วงกลม</option>
+                <option value="star">ดาว</option>
+              </select>
+            </div>
+
+            {/* ปุ่มลบ BG */}
+            <button
+              onClick={() => setShowBackground((prev) => !prev)}
+              className="bg-red-500 text-white text-xs px-3 py-1 rounded shadow-sm"
+            >
+              {showBackground ? "ลบ BG" : "แสดง BG"}
+            </button>
+
+            {/* เปลี่ยนฟอนต์ */}
+            <div className="flex items-center gap-1">
+              <label className="text-sm">ฟอนต์:</label>
+              <select
+                value={fontFamily}
+                onChange={(e) => setFontFamily(e.target.value)}
+                className="text-sm border rounded p-1"
+              >
+                <option value="Prompt">Prompt</option>
+                <option value="Kanit">Kanit</option>
+                <option value="Sarabun">Sarabun</option>
+                <option value="Arial">Arial</option>
+                <option value="Tahoma">Tahoma</option>
+                <option value="Sriracha">Sriracha</option>{" "}
+                {/* เพิ่มฟอนต์ Sriracha */}
+              </select>
+            </div>
+
+            {/* เลือกสีฟอนต์ */}
+            <div className="flex items-center gap-1">
+              <label className="text-sm">สีฟอนต์:</label>
+              <input
+                type="color"
+                value={fontColor}
+                onChange={(e) => setFontColor(e.target.value)}
+                className="w-8 h-8 p-0 border rounded"
+              />
+            </div>
           </div>
         </div>
 

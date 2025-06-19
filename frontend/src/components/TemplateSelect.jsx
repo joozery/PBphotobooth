@@ -35,6 +35,10 @@ export default function TemplateSelect() {
     navigate("/preview");
   };
 
+  useEffect(() => {
+    console.log('templates',templates)
+  })
+  
   // const getValidImage = (url) => {
   //   if (!url || !url.trim()) return "https://placehold.co/420x280";
   //   if (url.startsWith("http")) return url;

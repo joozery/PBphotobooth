@@ -179,17 +179,58 @@ export default function WishConfirm() {
                 clipFunc={(ctx) => {
                   const w = imageElement.width;
                   const h = imageElement.height;
-                  const r = 4;
+                  // const r = 4;
+                  // ctx.beginPath();
+                  // ctx.moveTo(r, 0);
+                  // ctx.lineTo(w - r, 0);
+                  // ctx.quadraticCurveTo(w, 0, w, r);
+                  // ctx.lineTo(w, h - r);
+                  // ctx.quadraticCurveTo(w, h, w - r, h);
+                  // ctx.lineTo(r, h);
+                  // ctx.quadraticCurveTo(0, h, 0, h - r);
+                  // ctx.lineTo(0, r);
+                  // ctx.quadraticCurveTo(0, 0, r, 0);
+                  // ctx.closePath();
                   ctx.beginPath();
-                  ctx.moveTo(r, 0);
-                  ctx.lineTo(w - r, 0);
-                  ctx.quadraticCurveTo(w, 0, w, r);
-                  ctx.lineTo(w, h - r);
-                  ctx.quadraticCurveTo(w, h, w - r, h);
-                  ctx.lineTo(r, h);
-                  ctx.quadraticCurveTo(0, h, 0, h - r);
-                  ctx.lineTo(0, r);
-                  ctx.quadraticCurveTo(0, 0, r, 0);
+                  if (localStorage.getItem('FrameShape') === "circle") {
+                    const radius = Math.min(w, h) / 2;
+                    ctx.arc(w / 2, h / 2, radius, 0, Math.PI * 2, false);
+                  } else if (localStorage.getItem('FrameShape')  === "star") {
+                    const cx = w / 2;
+                    const cy = h / 2;
+                    const spikes = 5;
+                    const outerRadius = Math.min(w, h) / 2;
+                    const innerRadius = outerRadius / 2.5;
+                    let rot = (Math.PI / 2) * 3;
+                    let step = Math.PI / spikes;
+
+                    ctx.moveTo(cx, cy - outerRadius);
+                    for (let i = 0; i < spikes; i++) {
+                      ctx.lineTo(
+                        cx + Math.cos(rot) * outerRadius,
+                        cy + Math.sin(rot) * outerRadius
+                      );
+                      rot += step;
+
+                      ctx.lineTo(
+                        cx + Math.cos(rot) * innerRadius,
+                        cy + Math.sin(rot) * innerRadius
+                      );
+                      rot += step;
+                    }
+                    ctx.lineTo(cx, cy - outerRadius);
+                  } else {
+                    const r = 4;
+                    ctx.moveTo(r, 0);
+                    ctx.lineTo(w - r, 0);
+                    ctx.quadraticCurveTo(w, 0, w, r);
+                    ctx.lineTo(w, h - r);
+                    ctx.quadraticCurveTo(w, h, w - r, h);
+                    ctx.lineTo(r, h);
+                    ctx.quadraticCurveTo(0, h, 0, h - r);
+                    ctx.lineTo(0, r);
+                    ctx.quadraticCurveTo(0, 0, r, 0);
+                  }
                   ctx.closePath();
                 }}
               >
