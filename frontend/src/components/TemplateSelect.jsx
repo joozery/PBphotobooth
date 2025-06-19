@@ -88,7 +88,7 @@ export default function TemplateSelect() {
             className="text-sm text-blue-700 font-medium mb-1 cursor-pointer"
             onClick={() => navigate(-1)}
           >
-            ← เลือกเทมเพลต (2/3)
+            ← เลือกเทมเพลต (2/4)
           </div>
 
           <p className="text-center text-xs text-gray-500 mb-4">

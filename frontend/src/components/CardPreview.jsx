@@ -38,6 +38,7 @@ export default function CardPreview() {
   const [scale, setScale] = useState(1);
   const [wishName, setWishName] = useState("");
   const [wishMessage, setWishMessage] = useState("");
+  const [wishMessagePos, setWishMessagePos] = useState(null);
   const [eventId, setEventId] = useState("");
 
   const [fontFamily, setFontFamily] = useState("Prompt"); // ฟอนต์เริ่มต้น
@@ -89,7 +90,10 @@ export default function CardPreview() {
   const handleConfirm = () => {
     localStorage.setItem("wishPosition", JSON.stringify(position));
     localStorage.setItem("wishScale", scale.toString());
-
+    localStorage.setItem("wishMessagePos", JSON.stringify(wishMessagePos));
+    localStorage.setItem("wishFontFamily", fontFamily);
+    localStorage.setItem("wishFontColor", fontColor);
+    localStorage.setItem("wishFrameShape", frameShape);
     if (eventId) {
       navigate("/confirm");
     } else {
@@ -101,25 +105,66 @@ export default function CardPreview() {
     setPosition({ x: e.target.x(), y: e.target.y() });
   };
 
+  // useEffect(() => {
+  //   if (template) {
+  //     setPosition({
+  //       x: imageElement?.x,
+  //       y: imageElement?.y,
+  //     });
+  //   }
+  //   if (template && textElement) {
+  //     // ถ้า wishMessagePos ยังเป็น (0,0) หรือเพิ่งโหลด template ให้ตั้งค่าเริ่ม
+  //     setWishMessagePos({
+  //       x: textElement.x,
+  //       y: textElement.y,
+  //     });
+  //   }
+
+  //   const savedMsgPos = localStorage.getItem("wishMessagePos");
+  //   if (savedMsgPos) {
+  //     setWishMessagePos(JSON.parse(savedMsgPos));
+  //   }
+  // }, [imageElement?.x, imageElement?.y, template]);
   useEffect(() => {
-    if (template) {
-      // const storedPos = localStorage.getItem("wishPosition");
-      // if (!storedPos) {
-      setPosition({
-        x: imageElement?.x,
-        y: imageElement?.y,
-      });
-      // }
+    if (template && textElement) {
+      // โหลด wishMessagePos
+      const savedPos = localStorage.getItem("wishMessagePos");
+      if (savedPos) {
+        setWishMessagePos(JSON.parse(savedPos));
+      } else {
+        setWishMessagePos({
+          x: textElement.x,
+          y: textElement.y,
+        });
+      }
+
+      // โหลด fontFamily
+      const savedFontFamily = localStorage.getItem("wishFontFamily");
+      if (savedFontFamily) setFontFamily(savedFontFamily);
+
+      // โหลด fontColor
+      const savedFontColor = localStorage.getItem("wishFontColor");
+      if (savedFontColor) setFontColor(savedFontColor);
+
+      // โหลด frameShape
+      const savedFrameShape = localStorage.getItem("wishFrameShape");
+      if (savedFrameShape) setFrameShape(savedFrameShape);
     }
-  }, [imageElement?.x, imageElement?.y, template]);
+  }, [template, textElement]);
 
   return (
     <div className="w-screen h-[100svh] bg-gray-100 font-prompt flex justify-center items-center">
       <div className="w-full max-w-lg h-[100svh] bg-white flex flex-col justify-between shadow-md overflow-auto">
         {/* Header / Title */}
         <div className="p-4 pb-0">
+          <div
+            className="text-sm text-blue-700 font-medium mb-1 cursor-pointer mb-3"
+            onClick={() => navigate(-1)}
+          >
+            ← เลือกเทมเพลต (3/4)
+          </div>
           <div className="text-center text-sm font-semibold text-blue-700 mb-3">
-            ปรับแต่งตำแหน่งรูป (3/3)
+            ปรับแต่งตำแหน่งรูป (3/4)
           </div>
 
           {/* Preview area */}
@@ -153,17 +198,32 @@ export default function CardPreview() {
                 {wishMessage && template && (
                   <Text
                     ref={messageRef}
-                    fontFamily={fontFamily} // 👈 เพิ่มตรงนี้
+                    fontFamily={fontFamily}
                     text={wishMessage}
-                    x={textElement?.x} // เลียนแบบ padding-left / ml-3 ถ้าต้องการ
-                    y={textElement?.y}
-                    width={textElement?.width} // ลดให้ balance กับ x + ml
-                    // height={100}
+                    // x={textElement?.x}
+                    // y={textElement?.y}
+                    x={wishMessagePos?.x}
+                    y={wishMessagePos?.y}
+                    width={textElement?.width}
                     fontSize={textElement?.fontSize || 16}
                     fill={fontColor}
-                    align="center" // คล้าย <p> ปกติใน HTML ที่ align left
-                    lineHeight={1.5} // ปรับให้ดูสบายตา
-                    wrap="word" // ตัดคำอัตโนมัติ
+                    align="center"
+                    lineHeight={1.5}
+                    wrap="word"
+                    draggable
+                    onDragEnd={(e) => {
+                      const newX = e.target.x();
+                      const newY = e.target.y();
+                      setWishMessagePos({ x: newX, y: newY });
+                    }}
+                    onMouseEnter={(e) => {
+                      const container = e.target.getStage().container();
+                      container.style.cursor = "grab"; // 👈 เปลี่ยนเป็นมือ
+                    }}
+                    onMouseLeave={(e) => {
+                      const container = e.target.getStage().container();
+                      container.style.cursor = "default"; // 👈 กลับเป็นปกติ
+                    }}
                   />
                 )}
 
@@ -171,15 +231,12 @@ export default function CardPreview() {
                   <Text
                     fontFamily={fontFamily} // 👈 เพิ่มตรงนี้
                     text={`– ${wishName}`}
-                    x={
-                      textElement?.x + 42 // ml-3
-                    }
+                    x={wishMessagePos?.x + 42} // หรือปรับ offset ตามต้องการ
                     y={
-                      messageRef.current
-                        ? messageRef.current.getClientRect().y +
-                          messageRef.current.getClientRect().height +
-                          4
-                        : (textElement?.y || 0) + (textElement?.height || 100)
+                      wishMessagePos?.y +
+                      (messageRef.current
+                        ? messageRef.current.getClientRect().height + 4
+                        : 20)
                     }
                     width={textElement?.width || 300}
                     fontSize={12}
@@ -194,12 +251,19 @@ export default function CardPreview() {
                     y={position.y}
                     draggable
                     onDragEnd={handleDragEnd}
+                    onMouseEnter={(e) => {
+                      const container = e.target.getStage().container();
+                      container.style.cursor = "grab"; // 👈 เปลี่ยนเป็นมือ
+                    }}
+                    onMouseLeave={(e) => {
+                      const container = e.target.getStage().container();
+                      container.style.cursor = "default"; // 👈 กลับเป็นปกติ
+                    }}
                     scaleX={scale}
                     scaleY={scale}
                     clipFunc={(ctx) => {
                       const w = imageElement.width;
                       const h = imageElement.height;
-
                       ctx.beginPath();
                       if (frameShape === "circle") {
                         const radius = Math.min(w, h) / 2;
@@ -220,7 +284,6 @@ export default function CardPreview() {
                             cy + Math.sin(rot) * outerRadius
                           );
                           rot += step;
-
                           ctx.lineTo(
                             cx + Math.cos(rot) * innerRadius,
                             cy + Math.sin(rot) * innerRadius
@@ -315,6 +378,13 @@ export default function CardPreview() {
                   y: imageElement?.y,
                 });
                 setScale(1);
+                setWishMessagePos({
+                  x: textElement?.x || 0,
+                  y: textElement?.y || 0,
+                });
+                setFontFamily("Prompt");
+                setFontColor("#333333");
+                setFrameShape("rectangle");
               }}
               className="bg-white border px-4 py-2 rounded shadow-sm text-sm flex items-center gap-1"
             >
@@ -341,7 +411,6 @@ export default function CardPreview() {
                 value={frameShape}
                 onChange={(e) => {
                   setFrameShape(e.target.value);
-                  localStorage.setItem("FrameShape", e.target.value);
                 }}
                 className="text-sm border rounded p-1"
               >

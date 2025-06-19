@@ -26,7 +26,10 @@ export default function WishConfirm() {
   const messageRef = useRef();
   const [loading, setLoading] = useState(false);
   const [template, setTemplate] = useState(null);
+  const [wishMessagePos, setWishMessagePos] = useState(null);
 
+  const imageElement = template?.elements?.find((el) => el.type === "image");
+  const textElement = template?.elements?.find((el) => el.type === "text");
   // Local data
   const templateId = localStorage.getItem("templateId");
   const eventId = localStorage.getItem("eventId"); // ✅ ดึง eventId
@@ -40,9 +43,6 @@ export default function WishConfirm() {
   const scale = parseFloat(localStorage.getItem("wishScale") || "1");
   const side = localStorage.getItem("side");
   const agree = localStorage.getItem("agree");
-
-  const imageElement = template?.elements?.find((el) => el.type === "image");
-  const textElement = template?.elements?.find((el) => el.type === "text");
 
   // Image hooks
   const [userImage] = useImage(image);
@@ -106,8 +106,27 @@ export default function WishConfirm() {
     }
   };
 
+  useEffect(() => {
+    const savedPos = localStorage.getItem("wishMessagePos");
+    if (savedPos) {
+      setWishMessagePos(JSON.parse(savedPos));
+    } else if (textElement) {
+      // ถ้าไม่มี localStorage ให้ใช้ค่าเริ่มต้นจาก template
+      setWishMessagePos({
+        x: textElement.x,
+        y: textElement.y,
+      });
+    }
+  }, [template, textElement]);
+
   return (
     <div className="w-screen h-[100svh] bg-gray-100 text-white font-prompt flex flex-col justify-center items-center px-4">
+      <div
+            className="text-sm text-blue-700 font-medium mb-1 cursor-pointer mb-3"
+            onClick={() => navigate(-1)}
+          >
+            ← เลือกเทมเพลต (4/4)
+          </div>
       <div
         ref={containerRef}
         className="relative w-full flex justify-center items-center overflow-hidden mb-3"
@@ -135,14 +154,14 @@ export default function WishConfirm() {
             {message && template && (
               <Text
                 ref={messageRef}
-                fontFamily="Prompt"
+                fontFamily={localStorage.getItem("wishFontFamily") || "Prompt"}
                 text={message}
-                x={textElement?.x} // เลียนแบบ padding-left / ml-3 ถ้าต้องการ
-                y={textElement?.y}
+                x={wishMessagePos.x}
+                y={wishMessagePos.y}
                 width={textElement?.width} // ลดให้ balance กับ x + ml
                 // height={100}
                 fontSize={textElement?.fontSize || 16}
-                fill="#333"
+                fill={localStorage.getItem("wishFontColor") || "#333"}
                 align="center" // คล้าย <p> ปกติใน HTML ที่ align left
                 lineHeight={1.5} // ปรับให้ดูสบายตา
                 wrap="word" // ตัดคำอัตโนมัติ
@@ -151,21 +170,19 @@ export default function WishConfirm() {
 
             {name && template && (
               <Text
-                fontFamily="Prompt"
+                fontFamily={localStorage.getItem("wishFontFamily") || "Prompt"}
                 text={`– ${name}`}
-                x={
-                  textElement?.x + 42 // ml-3
-                }
+                x={wishMessagePos.x + 42}
                 y={
                   messageRef.current
                     ? messageRef.current.getClientRect().y +
                       messageRef.current.getClientRect().height +
                       4
-                    : (textElement?.y || 0) + (textElement?.height || 100)
+                    : wishMessagePos.y + 20
                 }
                 width={textElement?.width || 300}
                 fontSize={12}
-                fill="#6b7280"
+                fill={localStorage.getItem("wishFontColor") || "#333"}
                 fontStyle="600"
                 align="left"
               />
@@ -179,23 +196,13 @@ export default function WishConfirm() {
                 clipFunc={(ctx) => {
                   const w = imageElement.width;
                   const h = imageElement.height;
-                  // const r = 4;
-                  // ctx.beginPath();
-                  // ctx.moveTo(r, 0);
-                  // ctx.lineTo(w - r, 0);
-                  // ctx.quadraticCurveTo(w, 0, w, r);
-                  // ctx.lineTo(w, h - r);
-                  // ctx.quadraticCurveTo(w, h, w - r, h);
-                  // ctx.lineTo(r, h);
-                  // ctx.quadraticCurveTo(0, h, 0, h - r);
-                  // ctx.lineTo(0, r);
-                  // ctx.quadraticCurveTo(0, 0, r, 0);
-                  // ctx.closePath();
                   ctx.beginPath();
-                  if (localStorage.getItem('FrameShape') === "circle") {
+                  if (localStorage.getItem("wishFrameShape") === "circle") {
                     const radius = Math.min(w, h) / 2;
                     ctx.arc(w / 2, h / 2, radius, 0, Math.PI * 2, false);
-                  } else if (localStorage.getItem('FrameShape')  === "star") {
+                  } else if (
+                    localStorage.getItem("wishFrameShape") === "star"
+                  ) {
                     const cx = w / 2;
                     const cy = h / 2;
                     const spikes = 5;
