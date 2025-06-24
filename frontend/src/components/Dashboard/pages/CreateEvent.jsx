@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import { IoIosFemale, IoMdFemale } from "react-icons/io";
 import {
@@ -17,19 +16,41 @@ import {
 } from "react-icons/fa";
 import Swal from "sweetalert2";
 
+//importicon
+
+import beerIcon from "../../../assets/icons/beer.png";
+import femaleIcon from "../../../assets/icons/female.png";
+import maleIcon from "../../../assets/icons/male.png";
+import manthaiIcon from "../../../assets/icons/manthai.png";
+import thaicolorIcon from "../../../assets/icons/thaicolor.png";
+import wineIcon from "../../../assets/icons/wine.png";
+import womancolorIcon from "../../../assets/icons/womancolor.png";
+import woomanthaiIcon from "../../../assets/icons/woomanthai.png";
+
+const iconImageOptions = [
+  { key: "beer", label: "Beer", src: beerIcon },
+  { key: "female", label: "Female", src: femaleIcon },
+  { key: "male", label: "Male", src: maleIcon },
+  { key: "manthai", label: "Man Thai", src: manthaiIcon },
+  { key: "thaicolor", label: "Thai Color", src: thaicolorIcon },
+  { key: "wine", label: "Wine", src: wineIcon },
+  { key: "womancolor", label: "Woman Color", src: womancolorIcon },
+  { key: "woomanthai", label: "Woman Thai", src: woomanthaiIcon },
+];
+
 // 🔧 ตั้งค่าicon
-const iconOptions = {
-  FaUser: <FaUser />,
-  FaUserTie: <FaUserTie />,
-  FaHeart: <FaHeart />,
-  FaStar: <FaStar />,
-  FaSmile: <FaSmile />,
-  FaCat: <FaCat />,
-  FaDog: <FaDog />,
-  FaRing: <FaRing />,
-  IoIosFemale: <IoIosFemale />, // ✅ เพิ่ม
-  IoMdFemale: <IoMdFemale />, // ✅ เพิ่ม
-};
+// const iconOptions = {
+//   FaUser: <FaUser />,
+//   FaUserTie: <FaUserTie />,
+//   FaHeart: <FaHeart />,
+//   FaStar: <FaStar />,
+//   FaSmile: <FaSmile />,
+//   FaCat: <FaCat />,
+//   FaDog: <FaDog />,
+//   FaRing: <FaRing />,
+//   IoIosFemale: <IoIosFemale />, // ✅ เพิ่ม
+//   IoMdFemale: <IoMdFemale />, // ✅ เพิ่ม
+// };
 
 // 🔧 แปลงวันที่จาก ISO → YYYY-MM-DD สำหรับ input[type="date"]
 const formatDate = (dateString) => {
@@ -73,6 +94,9 @@ function CreateEvent() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
+  const [coverImage2, setCoverImage2] = useState(null);
+  const [previewUrl2, setPreviewUrl2] = useState(null);
+
   useEffect(() => {
     const fetchEventAndTemplates = async () => {
       try {
@@ -96,14 +120,20 @@ function CreateEvent() {
             viewWishesButtonText: data.view_wishes_button_text,
             viewWishesButtonBg: data.view_wishes_button_bg,
             viewWishesButtonTextColor: data.view_wishes_button_text_color,
-            groomLabel: data.groom_label || "ฝ่ายเจ้าบ่าว",
-            brideLabel: data.bride_label || "ฝ่ายเจ้าสาว",
-            groomIcon: data.groom_icon || "FaUserTie",
-            brideIcon: data.bride_icon || "FaUser",
+            groom_label: data.groom_label || "ฝ่ายเจ้าบ่าว",
+            bride_label: data.bride_label || "ฝ่ายเจ้าสาว",
+            groom_icon: data.groom_icon || "FaUserTie",
+            bride_icon: data.bride_icon || "FaUser",
+            groomIconImage: data.groom_icon_image || "",
+            brideIconImage: data.bride_icon_image || "",
           });
 
           if (data.cover_image) {
             setPreviewUrl(data.cover_image);
+          }
+
+          if (data.cover_image2) {
+            setPreviewUrl2(data.cover_image2);
           }
 
           // โหลด template ที่เลือกไว้ใน event
@@ -156,6 +186,15 @@ function CreateEvent() {
     }
   };
 
+  // อัพโหลดรูปที่ 2
+  const handleImage2Change = (e) => {
+    const file = e.target.files[0];
+    setCoverImage2(file);
+    if (file) {
+      setPreviewUrl2(URL.createObjectURL(file));
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -170,9 +209,15 @@ function CreateEvent() {
       formData.set("bride_label", form.brideLabel);
       formData.set("groom_icon", form.groomIcon);
       formData.set("bride_icon", form.brideIcon);
+      formData.append("groom_icon_image", form.groomIconImage || "");
+      formData.append("bride_icon_image", form.brideIconImage || "");
 
       if (!eventId || coverImage) {
         formData.append("cover", coverImage);
+      }
+
+      if (!eventId || coverImage2) {
+        formData.append("cover2", coverImage2);
       }
 
       const selectedTemplateIds = templateOptions
@@ -215,12 +260,12 @@ function CreateEvent() {
     }
   };
 
-  const [wishSettings, setWishSettings] = useState({
-    enableImageUpload: true,
-    maxNameLength: 20,
-    maxMessageLength: 200,
-    requireAgreement: true,
-  });
+  // const [wishSettings, setWishSettings] = useState({
+  //   enableImageUpload: true,
+  //   maxNameLength: 20,
+  //   maxMessageLength: 200,
+  //   requireAgreement: true,
+  // });
 
   const [templateOptions, setTemplateOptions] = useState([]);
 
@@ -276,6 +321,26 @@ function CreateEvent() {
               <img
                 src={previewUrl}
                 alt="Preview"
+                className="mt-3 max-h-64 w-auto rounded-md shadow-md"
+              />
+            )}
+          </div>
+
+          {/* Cover Upload2 */}
+          <div>
+            <label className="block text-sm font-medium mb-1">
+              อัปโหลดภาพหน้าปกที่ 2
+            </label>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleImage2Change}
+              className="w-full"
+            />
+            {previewUrl2 && (
+              <img
+                src={previewUrl2}
+                alt="Preview2"
                 className="mt-3 max-h-64 w-auto rounded-md shadow-md"
               />
             )}
@@ -492,47 +557,76 @@ function CreateEvent() {
                 placeholder="ฝ่ายเจ้าสาว"
               />
             </div>
+          </div>
+          <div>
+            <label className="text-sm block mb-1">เลือกไอคอนฝ่ายเจ้าบ่าว</label>
+            <div className="flex items-center gap-2">
+              <select
+                name="groomIconImage"
+                value={form.groomIconImage || ""}
+                onChange={(e) =>
+                  setForm((prev) => ({
+                    ...prev,
+                    groomIconImage: e.target.value,
+                  }))
+                }
+                className="w-full px-3 py-2 border rounded"
+              >
+                <option value="">-- เลือกไอคอน --</option>
+                {iconImageOptions.map((opt) => (
+                  <option key={opt.key} value={opt.key}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
 
-            <div>
-              <label className="text-sm block mb-1">
-                เลือกไอคอนฝ่ายเจ้าบ่าว
-              </label>
-              <div className="flex items-center gap-2">
-                <select
-                  name="groomIcon"
-                  value={form.groomIcon}
-                  onChange={handleChange}
-                  className="w-full px-3 py-2 border rounded"
-                >
-                  {Object.keys(iconOptions).map((key) => (
-                    <option key={key} value={key}>
-                      {key}
-                    </option>
-                  ))}
-                </select>
-                <div className="text-xl">{iconOptions[form.groomIcon]}</div>
-              </div>
+              {form.groomIconImage && (
+                <img
+                  src={
+                    iconImageOptions.find(
+                      (opt) => opt.key === form.groomIconImage
+                    )?.src
+                  }
+                  alt="icon"
+                  className="w-8 h-8"
+                />
+              )}
             </div>
+          </div>
 
-            <div>
-              <label className="text-sm block mb-1">
-                เลือกไอคอนฝ่ายเจ้าสาว
-              </label>
-              <div className="flex items-center gap-2">
-                <select
-                  name="brideIcon"
-                  value={form.brideIcon}
-                  onChange={handleChange}
-                  className="w-full px-3 py-2 border rounded"
-                >
-                  {Object.keys(iconOptions).map((key) => (
-                    <option key={key} value={key}>
-                      {key}
-                    </option>
-                  ))}
-                </select>
-                <div className="text-xl">{iconOptions[form.brideIcon]}</div>
-              </div>
+          <div>
+            <label className="text-sm block mb-1">เลือกไอคอนฝ่ายเจ้าสาว</label>
+            <div className="flex items-center gap-2">
+              <select
+                name="brideIconImage"
+                value={form.brideIconImage || ""}
+                onChange={(e) =>
+                  setForm((prev) => ({
+                    ...prev,
+                    brideIconImage: e.target.value,
+                  }))
+                }
+                className="w-full px-3 py-2 border rounded"
+              >
+                <option value="">-- เลือกไอคอน --</option>
+                {iconImageOptions.map((opt) => (
+                  <option key={opt.key} value={opt.key}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+
+              {form.brideIconImage && (
+                <img
+                  src={
+                    iconImageOptions.find(
+                      (opt) => opt.key === form.brideIconImage
+                    )?.src
+                  }
+                  alt="icon"
+                  className="w-8 h-8"
+                />
+              )}
             </div>
           </div>
 
@@ -576,6 +670,7 @@ function CreateEvent() {
               {loading ? "กำลังบันทึก..." : "บันทึก"}
             </button>
           </div>
+          
         </form>
       </div>
     </div>

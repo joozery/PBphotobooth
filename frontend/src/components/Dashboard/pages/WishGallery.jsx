@@ -1,75 +1,70 @@
 import React from "react";
 
-export default function WishGalleryMockup() {
-  const event = {
-    id: 1,
-    title: "งานแต่งโจ้ & จูน",
-    cover_image: "https://res.cloudinary.com/demo/image/upload/sample.jpg",
-  };
-
-  const wishes = [
+export default function WishGalleryListMockup() {
+  const events = [
     {
       id: 1,
-      name: "คุณเอ",
-      message: "ขอให้มีความสุขมาก ๆ 🎉",
-      image: "https://res.cloudinary.com/demo/image/upload/sample.jpg",
+      title: "งานแต่งโจ้ & จูน",
+      cover_image: "https://res.cloudinary.com/demo/image/upload/sample.jpg",
+      wish_count: 12,
     },
     {
       id: 2,
-      name: "คุณบี",
-      message: "รักกันตลอดไปนะคะ 💕",
-      image: "https://res.cloudinary.com/demo/image/upload/sample.jpg",
+      title: "งานหมั้นบี & เบิร์ด",
+      cover_image: "https://res.cloudinary.com/demo/image/upload/sample.jpg",
+      wish_count: 8,
     },
     {
       id: 3,
-      name: "คุณซี",
-      message: "ยินดีด้วยนะครับ 🎊 ขอให้มีลูกไว ๆ 👶",
-      image: "https://res.cloudinary.com/demo/image/upload/sample.jpg",
+      title: "งานแต่งมิว & นัท",
+      cover_image: "https://res.cloudinary.com/demo/image/upload/sample.jpg",
+      wish_count: 15,
     },
   ];
 
   return (
-    <div className="font-prompt p-6 min-h-screen bg-gray-50">
-      {/* Event header */}
-      <div className="text-center mb-8">
-        <h2 className="text-3xl font-bold text-gray-800 mb-2">{event.title}</h2>
-        {event.cover_image && (
-          <img
-            src={event.cover_image}
-            alt={event.title}
-            className="mx-auto w-full max-w-md h-auto rounded-lg shadow-lg"
-          />
-        )}
-      </div>
+    <div className="font-prompt min-h-screen bg-gradient-to-br from-pink-50 to-yellow-50 p-6">
+      <div className="max-w-6xl mx-auto">
+        <h1 className="text-4xl font-bold text-pink-700 text-center mb-10">
+          รายการงานและจำนวนคำอวยพร
+        </h1>
 
-      {/* Wishes Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {wishes.map((wish) => (
-          <div
-            key={wish.id}
-            className="bg-white shadow-md rounded-2xl overflow-hidden transition hover:shadow-xl"
-          >
-            <img
-              src={wish.image || "/sample-image.png"}
-              alt={`คำอวยพรจาก ${wish.name}`}
-              className="w-full h-56 object-cover"
-            />
-            <div className="p-4">
-              <h4 className="text-lg font-semibold text-pink-600 mb-1">
-                💌 {wish.name}
-              </h4>
-              <p className="text-gray-700 text-sm whitespace-pre-wrap leading-relaxed">
-                {wish.message}
-              </p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+          {events.map((event) => (
+            <div
+              key={event.id}
+              className="bg-white rounded-3xl shadow-lg hover:shadow-2xl transition transform hover:-translate-y-1"
+            >
+              <div className="relative">
+                <img
+                  src={event.cover_image}
+                  alt={event.title}
+                  className="w-full h-48 object-cover rounded-t-3xl"
+                />
+                <div className="absolute top-2 right-2 bg-pink-600 text-white text-xs px-2 py-0.5 rounded-full shadow">
+                  {event.wish_count} ภาพอวยพร
+                </div>
+              </div>
+              <div className="p-5">
+                <h2 className="text-xl font-semibold text-pink-700 mb-1">
+                  {event.title}
+                </h2>
+                <button
+                  className="mt-3 bg-pink-500 hover:bg-pink-600 text-white text-sm px-4 py-2 rounded-full shadow"
+                  onClick={() => alert(`ไปยังงาน ID: ${event.id}`)}
+                >
+                  ดูคำอวยพรทั้งหมด
+                </button>
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
 
-        {wishes.length === 0 && (
-          <p className="col-span-full text-center text-gray-400">
-            ยังไม่มีคำอวยพรในงานนี้
-          </p>
-        )}
+          {events.length === 0 && (
+            <p className="col-span-full text-center text-gray-400">
+              ยังไม่มีงานที่สร้าง
+            </p>
+          )}
+        </div>
       </div>
     </div>
   );
