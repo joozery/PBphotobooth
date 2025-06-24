@@ -234,15 +234,28 @@ export default function WishForm() {
           </div>
 
           {/* ✅ Checkbox */}
-          <label className="flex items-center gap-2 mb-6 text-sm text-gray-600">
-            <input
-              type="checkbox"
-              checked={agree}
-              onChange={() => setAgree(!agree)}
-              className="accent-yellow-400"
-            />
-            คำอวยพรจะถูกแสดงในสไลด์โชว์
-          </label>
+          <div className="grid grid-cols-2 gap-2 mb-6">
+  <button
+    onClick={() => setAgree(true)}
+    className={`text-sm px-4 py-2 rounded-full border transition ${
+      agree
+        ? "bg-yellow-400 text-white border-yellow-500 shadow"
+        : "bg-white text-gray-600 border-gray-300 hover:bg-gray-100"
+    }`}
+  >
+    แสดงข้อความของคุณในสไลด์โชว์
+  </button>
+  <button
+    onClick={() => setAgree(false)}
+    className={`text-sm px-4 py-2 rounded-full border transition ${
+      !agree
+        ? "bg-gray-400 text-white border-gray-500 shadow"
+        : "bg-white text-gray-600 border-gray-300 hover:bg-gray-100"
+    }`}
+  >
+    ไม่แสดงข้อความของคุณในสไลด์โชว์
+  </button>
+</div>
 
           {/* ✅ Submit Button */}
           <button
