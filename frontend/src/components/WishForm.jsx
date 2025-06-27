@@ -99,8 +99,6 @@ export default function WishForm() {
   };
 
   const handleSubmit = async () => {
-    if (!agree) return;
-
     // ✅ เก็บไว้ใช้หน้า template/preview
     localStorage.setItem("wishName", name);
     localStorage.setItem("wishMessage", message);

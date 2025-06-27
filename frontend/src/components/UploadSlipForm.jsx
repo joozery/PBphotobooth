@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import Swal from "sweetalert2";
 
 export default function UploadSlipForm() {
   const navigate = useNavigate();
@@ -7,6 +8,20 @@ export default function UploadSlipForm() {
   const [side, setSide] = useState("groom");
   const [amount, setAmount] = useState("");
   const [slip, setSlip] = useState(null);
+
+  // ฟังก์ชันคัดลอก
+  const handleCopy = () => {
+    navigator.clipboard.writeText("0909636552");
+    Swal.fire({
+      icon: "success",
+      title: "คัดลอกหมายเลขพร้อมเพย์แล้ว!",
+      toast: true,
+      position: "top-end",
+      showConfirmButton: false,
+      timer: 1500,
+      timerProgressBar: true,
+    });
+  };
 
   return (
     <div className="w-screen h-screen flex flex-col bg-gray-100 font-prompt">
@@ -26,7 +41,7 @@ export default function UploadSlipForm() {
             <img src="https://promptpay.io/0909636552.png" alt="QR" className="w-40 h-40 object-contain mb-2" />
             <div className="text-xs text-gray-700 mb-1">ชื่อบัญชี: Thanapol Wongjaroen</div>
             <div className="text-xs text-gray-700 mb-1">หมายเลขพร้อมเพย์: 0909636552</div>
-            <button className="text-blue-600 text-xs underline">คัดลอก</button>
+            <button className="text-blue-600 text-xs underline" onClick={handleCopy}>คัดลอก</button>
           </div>
           {/* Slip Upload */}
           <div className="mx-6">

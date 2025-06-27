@@ -10,6 +10,7 @@ export default function TemplateSelect() {
   const navigate = useNavigate();
   const { eventId } = useParams();
   const [templates, setTemplates] = useState([]);
+  const [event, setEvent] = useState(null);
 
   const name = localStorage.getItem("wishName") || "ชื่อของคุณ";
   const message =
@@ -30,6 +31,18 @@ export default function TemplateSelect() {
     if (eventId) fetchTemplates();
   }, [eventId]);
 
+  useEffect(() => {
+    const fetchEvent = async () => {
+      try {
+        const res = await axios.get(`${BASE_URL}/api/events/${eventId}`);
+        setEvent(res.data);
+      } catch (err) {
+        console.error("❌ ไม่สามารถโหลด event ได้:", err);
+      }
+    };
+    if (eventId) fetchEvent();
+  }, [eventId]);
+
   const handleSelect = (id) => {
     localStorage.setItem("templateId", id);
     navigate("/preview");
@@ -39,46 +52,25 @@ export default function TemplateSelect() {
     console.log('templates',templates)
   })
   
-  // const getValidImage = (url) => {
-  //   if (!url || !url.trim()) return "https://placehold.co/420x280";
-  //   if (url.startsWith("http")) return url;
-  //   if (url.startsWith("blob:")) {
-  //     try {
-  //       // ลอง preload รูป (optional)
-  //       const img = new Image();
-  //       img.src = url;
-  //       return url;
-  //     } catch {
-  //       return "https://placehold.co/420x280";
-  //     }
-  //   }
-  //   return "https://placehold.co/420x280";
-  // };
-
   const getValidImage = (url) => {
-  if (!url || !url.trim()) {
+    if (!url || !url.trim()) {
+      return "https://placehold.co/420x280";
+    }
+    if (url.startsWith("http")) {
+      return url;
+    }
+    if (url.startsWith("data:image")) {
+      return url;
+    }
+    if (url.startsWith("blob:")) {
+      return url;
+    }
     return "https://placehold.co/420x280";
-  }
+  };
 
-  // ถ้าเป็น http หรือ https
-  if (url.startsWith("http")) {
-    return url;
-  }
-
-  // ถ้าเป็น base64 (data:image/...)
-  if (url.startsWith("data:image")) {
-    return url;
-  }
-
-  // ถ้าเป็น blob
-  if (url.startsWith("blob:")) {
-    return url; 
-  }
-
-  // fallback
-  return "https://placehold.co/420x280";
-};
-
+  const getTemplateBg = (tpl) => {
+    return tpl.background2 || tpl.cover_image2 || tpl.background || tpl.cover_image || event?.cover_image2 || event?.cover_image;
+  };
 
   return (
     <div className="w-screen h-[100svh] bg-gray-50 flex justify-center items-center font-prompt">
@@ -110,7 +102,7 @@ export default function TemplateSelect() {
               >
                 {/* BG */}
                 <img
-                  src={getValidImage(tpl.background)}
+                  src={getValidImage(getTemplateBg(tpl))}
                   alt="bg"
                   className="absolute inset-0 w-full h-full object-cover"
                 />
