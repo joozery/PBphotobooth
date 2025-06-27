@@ -37,7 +37,10 @@ export default function ThankYou() {
 
           {/* 🎁 Action Buttons */}
           <div className="flex flex-col gap-3 mt-10">
-            <button className="w-full bg-white border border-blue-500 py-2 rounded-full flex items-center justify-center gap-2 text-blue-700 font-medium shadow hover:bg-blue-50 transition-all">
+            <button
+              className="w-full bg-white border border-blue-500 py-2 rounded-full flex items-center justify-center gap-2 text-blue-700 font-medium shadow hover:bg-blue-50 transition-all"
+              onClick={() => navigate("/wish-gallery")}
+            >
               <FaImage /> ดูรูปคำอวยพร
             </button>
             <button className="w-full bg-white border border-blue-500 py-2 rounded-full flex items-center justify-center gap-2 text-blue-700 font-medium shadow hover:bg-blue-50 transition-all">

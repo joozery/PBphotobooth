@@ -80,6 +80,8 @@ export default function CardPreview() {
   const [wishNameWidth, setWishNameWidth] = useState(150);
   const [wishNameFontSize, setWishNameFontSize] = useState(12);
 
+  const groupRef = useRef();
+
   useEffect(() => {
     const savedTemplateId = localStorage.getItem("templateId");
     const savedImage = localStorage.getItem("wishImage");
@@ -252,19 +254,20 @@ export default function CardPreview() {
                   />
                 )}
                 {userImage && template && imageElement && (
-                  <KonvaImage
-                    ref={imageRef}
-                    image={userImage}
+                  <Group
+                    ref={groupRef}
                     x={imgProps.x}
                     y={imgProps.y}
                     width={imgProps.width}
                     height={imgProps.height}
                     draggable
-                    onClick={() => setSelected("image")}
-                    onTap={() => setSelected("image")}
-                    onDragEnd={e => setImgProps(prev => ({ ...prev, x: e.target.x(), y: e.target.y() }))}
+                    onDragEnd={e => setImgProps(prev => ({
+                      ...prev,
+                      x: e.target.x(),
+                      y: e.target.y()
+                    }))}
                     onTransformEnd={e => {
-                      const node = imageRef.current;
+                      const node = groupRef.current;
                       const scaleX = node.scaleX();
                       const scaleY = node.scaleY();
                       setImgProps(prev => ({
@@ -272,16 +275,96 @@ export default function CardPreview() {
                         x: node.x(),
                         y: node.y(),
                         width: Math.max(50, node.width() * scaleX),
-                        height: Math.max(50, node.height() * scaleY),
+                        height: Math.max(50, node.height() * scaleY)
                       }));
                       node.scaleX(1);
                       node.scaleY(1);
                     }}
-                  />
+                    clipFunc={ctx => {
+                      const w = imgProps.width;
+                      const h = imgProps.height;
+                      ctx.beginPath();
+                      if (frameShape === "circle") {
+                        const radius = Math.min(w, h) / 2;
+                        ctx.arc(w / 2, h / 2, radius, 0, Math.PI * 2, false);
+                      } else if (frameShape === "star") {
+                        const cx = w / 2;
+                        const cy = h / 2;
+                        const spikes = 5;
+                        const outerRadius = Math.min(w, h) / 2;
+                        const innerRadius = outerRadius / 2.5;
+                        let rot = (Math.PI / 2) * 3;
+                        let step = Math.PI / spikes;
+                        ctx.moveTo(cx, cy - outerRadius);
+                        for (let i = 0; i < spikes; i++) {
+                          ctx.lineTo(
+                            cx + Math.cos(rot) * outerRadius,
+                            cy + Math.sin(rot) * outerRadius
+                          );
+                          rot += step;
+                          ctx.lineTo(
+                            cx + Math.cos(rot) * innerRadius,
+                            cy + Math.sin(rot) * innerRadius
+                          );
+                          rot += step;
+                        }
+                        ctx.lineTo(cx, cy - outerRadius);
+                      } else if (frameShape === "heart") {
+                        ctx.moveTo(w / 2, h * 0.8);
+                        ctx.bezierCurveTo(w * 1.1, h * 0.5, w * 0.8, h * 0.05, w / 2, h * 0.3);
+                        ctx.bezierCurveTo(w * 0.2, h * 0.05, -w * 0.1, h * 0.5, w / 2, h * 0.8);
+                        ctx.closePath();
+                      } else if (frameShape === "hexagon") {
+                        const cx = w / 2;
+                        const cy = h / 2;
+                        const r = Math.min(w, h) / 2;
+                        ctx.moveTo(cx + r * Math.cos(0), cy + r * Math.sin(0));
+                        for (let i = 1; i <= 6; i++) {
+                          ctx.lineTo(
+                            cx + r * Math.cos((i * 2 * Math.PI) / 6),
+                            cy + r * Math.sin((i * 2 * Math.PI) / 6)
+                          );
+                        }
+                        ctx.closePath();
+                      } else if (frameShape === "cloud") {
+                        ctx.arc(w * 0.3, h * 0.7, w * 0.18, Math.PI * 0.5, Math.PI * 1.5);
+                        ctx.arc(w * 0.5, h * 0.5, w * 0.22, Math.PI, Math.PI * 2);
+                        ctx.arc(w * 0.7, h * 0.7, w * 0.18, Math.PI * 1.5, Math.PI * 0.5);
+                        ctx.closePath();
+                      } else if (frameShape === "zigzag") {
+                        const steps = 8;
+                        const stepW = w / steps;
+                        ctx.moveTo(0, h);
+                        for (let i = 0; i < steps; i++) {
+                          ctx.lineTo(stepW * i + stepW / 2, h - (i % 2 === 0 ? 20 : 0));
+                          ctx.lineTo(stepW * (i + 1), h);
+                        }
+                        ctx.lineTo(w, 0);
+                        ctx.lineTo(0, 0);
+                        ctx.closePath();
+                      } else {
+                        ctx.moveTo(0, 0);
+                        ctx.lineTo(w, 0);
+                        ctx.lineTo(w, h);
+                        ctx.lineTo(0, h);
+                        ctx.closePath();
+                      }
+                    }}
+                    onClick={() => setSelected("image")}
+                    onTap={() => setSelected("image")}
+                  >
+                    <Rect width={imgProps.width} height={imgProps.height} visible={false} />
+                    <KonvaImage
+                      ref={imageRef}
+                      image={userImage}
+                      width={imgProps.width}
+                      height={imgProps.height}
+                    />
+                  </Group>
                 )}
                 {selected === "image" && userImage && (
                   <Transformer
-                    ref={tr => tr && tr.nodes([imageRef.current])}
+                    ref={tr => tr && tr.nodes([groupRef.current])}
                     enabledAnchors={[
                       "top-left", "top-right", "bottom-left", "bottom-right",
                       "middle-left", "middle-right", "top-center", "bottom-center"

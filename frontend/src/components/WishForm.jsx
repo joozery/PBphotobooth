@@ -60,6 +60,7 @@ export default function WishForm() {
   const [image, setImage] = useState(null);
   // const [imageFile, setImageFile] = useState(null);
   const [event, setEvent] = useState(null);
+  const [frameShape, setFrameShape] = useState(null);
 
   useEffect(() => {
     const fetchEvent = async () => {
@@ -72,6 +73,12 @@ export default function WishForm() {
     };
     if (eventId) fetchEvent();
   }, [eventId]);
+
+  useEffect(() => {
+    if (typeof frameShape !== 'undefined' && frameShape) {
+      localStorage.setItem('wishFrameShape', frameShape);
+    }
+  }, [typeof frameShape !== 'undefined' ? frameShape : null]);
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];

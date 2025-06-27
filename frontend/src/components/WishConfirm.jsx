@@ -168,6 +168,13 @@ export default function WishConfirm() {
     }
   }, [template, textElement]);
 
+  // เพิ่ม useEffect สำหรับ sync frameShape ลง localStorage
+  useEffect(() => {
+    if (frameShape) {
+      localStorage.setItem("wishFrameShape", frameShape);
+    }
+  }, [frameShape]);
+
   return (
     <div
       className="w-screen h-[100svh] text-white font-prompt flex flex-col justify-center items-center px-4"

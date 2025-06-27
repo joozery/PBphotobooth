@@ -13,6 +13,7 @@ import AdminLogin from "./components/AdminLogin";
 import CreateEvent from "./components/Dashboard/pages/CreateEvent";
 import TemplateBuilder from "./components/Dashboard/pages/TemplateBuilder"; // ✅ เพิ่มตรงนี้
 import UploadSlipForm from "./components/UploadSlipForm";
+import WishGallerySlideshow from "./components/WishGallerySlideshow";
 
 function App() {
   return (
@@ -30,6 +31,7 @@ function App() {
         <Route path="/template/:eventId" element={<TemplateSelect />} />
         <Route path="/select-template/:eventId" element={<TemplateSelect />} />
         <Route path="/upload-slip" element={<UploadSlipForm />} />
+        <Route path="/wish-gallery" element={<WishGallerySlideshow />} />
 
         {/* ✅ เส้นทางแอดมิน */}
         <Route path="/admin/login" element={<AdminLogin />} />
