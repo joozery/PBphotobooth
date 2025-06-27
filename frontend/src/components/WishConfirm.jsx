@@ -47,6 +47,7 @@ export default function WishConfirm() {
   const imgProps = JSON.parse(localStorage.getItem("imgProps") || '{}');
   const side = localStorage.getItem("side");
   const agree = localStorage.getItem("agree");
+  const wishNamePos = JSON.parse(localStorage.getItem("wishNamePos") || '{"x":42,"y":20}');
 
   // Image hooks
   const [userImage] = useImage(image);
@@ -196,18 +197,12 @@ export default function WishConfirm() {
               />
             )}
 
-            {name && template && wishMessagePosState && (
+            {name && template && wishNamePos && (
               <Text
                 fontFamily={fontFamily}
                 text={`– ${name}`}
-                x={wishMessagePosState.x + 42}
-                y={
-                  messageRef.current
-                    ? messageRef.current.getClientRect().y +
-                      messageRef.current.getClientRect().height +
-                      4
-                    : wishMessagePosState.y + 20
-                }
+                x={wishNamePos.x}
+                y={wishNamePos.y}
                 width={wishMessageWidth}
                 fontSize={12}
                 fill={fontColor}

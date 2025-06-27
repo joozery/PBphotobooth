@@ -30,6 +30,8 @@ const BASE_URL =
   import.meta.env.VITE_API_BASE_URL ||
   "https://pbphoto-api-fae29207c672.herokuapp.com";
 
+const REMOVE_BG_API_KEY = "CNxCKtW7ASjw1GMNHPmo56Uz";
+
 export default function CardPreview() {
   const messageRef = useRef();
   const navigate = useNavigate();
@@ -68,6 +70,11 @@ export default function CardPreview() {
     cropWidth: 0,
     cropHeight: 0,
   });
+
+  const [loadingRemoveBg, setLoadingRemoveBg] = useState(false);
+
+  // --- เพิ่ม state สำหรับตำแหน่งชื่อ ---
+  const [wishNamePos, setWishNamePos] = useState({ x: 0, y: 0 });
 
   useEffect(() => {
     const savedTemplateId = localStorage.getItem("templateId");
@@ -117,6 +124,7 @@ export default function CardPreview() {
     localStorage.setItem("wishMessageWidth", textWidth.toString());
     localStorage.setItem("wishFontSize", fontSize.toString());
     localStorage.setItem("imgProps", JSON.stringify(imgProps));
+    localStorage.setItem("wishNamePos", JSON.stringify(wishNamePos));
     if (eventId) {
       navigate("/confirm");
     } else {
@@ -152,8 +160,48 @@ export default function CardPreview() {
       // โหลด frameShape
       const savedFrameShape = localStorage.getItem("wishFrameShape");
       if (savedFrameShape) setFrameShape(savedFrameShape);
+
+      // โหลด wishNamePos
+      const savedNamePos = localStorage.getItem("wishNamePos");
+      if (savedNamePos) {
+        setWishNamePos(JSON.parse(savedNamePos));
+      } else {
+        setWishNamePos({
+          x: (textElement.x || 0) + 42,
+          y: (textElement.y || 0) + 20,
+        });
+      }
     }
   }, [template, textElement]);
+
+  const handleRemoveBg = async () => {
+    setLoadingRemoveBg(true);
+    try {
+      // แปลง base64 เป็นไฟล์ (ถ้ามี base64)
+      const dataUrl = imageURL;
+      const blob = await (await fetch(dataUrl)).blob();
+      const file = new File([blob], "wish-image.png", { type: blob.type });
+      const formData = new FormData();
+      formData.append("image_file", file);
+      formData.append("size", "auto");
+      const res = await fetch("https://api.remove.bg/v1.0/removebg", {
+        method: "POST",
+        headers: { "X-Api-Key": REMOVE_BG_API_KEY },
+        body: formData,
+      });
+      if (!res.ok) {
+        alert("ลบพื้นหลังไม่สำเร็จ: " + (await res.text()));
+        setLoadingRemoveBg(false);
+        return;
+      }
+      const resultBlob = await res.blob();
+      const url = URL.createObjectURL(resultBlob);
+      setImageURL(url); // set ให้ userImage เป็นรูปที่ไดคัทแล้ว
+    } catch (err) {
+      alert("เกิดข้อผิดพลาดในการลบพื้นหลัง");
+    }
+    setLoadingRemoveBg(false);
+  };
 
   return (
     <div className="w-screen h-[100svh] bg-gray-100 font-prompt flex justify-center items-center">
@@ -346,7 +394,10 @@ export default function CardPreview() {
                 {selected === "image" && userImage && (
                   <Transformer
                     ref={tr => tr && tr.nodes([imageRef.current])}
-                    enabledAnchors={["top-left", "top-right", "bottom-left", "bottom-right"]}
+                    enabledAnchors={[
+                      "top-left", "top-right", "bottom-left", "bottom-right",
+                      "middle-left", "middle-right", "top-center", "bottom-center"
+                    ]}
                     boundBoxFunc={(oldBox, newBox) => {
                       if (newBox.width < 50 || newBox.height < 50) {
                         return oldBox;
@@ -394,20 +445,35 @@ export default function CardPreview() {
                 )}
                 {wishName && template && (
                   <Text
-                    fontFamily={fontFamily} // 👈 เพิ่มตรงนี้
+                    fontFamily={fontFamily}
                     text={`– ${wishName}`}
-                    x={wishMessagePos?.x + 42} // หรือปรับ offset ตามต้องการ
-                    y={
-                      wishMessagePos?.y +
-                      (messageRef.current
-                        ? messageRef.current.getClientRect().height + 4
-                        : 20)
-                    }
-                    width={textElement?.width || 300}
+                    x={wishNamePos.x}
+                    y={wishNamePos.y}
+                    width={textWidth}
                     fontSize={12}
                     fill={fontColor}
                     fontStyle="600"
                     align="left"
+                    draggable
+                    onDragEnd={e => {
+                      const newPos = { x: e.target.x(), y: e.target.y() };
+                      setWishNamePos(newPos);
+                      localStorage.setItem("wishNamePos", JSON.stringify(newPos));
+                    }}
+                    onClick={() => setSelected("wishName")}
+                    onTap={() => setSelected("wishName")}
+                  />
+                )}
+                {selected === "wishName" && wishName && (
+                  <Transformer
+                    ref={tr => tr && tr.nodes([textRef.current])}
+                    enabledAnchors={["middle-left", "middle-right", "top-center", "bottom-center"]}
+                    boundBoxFunc={(oldBox, newBox) => {
+                      if (newBox.width < 30 || newBox.height < 10) {
+                        return oldBox;
+                      }
+                      return newBox;
+                    }}
                   />
                 )}
                 {textboxImage && template && (
@@ -462,18 +528,28 @@ export default function CardPreview() {
           <div className="flex justify-center gap-2 mb-6">
             <button
               onClick={() => {
-                setPosition({
-                  x: imageElement?.x,
-                  y: imageElement?.y,
-                });
+                setPosition({ x: imageElement?.x, y: imageElement?.y });
                 setScale(1);
-                setWishMessagePos({
-                  x: textElement?.x || 0,
-                  y: textElement?.y || 0,
-                });
+                setWishMessagePos({ x: textElement?.x || 0, y: textElement?.y || 0 });
                 setFontFamily("Prompt");
                 setFontColor("#333333");
                 setFrameShape("rectangle");
+                setWishNamePos({
+                  x: (textElement?.x || 0) + 42,
+                  y: (textElement?.y || 0) + 20,
+                });
+                setTextWidth(300);
+                setFontSize(24);
+                setImgProps({
+                  x: imageElement?.x || 60,
+                  y: imageElement?.y || 20,
+                  width: imageElement?.width || 300,
+                  height: imageElement?.height || 400,
+                  cropX: 0,
+                  cropY: 0,
+                  cropWidth: 0,
+                  cropHeight: 0,
+                });
               }}
               className="bg-white border px-4 py-2 rounded shadow-sm text-sm flex items-center gap-1"
             >
@@ -513,10 +589,11 @@ export default function CardPreview() {
 
             {/* ปุ่มลบ BG */}
             <button
-              onClick={() => setShowBackground((prev) => !prev)}
+              onClick={handleRemoveBg}
               className="bg-red-500 text-white text-xs px-3 py-1 rounded shadow-sm"
+              disabled={loadingRemoveBg}
             >
-              {showBackground ? "ลบ BG" : "แสดง BG"}
+              {loadingRemoveBg ? "กำลังลบ BG..." : "ลบ BG (ไดคัท)"}
             </button>
 
             {/* เปลี่ยนฟอนต์ */}
