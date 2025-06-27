@@ -8,9 +8,9 @@ import {
   Text,
   Rect,
   Transformer,
+  Shape,
 } from "react-konva";
 import { MdRefresh } from "react-icons/md";
-import { AiOutlineZoomIn, AiOutlineZoomOut } from "react-icons/ai";
 import { FaCheck } from "react-icons/fa";
 import axios from "axios";
 
@@ -82,6 +82,9 @@ export default function CardPreview() {
 
   const groupRef = useRef();
 
+  const [showShadow, setShowShadow] = useState(false);
+  const [showStroke, setShowStroke] = useState(false);
+
   useEffect(() => {
     const savedTemplateId = localStorage.getItem("templateId");
     const savedImage = localStorage.getItem("wishImage");
@@ -113,12 +116,6 @@ export default function CardPreview() {
   const [bgImage] = useImage(template?.background || "");
   const [textboxImage] = useImage(template?.textbox || "");
   const [frameImage] = useImage(template?.frame || "");
-
-  const handleZoom = (type) => {
-    setScale((prev) =>
-      type === "in" ? prev + 0.1 : Math.max(0.5, prev - 0.1)
-    );
-  };
 
   const handleConfirm = () => {
     localStorage.setItem("wishPosition", JSON.stringify(position));
@@ -180,6 +177,41 @@ export default function CardPreview() {
     }
   }, [template, textElement]);
 
+  // จัดวางรูปให้อยู่กลางเฟรมและขนาดพอดีอัตโนมัติเมื่ออัปโหลดรูปใหม่หรือเปลี่ยน template
+  useEffect(() => {
+    if (userImage && imageElement) {
+      const frameW = imageElement.width || 300;
+      const frameH = imageElement.height || 400;
+      const imgW = userImage.width;
+      const imgH = userImage.height;
+      const scale = Math.min(frameW / imgW, frameH / imgH, 1);
+      const newW = imgW * scale;
+      const newH = imgH * scale;
+      setImgProps({
+        x: imageElement.x + (frameW - newW) / 2,
+        y: imageElement.y + (frameH - newH) / 2,
+        width: newW,
+        height: newH,
+        cropX: 0,
+        cropY: 0,
+        cropWidth: 0,
+        cropHeight: 0,
+      });
+    }
+  }, [userImage, imageElement]);
+
+  // จัดตำแหน่งข้อความให้อยู่ใน textbox อัตโนมัติเมื่อเปลี่ยน template
+  useEffect(() => {
+    if (template && textElement) {
+      setWishMessagePos({
+        x: textElement.x,
+        y: textElement.y,
+      });
+      setTextWidth(textElement.width || 300);
+      setFontSize(textElement.fontSize || 24);
+    }
+  }, [template, textElement]);
+
   const handleRemoveBg = async () => {
     setLoadingRemoveBg(true);
     try {
@@ -209,6 +241,13 @@ export default function CardPreview() {
     }
     setLoadingRemoveBg(false);
   };
+
+  useEffect(() => {
+    localStorage.setItem("showShadow", showShadow ? "true" : "false");
+  }, [showShadow]);
+  useEffect(() => {
+    localStorage.setItem("showStroke", showStroke ? "true" : "false");
+  }, [showStroke]);
 
   return (
     <div className="w-screen h-[100svh] bg-gray-100 font-prompt flex justify-center items-center">
@@ -251,6 +290,105 @@ export default function CardPreview() {
                         template.textbox_height / textboxImage.height;
                       return Math.min(scaleX, scaleY);
                     })()}
+                  />
+                )}
+                {/* Shadow (เงา) วาดก่อน Group เพื่อไม่ถูก clip */}
+                {showShadow && (
+                  <Rect
+                    x={imgProps.x}
+                    y={imgProps.y}
+                    width={imgProps.width}
+                    height={imgProps.height}
+                    fill="transparent"
+                    shadowColor="#888"
+                    shadowBlur={24}
+                    shadowOffsetX={12}
+                    shadowOffsetY={12}
+                    shadowOpacity={0.5}
+                    listening={false}
+                    cornerRadius={frameShape === "circle" ? imgProps.width / 2 : 0}
+                  />
+                )}
+                {/* Stroke (ขอบ) วาดก่อน Group เพื่อไม่ถูก clip และตรงกับ frameShape */}
+                {showStroke && (
+                  <Shape
+                    sceneFunc={(ctx, shape) => {
+                      const w = imgProps.width;
+                      const h = imgProps.height;
+                      ctx.beginPath();
+                      if (frameShape === "circle") {
+                        const radius = Math.min(w, h) / 2;
+                        ctx.arc(imgProps.x + w / 2, imgProps.y + h / 2, radius, 0, Math.PI * 2, false);
+                      } else if (frameShape === "star") {
+                        const cx = imgProps.x + w / 2;
+                        const cy = imgProps.y + h / 2;
+                        const spikes = 5;
+                        const outerRadius = Math.min(w, h) / 2;
+                        const innerRadius = outerRadius / 2.5;
+                        let rot = (Math.PI / 2) * 3;
+                        let step = Math.PI / spikes;
+                        ctx.moveTo(cx, cy - outerRadius);
+                        for (let i = 0; i < spikes; i++) {
+                          ctx.lineTo(
+                            cx + Math.cos(rot) * outerRadius,
+                            cy + Math.sin(rot) * outerRadius
+                          );
+                          rot += step;
+                          ctx.lineTo(
+                            cx + Math.cos(rot) * innerRadius,
+                            cy + Math.sin(rot) * innerRadius
+                          );
+                          rot += step;
+                        }
+                        ctx.lineTo(cx, cy - outerRadius);
+                      } else if (frameShape === "heart") {
+                        // วาดหัวใจ
+                        ctx.moveTo(imgProps.x + w / 2, imgProps.y + h * 0.8);
+                        ctx.bezierCurveTo(imgProps.x + w * 1.1, imgProps.y + h * 0.5, imgProps.x + w * 0.8, imgProps.y + h * 0.05, imgProps.x + w / 2, imgProps.y + h * 0.3);
+                        ctx.bezierCurveTo(imgProps.x + w * 0.2, imgProps.y + h * 0.05, imgProps.x - w * 0.1, imgProps.y + h * 0.5, imgProps.x + w / 2, imgProps.y + h * 0.8);
+                        ctx.closePath();
+                      } else if (frameShape === "hexagon") {
+                        const cx = imgProps.x + w / 2;
+                        const cy = imgProps.y + h / 2;
+                        const r = Math.min(w, h) / 2;
+                        ctx.moveTo(cx + r * Math.cos(0), cy + r * Math.sin(0));
+                        for (let i = 1; i <= 6; i++) {
+                          ctx.lineTo(
+                            cx + r * Math.cos((i * 2 * Math.PI) / 6),
+                            cy + r * Math.sin((i * 2 * Math.PI) / 6)
+                          );
+                        }
+                        ctx.closePath();
+                      } else if (frameShape === "cloud") {
+                        ctx.arc(imgProps.x + w * 0.3, imgProps.y + h * 0.7, w * 0.18, Math.PI * 0.5, Math.PI * 1.5);
+                        ctx.arc(imgProps.x + w * 0.5, imgProps.y + h * 0.5, w * 0.22, Math.PI, Math.PI * 2);
+                        ctx.arc(imgProps.x + w * 0.7, imgProps.y + h * 0.7, w * 0.18, Math.PI * 1.5, Math.PI * 0.5);
+                        ctx.closePath();
+                      } else if (frameShape === "zigzag") {
+                        const steps = 8;
+                        const stepW = w / steps;
+                        ctx.moveTo(imgProps.x, imgProps.y + h);
+                        for (let i = 0; i < steps; i++) {
+                          ctx.lineTo(imgProps.x + stepW * i + stepW / 2, imgProps.y + h - (i % 2 === 0 ? 20 : 0));
+                          ctx.lineTo(imgProps.x + stepW * (i + 1), imgProps.y + h);
+                        }
+                        ctx.lineTo(imgProps.x + w, imgProps.y);
+                        ctx.lineTo(imgProps.x, imgProps.y);
+                        ctx.closePath();
+                      } else {
+                        // default: สี่เหลี่ยม
+                        ctx.moveTo(imgProps.x, imgProps.y);
+                        ctx.lineTo(imgProps.x + w, imgProps.y);
+                        ctx.lineTo(imgProps.x + w, imgProps.y + h);
+                        ctx.lineTo(imgProps.x, imgProps.y + h);
+                        ctx.closePath();
+                      }
+                      ctx.closePath();
+                      ctx.fillStrokeShape(shape);
+                    }}
+                    stroke="#000"
+                    strokeWidth={4}
+                    listening={false}
                   />
                 )}
                 {userImage && template && imageElement && (
@@ -353,7 +491,6 @@ export default function CardPreview() {
                     onClick={() => setSelected("image")}
                     onTap={() => setSelected("image")}
                   >
-                    <Rect width={imgProps.width} height={imgProps.height} visible={false} />
                     <KonvaImage
                       ref={imageRef}
                       image={userImage}
@@ -513,9 +650,35 @@ export default function CardPreview() {
           <div className="flex justify-center gap-2 mb-6">
             <button
               onClick={() => {
-                setPosition({ x: imageElement?.x, y: imageElement?.y });
-                setScale(1);
-                setWishMessagePos({ x: textElement?.x || 0, y: textElement?.y || 0 });
+                // รีเซ็ตตำแหน่ง/ขนาดรูปให้อยู่กลางเฟรมและขนาดพอดี
+                if (userImage && imageElement) {
+                  const frameW = imageElement.width || 300;
+                  const frameH = imageElement.height || 400;
+                  const imgW = userImage.width;
+                  const imgH = userImage.height;
+                  const scale = Math.min(frameW / imgW, frameH / imgH, 1);
+                  const newW = imgW * scale;
+                  const newH = imgH * scale;
+                  setImgProps({
+                    x: imageElement.x + (frameW - newW) / 2,
+                    y: imageElement.y + (frameH - newH) / 2,
+                    width: newW,
+                    height: newH,
+                    cropX: 0,
+                    cropY: 0,
+                    cropWidth: 0,
+                    cropHeight: 0,
+                  });
+                }
+                // รีเซ็ตข้อความให้อยู่ใน textbox
+                if (textElement) {
+                  setWishMessagePos({
+                    x: textElement.x,
+                    y: textElement.y,
+                  });
+                  setTextWidth(textElement.width || 300);
+                  setFontSize(textElement.fontSize || 24);
+                }
                 setFontFamily("Prompt");
                 setFontColor("#333333");
                 setFrameShape("rectangle");
@@ -523,35 +686,22 @@ export default function CardPreview() {
                   x: (textElement?.x || 0) + 42,
                   y: (textElement?.y || 0) + 20,
                 });
-                setTextWidth(300);
-                setFontSize(24);
-                setImgProps({
-                  x: imageElement?.x || 60,
-                  y: imageElement?.y || 20,
-                  width: imageElement?.width || 300,
-                  height: imageElement?.height || 400,
-                  cropX: 0,
-                  cropY: 0,
-                  cropWidth: 0,
-                  cropHeight: 0,
-                });
               }}
               className="bg-white border px-4 py-2 rounded shadow-sm text-sm flex items-center gap-1"
             >
               <MdRefresh /> รีเซ็ท
             </button>
-            <button
-              onClick={() => handleZoom("out")}
-              className="bg-blue-600 text-white px-4 py-2 rounded shadow-sm text-sm flex items-center gap-1"
-            >
-              <AiOutlineZoomOut /> ย่อรูป
-            </button>
-            <button
-              onClick={() => handleZoom("in")}
-              className="bg-blue-600 text-white px-4 py-2 rounded shadow-sm text-sm flex items-center gap-1"
-            >
-              <AiOutlineZoomIn /> ขยายรูป
-            </button>
+          </div>
+          {/* เพิ่ม checkbox สำหรับเงาและขอบ */}
+          <div className="flex gap-4 items-center mb-4">
+            <label className="flex items-center gap-1 text-sm">
+              <input type="checkbox" checked={showShadow} onChange={e => setShowShadow(e.target.checked)} />
+              เพิ่มเงา
+            </label>
+            <label className="flex items-center gap-1 text-sm">
+              <input type="checkbox" checked={showStroke} onChange={e => setShowStroke(e.target.checked)} />
+              เพิ่มเส้นขอบ
+            </label>
           </div>
           <div className="flex flex-wrap justify-center gap-2 mb-4">
             {/* เลือกรูปร่างเฟรม */}

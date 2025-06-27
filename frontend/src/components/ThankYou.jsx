@@ -43,7 +43,10 @@ export default function ThankYou() {
             >
               <FaImage /> ดูรูปคำอวยพร
             </button>
-            <button className="w-full bg-white border border-blue-500 py-2 rounded-full flex items-center justify-center gap-2 text-blue-700 font-medium shadow hover:bg-blue-50 transition-all">
+            <button
+              className="w-full bg-white border border-blue-500 py-2 rounded-full flex items-center justify-center gap-2 text-blue-700 font-medium shadow hover:bg-blue-50 transition-all"
+              onClick={() => navigate("/upload-slip")}
+            >
               <FaQrcode /> แนบสลิปพร้อมเพย์
             </button>
           </div>
