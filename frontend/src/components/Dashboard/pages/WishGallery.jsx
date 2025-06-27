@@ -1,26 +1,46 @@
-import React from "react";
+import React, { useState } from "react";
+import FolderDetailDialog from "./FolderDetailDialog"; // 👈 import component ป๊อปอัป
 
 export default function WishGalleryListMockup() {
+  const [openDialog, setOpenDialog] = useState(false);
+  const [selectedFolder, setSelectedFolder] = useState(null);
+
   const events = [
     {
       id: 1,
       title: "งานแต่งโจ้ & จูน",
+      subtitle: "ภาพรวมงานฟรี",
+      event: "Jo & June Wedding",
       cover_image: "https://res.cloudinary.com/demo/image/upload/sample.jpg",
       wish_count: 12,
     },
     {
       id: 2,
       title: "งานหมั้นบี & เบิร์ด",
+      subtitle: "อวยพรบ่าวสาว",
+      event: "B&B Engagement",
       cover_image: "https://res.cloudinary.com/demo/image/upload/sample.jpg",
       wish_count: 8,
     },
     {
       id: 3,
       title: "งานแต่งมิว & นัท",
+      subtitle: "รวมคำอวยพรจากแขก",
+      event: "Mew & Nut Wedding",
       cover_image: "https://res.cloudinary.com/demo/image/upload/sample.jpg",
       wish_count: 15,
     },
   ];
+
+  const handleOpenFolder = (folder) => {
+    setSelectedFolder({
+      name: folder.title,
+      subtitle: folder.subtitle,
+      event: folder.event,
+      itemsCount: folder.wish_count,
+    });
+    setOpenDialog(true);
+  };
 
   return (
     <div className="font-prompt min-h-screen bg-gradient-to-br from-pink-50 to-yellow-50 p-6">
@@ -51,7 +71,7 @@ export default function WishGalleryListMockup() {
                 </h2>
                 <button
                   className="mt-3 bg-pink-500 hover:bg-pink-600 text-white text-sm px-4 py-2 rounded-full shadow"
-                  onClick={() => alert(`ไปยังงาน ID: ${event.id}`)}
+                  onClick={() => handleOpenFolder(event)}
                 >
                   ดูคำอวยพรทั้งหมด
                 </button>
@@ -66,6 +86,16 @@ export default function WishGalleryListMockup() {
           )}
         </div>
       </div>
+
+      {/* 🔍 Dialog แสดงอัลบั้ม */}
+      <FolderDetailDialog
+        isOpen={openDialog}
+        onOpenChange={setOpenDialog}
+        folder={selectedFolder}
+        onImageClick={(imgUrl, allImgs, index) =>
+          console.log("Clicked:", imgUrl)
+        }
+      />
     </div>
   );
 }
