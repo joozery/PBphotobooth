@@ -27,20 +27,24 @@ export default function WishConfirm() {
   const [loading, setLoading] = useState(false);
   const [template, setTemplate] = useState(null);
   const [wishMessagePos, setWishMessagePos] = useState(null);
+  const [event, setEvent] = useState(null);
 
   const imageElement = template?.elements?.find((el) => el.type === "image");
   const textElement = template?.elements?.find((el) => el.type === "text");
   // Local data
   const templateId = localStorage.getItem("templateId");
-  const eventId = localStorage.getItem("eventId"); // ✅ ดึง eventId
+  const eventId = localStorage.getItem("eventId");
   const image = localStorage.getItem("wishImage") || "/sample-image.png";
   const name = localStorage.getItem("wishName") || "ชื่อของคุณ";
-  const message =
-    localStorage.getItem("wishMessage") || "ข้อความอวยพรของคุณ...";
-  const position = JSON.parse(
-    localStorage.getItem("wishPosition") || '{"x":60,"y":60}'
-  );
+  const message = localStorage.getItem("wishMessage") || "ข้อความอวยพรของคุณ...";
+  const wishMessagePosValue = JSON.parse(localStorage.getItem("wishMessagePos") || '{"x":60,"y":60}');
+  const wishMessageWidth = parseFloat(localStorage.getItem("wishMessageWidth") || "300");
+  const wishFontSize = parseFloat(localStorage.getItem("wishFontSize") || "24");
+  const fontFamily = localStorage.getItem("wishFontFamily") || "Prompt";
+  const fontColor = localStorage.getItem("wishFontColor") || "#333";
+  const frameShape = localStorage.getItem("wishFrameShape") || "rectangle";
   const scale = parseFloat(localStorage.getItem("wishScale") || "1");
+  const imgProps = JSON.parse(localStorage.getItem("imgProps") || '{}');
   const side = localStorage.getItem("side");
   const agree = localStorage.getItem("agree");
 
@@ -50,6 +54,17 @@ export default function WishConfirm() {
   const [textboxImage] = useImage(template?.textbox || "");
   const [frameImage] = useImage(template?.frame || "");
 
+  // ใช้ wishMessagePosState สำหรับ state ภายใน component
+  const [wishMessagePosState, setWishMessagePosState] = useState(wishMessagePosValue);
+
+  // เพิ่มการดึง cover_image2 จาก template หรือ event
+  const coverImage2 =
+    event?.cover_image2 ||
+    event?.coverImage2 ||
+    template?.cover_image2 ||
+    template?.coverImage2 ||
+    null;
+
   useEffect(() => {
     if (templateId) {
       axios.get(`${BASE_URL}/api/templates/${templateId}`).then((res) => {
@@ -57,6 +72,14 @@ export default function WishConfirm() {
       });
     }
   }, [templateId]);
+
+  useEffect(() => {
+    if (eventId) {
+      axios.get(`${BASE_URL}/api/events/${eventId}`).then((res) => {
+        setEvent(res.data);
+      });
+    }
+  }, [eventId]);
 
   const { containerProps, indicatorEl } = useLoading({
     loading,
@@ -111,7 +134,6 @@ export default function WishConfirm() {
     if (savedPos) {
       setWishMessagePos(JSON.parse(savedPos));
     } else if (textElement) {
-      // ถ้าไม่มี localStorage ให้ใช้ค่าเริ่มต้นจาก template
       setWishMessagePos({
         x: textElement.x,
         y: textElement.y,
@@ -120,7 +142,14 @@ export default function WishConfirm() {
   }, [template, textElement]);
 
   return (
-    <div className="w-screen h-[100svh] bg-gray-100 text-white font-prompt flex flex-col justify-center items-center px-4">
+    <div
+      className="w-screen h-[100svh] text-white font-prompt flex flex-col justify-center items-center px-4"
+      style={{
+        background: coverImage2
+          ? `url(${coverImage2}) center center / cover no-repeat`
+          : 'linear-gradient(to bottom right, #fef9c3, #bae6fd)',
+      }}
+    >
       <div
             className="text-sm text-blue-700 font-medium mb-1 cursor-pointer mb-3"
             onClick={() => navigate(-1)}
@@ -151,58 +180,56 @@ export default function WishConfirm() {
                 })()}
               />
             )}
-            {message && template && (
+            {message && template && wishMessagePosState && (
               <Text
                 ref={messageRef}
-                fontFamily={localStorage.getItem("wishFontFamily") || "Prompt"}
+                fontFamily={fontFamily}
                 text={message}
-                x={wishMessagePos.x}
-                y={wishMessagePos.y}
-                width={textElement?.width} // ลดให้ balance กับ x + ml
-                // height={100}
-                fontSize={textElement?.fontSize || 16}
-                fill={localStorage.getItem("wishFontColor") || "#333"}
-                align="center" // คล้าย <p> ปกติใน HTML ที่ align left
-                lineHeight={1.5} // ปรับให้ดูสบายตา
-                wrap="word" // ตัดคำอัตโนมัติ
+                x={wishMessagePosState.x}
+                y={wishMessagePosState.y}
+                width={wishMessageWidth}
+                fontSize={wishFontSize}
+                fill={fontColor}
+                align="center"
+                lineHeight={1.5}
+                wrap="word"
               />
             )}
 
-            {name && template && (
+            {name && template && wishMessagePosState && (
               <Text
-                fontFamily={localStorage.getItem("wishFontFamily") || "Prompt"}
+                fontFamily={fontFamily}
                 text={`– ${name}`}
-                x={wishMessagePos.x + 42}
+                x={wishMessagePosState.x + 42}
                 y={
                   messageRef.current
                     ? messageRef.current.getClientRect().y +
                       messageRef.current.getClientRect().height +
                       4
-                    : wishMessagePos.y + 20
+                    : wishMessagePosState.y + 20
                 }
-                width={textElement?.width || 300}
+                width={wishMessageWidth}
                 fontSize={12}
-                fill={localStorage.getItem("wishFontColor") || "#333"}
+                fill={fontColor}
                 fontStyle="600"
                 align="left"
               />
             )}
-            {userImage && template && imageElement && (
+            {userImage && template && imageElement && imgProps && imgProps.width && imgProps.height && (
               <Group
-                x={position.x}
-                y={position.y}
-                scaleX={scale}
-                scaleY={scale}
-                clipFunc={(ctx) => {
-                  const w = imageElement.width;
-                  const h = imageElement.height;
+                x={imgProps.x}
+                y={imgProps.y}
+                draggable={false}
+                scaleX={1}
+                scaleY={1}
+                clipFunc={ctx => {
+                  const w = imgProps.width;
+                  const h = imgProps.height;
                   ctx.beginPath();
-                  if (localStorage.getItem("wishFrameShape") === "circle") {
+                  if (frameShape === "circle") {
                     const radius = Math.min(w, h) / 2;
                     ctx.arc(w / 2, h / 2, radius, 0, Math.PI * 2, false);
-                  } else if (
-                    localStorage.getItem("wishFrameShape") === "star"
-                  ) {
+                  } else if (frameShape === "star") {
                     const cx = w / 2;
                     const cy = h / 2;
                     const spikes = 5;
@@ -210,7 +237,6 @@ export default function WishConfirm() {
                     const innerRadius = outerRadius / 2.5;
                     let rot = (Math.PI / 2) * 3;
                     let step = Math.PI / spikes;
-
                     ctx.moveTo(cx, cy - outerRadius);
                     for (let i = 0; i < spikes; i++) {
                       ctx.lineTo(
@@ -218,7 +244,6 @@ export default function WishConfirm() {
                         cy + Math.sin(rot) * outerRadius
                       );
                       rot += step;
-
                       ctx.lineTo(
                         cx + Math.cos(rot) * innerRadius,
                         cy + Math.sin(rot) * innerRadius
@@ -226,58 +251,60 @@ export default function WishConfirm() {
                       rot += step;
                     }
                     ctx.lineTo(cx, cy - outerRadius);
+                  } else if (frameShape === "heart") {
+                    ctx.moveTo(w / 2, h * 0.8);
+                    ctx.bezierCurveTo(w * 1.1, h * 0.5, w * 0.8, h * 0.05, w / 2, h * 0.3);
+                    ctx.bezierCurveTo(w * 0.2, h * 0.05, -w * 0.1, h * 0.5, w / 2, h * 0.8);
+                  } else if (frameShape === "hexagon") {
+                    const cx = w / 2;
+                    const cy = h / 2;
+                    const r = Math.min(w, h) / 2;
+                    ctx.moveTo(cx + r * Math.cos(0), cy + r * Math.sin(0));
+                    for (let i = 1; i <= 6; i++) {
+                      ctx.lineTo(
+                        cx + r * Math.cos((i * 2 * Math.PI) / 6),
+                        cy + r * Math.sin((i * 2 * Math.PI) / 6)
+                      );
+                    }
+                  } else if (frameShape === "cloud") {
+                    ctx.arc(w * 0.3, h * 0.7, w * 0.18, Math.PI * 0.5, Math.PI * 1.5);
+                    ctx.arc(w * 0.5, h * 0.5, w * 0.22, Math.PI, Math.PI * 2);
+                    ctx.arc(w * 0.7, h * 0.7, w * 0.18, Math.PI * 1.5, Math.PI * 0.5);
+                    ctx.closePath();
+                  } else if (frameShape === "zigzag") {
+                    const steps = 8;
+                    const stepW = w / steps;
+                    ctx.moveTo(0, h);
+                    for (let i = 0; i < steps; i++) {
+                      ctx.lineTo(stepW * i + stepW / 2, h - (i % 2 === 0 ? 20 : 0));
+                      ctx.lineTo(stepW * (i + 1), h);
+                    }
+                    ctx.lineTo(w, 0);
+                    ctx.lineTo(0, 0);
+                    ctx.closePath();
                   } else {
-                    const r = 4;
-                    ctx.moveTo(r, 0);
-                    ctx.lineTo(w - r, 0);
-                    ctx.quadraticCurveTo(w, 0, w, r);
-                    ctx.lineTo(w, h - r);
-                    ctx.quadraticCurveTo(w, h, w - r, h);
-                    ctx.lineTo(r, h);
-                    ctx.quadraticCurveTo(0, h, 0, h - r);
-                    ctx.lineTo(0, r);
-                    ctx.quadraticCurveTo(0, 0, r, 0);
+                    ctx.moveTo(0, 0);
+                    ctx.lineTo(w, 0);
+                    ctx.lineTo(w, h);
+                    ctx.lineTo(0, h);
+                    ctx.closePath();
                   }
-                  ctx.closePath();
                 }}
               >
-                {userImage &&
-                  (() => {
-                    // คำนวณ object-cover
-                    const iw = userImage.width;
-                    const ih = userImage.height;
-                    const cw = imageElement.width;
-                    const ch = imageElement.height;
-
-                    const imageRatio = iw / ih;
-                    const containerRatio = cw / ch;
-
-                    let width, height, offsetX, offsetY;
-
-                    if (imageRatio > containerRatio) {
-                      // ภาพกว้างเกินไป → fit height
-                      height = ch;
-                      width = ch * imageRatio;
-                      offsetX = (cw - width) / 2;
-                      offsetY = 0;
-                    } else {
-                      // ภาพแคบเกินไป → fit width
-                      width = cw;
-                      height = cw / imageRatio;
-                      offsetX = 0;
-                      offsetY = (ch - height) / 2;
-                    }
-
-                    return (
-                      <KonvaImage
-                        image={userImage}
-                        x={offsetX}
-                        y={offsetY}
-                        width={width}
-                        height={height}
-                      />
-                    );
-                  })()}
+                <KonvaImage
+                  image={userImage}
+                  x={imgProps.offsetX || 0}
+                  y={imgProps.offsetY || 0}
+                  width={imgProps.width}
+                  height={imgProps.height}
+                  crop={{
+                    x: imgProps.cropX || 0,
+                    y: imgProps.cropY || 0,
+                    width: imgProps.cropWidth || userImage.width,
+                    height: imgProps.cropHeight || userImage.height,
+                  }}
+                  draggable={false}
+                />
               </Group>
             )}
             {frameImage && template && (
@@ -307,7 +334,7 @@ export default function WishConfirm() {
           )}
         </button>
         <div
-          className="mt-4 text-center text-sm underline cursor-pointer"
+          className="mt-4 text-center text-sm underline cursor-pointer text-blue-700 hover:text-blue-900"
           onClick={() => navigate(-1)}
         >
           ย้อนกลับ

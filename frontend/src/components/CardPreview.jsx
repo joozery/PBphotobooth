@@ -7,6 +7,7 @@ import {
   Image as KonvaImage,
   Text,
   Rect,
+  Transformer,
 } from "react-konva";
 import { MdRefresh } from "react-icons/md";
 import { AiOutlineZoomIn, AiOutlineZoomOut } from "react-icons/ai";
@@ -48,6 +49,25 @@ export default function CardPreview() {
 
   const imageElement = template?.elements?.find((el) => el.type === "image");
   const textElement = template?.elements?.find((el) => el.type === "text");
+
+  const imageRef = useRef();
+  const textRef = useRef();
+  const [selected, setSelected] = useState(null);
+
+  const [textWidth, setTextWidth] = useState(300); // กว้างเริ่มต้น
+  const [fontSize, setFontSize] = useState(24); // ขนาดฟอนต์เริ่มต้น
+
+  // --- state สำหรับ crop ---
+  const [imgProps, setImgProps] = useState({
+    x: imageElement?.x || 60,
+    y: imageElement?.y || 20,
+    width: imageElement?.width || 300,
+    height: imageElement?.height || 400,
+    cropX: 0,
+    cropY: 0,
+    cropWidth: 0,
+    cropHeight: 0,
+  });
 
   useEffect(() => {
     const savedTemplateId = localStorage.getItem("templateId");
@@ -94,6 +114,9 @@ export default function CardPreview() {
     localStorage.setItem("wishFontFamily", fontFamily);
     localStorage.setItem("wishFontColor", fontColor);
     localStorage.setItem("wishFrameShape", frameShape);
+    localStorage.setItem("wishMessageWidth", textWidth.toString());
+    localStorage.setItem("wishFontSize", fontSize.toString());
+    localStorage.setItem("imgProps", JSON.stringify(imgProps));
     if (eventId) {
       navigate("/confirm");
     } else {
@@ -105,26 +128,6 @@ export default function CardPreview() {
     setPosition({ x: e.target.x(), y: e.target.y() });
   };
 
-  // useEffect(() => {
-  //   if (template) {
-  //     setPosition({
-  //       x: imageElement?.x,
-  //       y: imageElement?.y,
-  //     });
-  //   }
-  //   if (template && textElement) {
-  //     // ถ้า wishMessagePos ยังเป็น (0,0) หรือเพิ่งโหลด template ให้ตั้งค่าเริ่ม
-  //     setWishMessagePos({
-  //       x: textElement.x,
-  //       y: textElement.y,
-  //     });
-  //   }
-
-  //   const savedMsgPos = localStorage.getItem("wishMessagePos");
-  //   if (savedMsgPos) {
-  //     setWishMessagePos(JSON.parse(savedMsgPos));
-  //   }
-  // }, [imageElement?.x, imageElement?.y, template]);
   useEffect(() => {
     if (template && textElement) {
       // โหลด wishMessagePos
@@ -195,38 +198,200 @@ export default function CardPreview() {
                     })()}
                   />
                 )}
-                {wishMessage && template && (
-                  <Text
-                    ref={messageRef}
-                    fontFamily={fontFamily}
-                    text={wishMessage}
-                    // x={textElement?.x}
-                    // y={textElement?.y}
-                    x={wishMessagePos?.x}
-                    y={wishMessagePos?.y}
-                    width={textElement?.width}
-                    fontSize={textElement?.fontSize || 16}
-                    fill={fontColor}
-                    align="center"
-                    lineHeight={1.5}
-                    wrap="word"
+                {userImage && template && imageElement && (
+                  <Group
+                    x={imgProps.x}
+                    y={imgProps.y}
                     draggable
-                    onDragEnd={(e) => {
-                      const newX = e.target.x();
-                      const newY = e.target.y();
-                      setWishMessagePos({ x: newX, y: newY });
+                    onDragEnd={e => setImgProps(prev => ({ ...prev, x: e.target.x(), y: e.target.y() }))}
+                    onClick={() => setSelected("image")}
+                    onTap={() => setSelected("image")}
+                    scaleX={1}
+                    scaleY={1}
+                    clipFunc={ctx => {
+                      const w = imgProps.width;
+                      const h = imgProps.height;
+                      ctx.beginPath();
+                      if (frameShape === "circle") {
+                        const radius = Math.min(w, h) / 2;
+                        ctx.arc(w / 2, h / 2, radius, 0, Math.PI * 2, false);
+                      } else if (frameShape === "star") {
+                        const cx = w / 2;
+                        const cy = h / 2;
+                        const spikes = 5;
+                        const outerRadius = Math.min(w, h) / 2;
+                        const innerRadius = outerRadius / 2.5;
+                        let rot = (Math.PI / 2) * 3;
+                        let step = Math.PI / spikes;
+                        ctx.moveTo(cx, cy - outerRadius);
+                        for (let i = 0; i < spikes; i++) {
+                          ctx.lineTo(
+                            cx + Math.cos(rot) * outerRadius,
+                            cy + Math.sin(rot) * outerRadius
+                          );
+                          rot += step;
+                          ctx.lineTo(
+                            cx + Math.cos(rot) * innerRadius,
+                            cy + Math.sin(rot) * innerRadius
+                          );
+                          rot += step;
+                        }
+                        ctx.lineTo(cx, cy - outerRadius);
+                      } else if (frameShape === "heart") {
+                        ctx.moveTo(w / 2, h * 0.8);
+                        ctx.bezierCurveTo(w * 1.1, h * 0.5, w * 0.8, h * 0.05, w / 2, h * 0.3);
+                        ctx.bezierCurveTo(w * 0.2, h * 0.05, -w * 0.1, h * 0.5, w / 2, h * 0.8);
+                      } else if (frameShape === "hexagon") {
+                        const cx = w / 2;
+                        const cy = h / 2;
+                        const r = Math.min(w, h) / 2;
+                        ctx.moveTo(cx + r * Math.cos(0), cy + r * Math.sin(0));
+                        for (let i = 1; i <= 6; i++) {
+                          ctx.lineTo(
+                            cx + r * Math.cos((i * 2 * Math.PI) / 6),
+                            cy + r * Math.sin((i * 2 * Math.PI) / 6)
+                          );
+                        }
+                      } else if (frameShape === "cloud") {
+                        // วาดเมฆแบบง่าย
+                        ctx.arc(w * 0.3, h * 0.7, w * 0.18, Math.PI * 0.5, Math.PI * 1.5);
+                        ctx.arc(w * 0.5, h * 0.5, w * 0.22, Math.PI, Math.PI * 2);
+                        ctx.arc(w * 0.7, h * 0.7, w * 0.18, Math.PI * 1.5, Math.PI * 0.5);
+                        ctx.closePath();
+                      } else if (frameShape === "zigzag") {
+                        // วาดฟันปลา
+                        const steps = 8;
+                        const stepW = w / steps;
+                        ctx.moveTo(0, h);
+                        for (let i = 0; i < steps; i++) {
+                          ctx.lineTo(stepW * i + stepW / 2, h - (i % 2 === 0 ? 20 : 0));
+                          ctx.lineTo(stepW * (i + 1), h);
+                        }
+                        ctx.lineTo(w, 0);
+                        ctx.lineTo(0, 0);
+                        ctx.closePath();
+                      } else {
+                        // rectangle
+                        ctx.moveTo(0, 0);
+                        ctx.lineTo(w, 0);
+                        ctx.lineTo(w, h);
+                        ctx.lineTo(0, h);
+                        ctx.closePath();
+                      }
                     }}
-                    onMouseEnter={(e) => {
-                      const container = e.target.getStage().container();
-                      container.style.cursor = "grab"; // 👈 เปลี่ยนเป็นมือ
-                    }}
-                    onMouseLeave={(e) => {
-                      const container = e.target.getStage().container();
-                      container.style.cursor = "default"; // 👈 กลับเป็นปกติ
+                  >
+                    <KonvaImage
+                      ref={imageRef}
+                      image={userImage}
+                      x={imgProps.x}
+                      y={imgProps.y}
+                      width={imgProps.width}
+                      height={imgProps.height}
+                      crop={{
+                        x: imgProps.cropX,
+                        y: imgProps.cropY,
+                        width: imgProps.cropWidth || userImage.width,
+                        height: imgProps.cropHeight || userImage.height,
+                      }}
+                      draggable
+                      onClick={() => setSelected("image")}
+                      onTap={() => setSelected("image")}
+                      onDragEnd={e => setImgProps(prev => ({ ...prev, x: e.target.x(), y: e.target.y() }))}
+                      onTransformEnd={e => {
+                        const node = imageRef.current;
+                        const scaleX = node.scaleX();
+                        const scaleY = node.scaleY();
+                        // ปรับขนาดใหม่
+                        setImgProps(prev => ({
+                          ...prev,
+                          x: node.x(),
+                          y: node.y(),
+                          width: Math.max(50, node.width() * scaleX),
+                          height: Math.max(50, node.height() * scaleY),
+                        }));
+                        node.scaleX(1);
+                        node.scaleY(1);
+                      }}
+                      // ปรับ crop ให้ cover กรอบ
+                      onLoad={e => {
+                        const iw = userImage.width;
+                        const ih = userImage.height;
+                        const cw = imgProps.width;
+                        const ch = imgProps.height;
+                        const imageRatio = iw / ih;
+                        const containerRatio = cw / ch;
+                        let cropWidth, cropHeight, cropX, cropY;
+                        if (imageRatio > containerRatio) {
+                          cropHeight = ih;
+                          cropWidth = ih * containerRatio;
+                          cropX = (iw - cropWidth) / 2;
+                          cropY = 0;
+                        } else {
+                          cropWidth = iw;
+                          cropHeight = iw / containerRatio;
+                          cropX = 0;
+                          cropY = (ih - cropHeight) / 2;
+                        }
+                        setImgProps(prev => ({
+                          ...prev,
+                          cropX,
+                          cropY,
+                          cropWidth,
+                          cropHeight,
+                        }));
+                      }}
+                    />
+                  </Group>
+                )}
+                {selected === "image" && userImage && (
+                  <Transformer
+                    ref={tr => tr && tr.nodes([imageRef.current])}
+                    enabledAnchors={["top-left", "top-right", "bottom-left", "bottom-right"]}
+                    boundBoxFunc={(oldBox, newBox) => {
+                      if (newBox.width < 50 || newBox.height < 50) {
+                        return oldBox;
+                      }
+                      return newBox;
                     }}
                   />
                 )}
-
+                {wishMessage && template && (
+                  <Text
+                    ref={textRef}
+                    text={wishMessage}
+                    x={wishMessagePos?.x}
+                    y={wishMessagePos?.y}
+                    width={textWidth}
+                    fontSize={fontSize}
+                    fontFamily={fontFamily}
+                    fill={fontColor}
+                    wrap="word"
+                    align="center"
+                    draggable
+                    onClick={() => setSelected("text")}
+                    onTap={() => setSelected("text")}
+                    onDragEnd={e => setWishMessagePos({ x: e.target.x(), y: e.target.y() })}
+                    onTransformEnd={e => {
+                      const node = textRef.current;
+                      setTextWidth(node.width() * node.scaleX());
+                      setFontSize(fontSize * node.scaleY());
+                      node.scaleX(1);
+                      node.scaleY(1);
+                    }}
+                  />
+                )}
+                {selected === "text" && wishMessage && (
+                  <Transformer
+                    ref={tr => tr && tr.nodes([textRef.current])}
+                    enabledAnchors={["top-left", "top-right", "bottom-left", "bottom-right"]}
+                    boundBoxFunc={(oldBox, newBox) => {
+                      if (newBox.width < 50 || newBox.height < 20) {
+                        return oldBox;
+                      }
+                      return newBox;
+                    }}
+                  />
+                )}
                 {wishName && template && (
                   <Text
                     fontFamily={fontFamily} // 👈 เพิ่มตรงนี้
@@ -245,102 +410,26 @@ export default function CardPreview() {
                     align="left"
                   />
                 )}
-                {userImage && template && imageElement && (
-                  <Group
-                    x={position.x}
-                    y={position.y}
-                    draggable
-                    onDragEnd={handleDragEnd}
-                    onMouseEnter={(e) => {
-                      const container = e.target.getStage().container();
-                      container.style.cursor = "grab"; // 👈 เปลี่ยนเป็นมือ
-                    }}
-                    onMouseLeave={(e) => {
-                      const container = e.target.getStage().container();
-                      container.style.cursor = "default"; // 👈 กลับเป็นปกติ
-                    }}
-                    scaleX={scale}
-                    scaleY={scale}
-                    clipFunc={(ctx) => {
-                      const w = imageElement.width;
-                      const h = imageElement.height;
-                      ctx.beginPath();
-                      if (frameShape === "circle") {
-                        const radius = Math.min(w, h) / 2;
-                        ctx.arc(w / 2, h / 2, radius, 0, Math.PI * 2, false);
-                      } else if (frameShape === "star") {
-                        const cx = w / 2;
-                        const cy = h / 2;
-                        const spikes = 5;
-                        const outerRadius = Math.min(w, h) / 2;
-                        const innerRadius = outerRadius / 2.5;
-                        let rot = (Math.PI / 2) * 3;
-                        let step = Math.PI / spikes;
-
-                        ctx.moveTo(cx, cy - outerRadius);
-                        for (let i = 0; i < spikes; i++) {
-                          ctx.lineTo(
-                            cx + Math.cos(rot) * outerRadius,
-                            cy + Math.sin(rot) * outerRadius
-                          );
-                          rot += step;
-                          ctx.lineTo(
-                            cx + Math.cos(rot) * innerRadius,
-                            cy + Math.sin(rot) * innerRadius
-                          );
-                          rot += step;
-                        }
-                        ctx.lineTo(cx, cy - outerRadius);
-                      } else {
-                        const r = 4;
-                        ctx.moveTo(r, 0);
-                        ctx.lineTo(w - r, 0);
-                        ctx.quadraticCurveTo(w, 0, w, r);
-                        ctx.lineTo(w, h - r);
-                        ctx.quadraticCurveTo(w, h, w - r, h);
-                        ctx.lineTo(r, h);
-                        ctx.quadraticCurveTo(0, h, 0, h - r);
-                        ctx.lineTo(0, r);
-                        ctx.quadraticCurveTo(0, 0, r, 0);
-                      }
-                      ctx.closePath();
-                    }}
-                  >
-                    {/* วาด userImage ด้วย object-cover เหมือนเดิม */}
-                    {(() => {
-                      const iw = userImage.width;
-                      const ih = userImage.height;
-                      const cw = imageElement.width;
-                      const ch = imageElement.height;
-
-                      const imageRatio = iw / ih;
-                      const containerRatio = cw / ch;
-
-                      let width, height, offsetX, offsetY;
-
-                      if (imageRatio > containerRatio) {
-                        height = ch;
-                        width = ch * imageRatio;
-                        offsetX = (cw - width) / 2;
-                        offsetY = 0;
-                      } else {
-                        width = cw;
-                        height = cw / imageRatio;
-                        offsetX = 0;
-                        offsetY = (ch - height) / 2;
-                      }
-
-                      return (
-                        <KonvaImage
-                          image={userImage}
-                          x={offsetX}
-                          y={offsetY}
-                          width={width}
-                          height={height}
-                        />
-                      );
+                {textboxImage && template && (
+                  <KonvaImage
+                    image={textboxImage}
+                    x={template.textbox_x + 10}
+                    y={template.textbox_y}
+                    scaleX={(() => {
+                      const scaleX =
+                        template.textbox_width / textboxImage.width;
+                      const scaleY =
+                        template.textbox_height / textboxImage.height;
+                      return Math.min(scaleX, scaleY);
                     })()}
-                  </Group>
+                    scaleY={(() => {
+                      const scaleX =
+                        template.textbox_width / textboxImage.width;
+                      const scaleY =
+                        template.textbox_height / textboxImage.height;
+                      return Math.min(scaleX, scaleY);
+                    })()}
+                  />
                 )}
                 {frameImage && template && (
                   <>
@@ -409,14 +498,16 @@ export default function CardPreview() {
               <label className="text-sm">เฟรม:</label>
               <select
                 value={frameShape}
-                onChange={(e) => {
-                  setFrameShape(e.target.value);
-                }}
+                onChange={(e) => setFrameShape(e.target.value)}
                 className="text-sm border rounded p-1"
               >
                 <option value="rectangle">สี่เหลี่ยม</option>
                 <option value="circle">วงกลม</option>
                 <option value="star">ดาว</option>
+                <option value="heart">หัวใจ</option>
+                <option value="hexagon">หกเหลี่ยม</option>
+                <option value="cloud">เมฆ</option>
+                <option value="zigzag">ฟันปลา</option>
               </select>
             </div>
 
