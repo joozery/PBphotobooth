@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useLoading, Oval } from "@agney/react-loading";
 import { Group, Stage, Layer, Image as KonvaImage, Text } from "react-konva";
 import axios from "axios";
+import Swal from "sweetalert2";
 
 const BASE_URL =
   import.meta.env.VITE_API_BASE_URL ||
@@ -48,6 +49,8 @@ export default function WishConfirm() {
   const side = localStorage.getItem("side");
   const agree = localStorage.getItem("agree");
   const wishNamePos = JSON.parse(localStorage.getItem("wishNamePos") || '{"x":42,"y":20}');
+  const wishNameWidth = parseFloat(localStorage.getItem("wishNameWidth") || "150");
+  const wishNameFontSize = parseFloat(localStorage.getItem("wishNameFontSize") || "12");
 
   // Image hooks
   const [userImage] = useImage(image);
@@ -117,14 +120,37 @@ export default function WishConfirm() {
         localStorage.removeItem("side");
         localStorage.removeItem("agree");
         localStorage.removeItem("templateId");
-        alert("ส่งคำอวยพรเรียบร้อย!");
+        localStorage.removeItem("wishMessagePos");
+        localStorage.removeItem("wishMessageWidth");
+        localStorage.removeItem("wishFontSize");
+        localStorage.removeItem("wishFontFamily");
+        localStorage.removeItem("wishFontColor");
+        localStorage.removeItem("wishFrameShape");
+        localStorage.removeItem("imgProps");
+        localStorage.removeItem("wishNamePos");
+        localStorage.removeItem("wishNameWidth");
+        localStorage.removeItem("wishNameFontSize");
+        await Swal.fire({
+          icon: "success",
+          title: "ส่งคำอวยพรเรียบร้อย!",
+          showConfirmButton: false,
+          timer: 1800
+        });
         navigate(`/thankyou/${eventId}`);
       } else {
-        alert("เกิดข้อผิดพลาดในการส่งคำอวยพร");
+        await Swal.fire({
+          icon: "error",
+          title: "เกิดข้อผิดพลาดในการส่งคำอวยพร",
+          text: response.data.message || "ไม่สามารถส่งคำอวยพรได้",
+        });
       }
     } catch (error) {
       console.error("❌ ส่งคำอวยพร error:", error);
-      alert("เกิดข้อผิดพลาดในการส่งคำอวยพร");
+      await Swal.fire({
+        icon: "error",
+        title: "เกิดข้อผิดพลาดในการส่งคำอวยพร",
+        text: error.message || "ไม่สามารถเชื่อมต่อ API ได้",
+      });
     } finally {
       setLoading(false);
     }
@@ -203,8 +229,8 @@ export default function WishConfirm() {
                 text={`– ${name}`}
                 x={wishNamePos.x}
                 y={wishNamePos.y}
-                width={wishMessageWidth}
-                fontSize={12}
+                width={wishNameWidth}
+                fontSize={wishNameFontSize}
                 fill={fontColor}
                 fontStyle="600"
                 align="left"

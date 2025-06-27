@@ -12,6 +12,14 @@ import {
   FaRing,
 } from "react-icons/fa";
 import { IoIosFemale, IoMdFemale } from "react-icons/io";
+import beerIcon from "../assets/icons/beer.png";
+import femaleIcon from "../assets/icons/female.png";
+import maleIcon from "../assets/icons/male.png";
+import manthaiIcon from "../assets/icons/manthai.png";
+import thaicolorIcon from "../assets/icons/thaicolor.png";
+import wineIcon from "../assets/icons/wine.png";
+import womancolorIcon from "../assets/icons/womancolor.png";
+import woomanthaiIcon from "../assets/icons/woomanthai.png";
 
 const BASE_URL =
   import.meta.env.VITE_API_BASE_URL ||
@@ -28,6 +36,17 @@ const iconMap = {
   FaRing,
   IoIosFemale,
   IoMdFemale,
+};
+
+const iconImageOptions = {
+  beer: beerIcon,
+  female: femaleIcon,
+  male: maleIcon,
+  manthai: manthaiIcon,
+  thaicolor: thaicolorIcon,
+  wine: wineIcon,
+  womancolor: womancolorIcon,
+  woomanthai: woomanthaiIcon,
 };
 
 export default function WishForm() {
@@ -123,8 +142,8 @@ export default function WishForm() {
   const BrideIcon = iconMap[brideIconKey] || FaUser;
 
   // เช็คว่ามี icon image หรือไม่
-  const groomIconImage = event?.groomIconImage || event?.groom_icon_image;
-  const brideIconImage = event?.brideIconImage || event?.bride_icon_image;
+  const groomIconImage = event?.groomIconImage || event?.groom_icon_image || iconImageOptions[event?.groom_icon];
+  const brideIconImage = event?.brideIconImage || event?.bride_icon_image || iconImageOptions[event?.bride_icon];
 
   return (
     <div
@@ -183,6 +202,7 @@ export default function WishForm() {
                 <img
                   src={groomIconImage}
                   alt="groom icon"
+                  onError={e => e.target.style.display = 'none'}
                   className={`w-8 h-8 mb-1 ${side === "groom" ? "" : "grayscale opacity-60"}`}
                 />
               ) : (
@@ -206,6 +226,7 @@ export default function WishForm() {
                 <img
                   src={brideIconImage}
                   alt="bride icon"
+                  onError={e => e.target.style.display = 'none'}
                   className={`w-8 h-8 mb-1 ${side === "bride" ? "" : "grayscale opacity-60"}`}
                 />
               ) : (

@@ -76,6 +76,10 @@ export default function CardPreview() {
   // --- เพิ่ม state สำหรับตำแหน่งชื่อ ---
   const [wishNamePos, setWishNamePos] = useState({ x: 0, y: 0 });
 
+  const wishNameRef = useRef();
+  const [wishNameWidth, setWishNameWidth] = useState(150);
+  const [wishNameFontSize, setWishNameFontSize] = useState(12);
+
   useEffect(() => {
     const savedTemplateId = localStorage.getItem("templateId");
     const savedImage = localStorage.getItem("wishImage");
@@ -197,6 +201,7 @@ export default function CardPreview() {
       const resultBlob = await res.blob();
       const url = URL.createObjectURL(resultBlob);
       setImageURL(url); // set ให้ userImage เป็นรูปที่ไดคัทแล้ว
+      localStorage.setItem("wishImage", url); // เพิ่มบันทึก url ที่ไดคัทแล้ว
     } catch (err) {
       alert("เกิดข้อผิดพลาดในการลบพื้นหลัง");
     }
@@ -247,149 +252,32 @@ export default function CardPreview() {
                   />
                 )}
                 {userImage && template && imageElement && (
-                  <Group
+                  <KonvaImage
+                    ref={imageRef}
+                    image={userImage}
                     x={imgProps.x}
                     y={imgProps.y}
+                    width={imgProps.width}
+                    height={imgProps.height}
                     draggable
-                    onDragEnd={e => setImgProps(prev => ({ ...prev, x: e.target.x(), y: e.target.y() }))}
                     onClick={() => setSelected("image")}
                     onTap={() => setSelected("image")}
-                    scaleX={1}
-                    scaleY={1}
-                    clipFunc={ctx => {
-                      const w = imgProps.width;
-                      const h = imgProps.height;
-                      ctx.beginPath();
-                      if (frameShape === "circle") {
-                        const radius = Math.min(w, h) / 2;
-                        ctx.arc(w / 2, h / 2, radius, 0, Math.PI * 2, false);
-                      } else if (frameShape === "star") {
-                        const cx = w / 2;
-                        const cy = h / 2;
-                        const spikes = 5;
-                        const outerRadius = Math.min(w, h) / 2;
-                        const innerRadius = outerRadius / 2.5;
-                        let rot = (Math.PI / 2) * 3;
-                        let step = Math.PI / spikes;
-                        ctx.moveTo(cx, cy - outerRadius);
-                        for (let i = 0; i < spikes; i++) {
-                          ctx.lineTo(
-                            cx + Math.cos(rot) * outerRadius,
-                            cy + Math.sin(rot) * outerRadius
-                          );
-                          rot += step;
-                          ctx.lineTo(
-                            cx + Math.cos(rot) * innerRadius,
-                            cy + Math.sin(rot) * innerRadius
-                          );
-                          rot += step;
-                        }
-                        ctx.lineTo(cx, cy - outerRadius);
-                      } else if (frameShape === "heart") {
-                        ctx.moveTo(w / 2, h * 0.8);
-                        ctx.bezierCurveTo(w * 1.1, h * 0.5, w * 0.8, h * 0.05, w / 2, h * 0.3);
-                        ctx.bezierCurveTo(w * 0.2, h * 0.05, -w * 0.1, h * 0.5, w / 2, h * 0.8);
-                      } else if (frameShape === "hexagon") {
-                        const cx = w / 2;
-                        const cy = h / 2;
-                        const r = Math.min(w, h) / 2;
-                        ctx.moveTo(cx + r * Math.cos(0), cy + r * Math.sin(0));
-                        for (let i = 1; i <= 6; i++) {
-                          ctx.lineTo(
-                            cx + r * Math.cos((i * 2 * Math.PI) / 6),
-                            cy + r * Math.sin((i * 2 * Math.PI) / 6)
-                          );
-                        }
-                      } else if (frameShape === "cloud") {
-                        // วาดเมฆแบบง่าย
-                        ctx.arc(w * 0.3, h * 0.7, w * 0.18, Math.PI * 0.5, Math.PI * 1.5);
-                        ctx.arc(w * 0.5, h * 0.5, w * 0.22, Math.PI, Math.PI * 2);
-                        ctx.arc(w * 0.7, h * 0.7, w * 0.18, Math.PI * 1.5, Math.PI * 0.5);
-                        ctx.closePath();
-                      } else if (frameShape === "zigzag") {
-                        // วาดฟันปลา
-                        const steps = 8;
-                        const stepW = w / steps;
-                        ctx.moveTo(0, h);
-                        for (let i = 0; i < steps; i++) {
-                          ctx.lineTo(stepW * i + stepW / 2, h - (i % 2 === 0 ? 20 : 0));
-                          ctx.lineTo(stepW * (i + 1), h);
-                        }
-                        ctx.lineTo(w, 0);
-                        ctx.lineTo(0, 0);
-                        ctx.closePath();
-                      } else {
-                        // rectangle
-                        ctx.moveTo(0, 0);
-                        ctx.lineTo(w, 0);
-                        ctx.lineTo(w, h);
-                        ctx.lineTo(0, h);
-                        ctx.closePath();
-                      }
+                    onDragEnd={e => setImgProps(prev => ({ ...prev, x: e.target.x(), y: e.target.y() }))}
+                    onTransformEnd={e => {
+                      const node = imageRef.current;
+                      const scaleX = node.scaleX();
+                      const scaleY = node.scaleY();
+                      setImgProps(prev => ({
+                        ...prev,
+                        x: node.x(),
+                        y: node.y(),
+                        width: Math.max(50, node.width() * scaleX),
+                        height: Math.max(50, node.height() * scaleY),
+                      }));
+                      node.scaleX(1);
+                      node.scaleY(1);
                     }}
-                  >
-                    <KonvaImage
-                      ref={imageRef}
-                      image={userImage}
-                      x={imgProps.x}
-                      y={imgProps.y}
-                      width={imgProps.width}
-                      height={imgProps.height}
-                      crop={{
-                        x: imgProps.cropX,
-                        y: imgProps.cropY,
-                        width: imgProps.cropWidth || userImage.width,
-                        height: imgProps.cropHeight || userImage.height,
-                      }}
-                      draggable
-                      onClick={() => setSelected("image")}
-                      onTap={() => setSelected("image")}
-                      onDragEnd={e => setImgProps(prev => ({ ...prev, x: e.target.x(), y: e.target.y() }))}
-                      onTransformEnd={e => {
-                        const node = imageRef.current;
-                        const scaleX = node.scaleX();
-                        const scaleY = node.scaleY();
-                        // ปรับขนาดใหม่
-                        setImgProps(prev => ({
-                          ...prev,
-                          x: node.x(),
-                          y: node.y(),
-                          width: Math.max(50, node.width() * scaleX),
-                          height: Math.max(50, node.height() * scaleY),
-                        }));
-                        node.scaleX(1);
-                        node.scaleY(1);
-                      }}
-                      // ปรับ crop ให้ cover กรอบ
-                      onLoad={e => {
-                        const iw = userImage.width;
-                        const ih = userImage.height;
-                        const cw = imgProps.width;
-                        const ch = imgProps.height;
-                        const imageRatio = iw / ih;
-                        const containerRatio = cw / ch;
-                        let cropWidth, cropHeight, cropX, cropY;
-                        if (imageRatio > containerRatio) {
-                          cropHeight = ih;
-                          cropWidth = ih * containerRatio;
-                          cropX = (iw - cropWidth) / 2;
-                          cropY = 0;
-                        } else {
-                          cropWidth = iw;
-                          cropHeight = iw / containerRatio;
-                          cropX = 0;
-                          cropY = (ih - cropHeight) / 2;
-                        }
-                        setImgProps(prev => ({
-                          ...prev,
-                          cropX,
-                          cropY,
-                          cropWidth,
-                          cropHeight,
-                        }));
-                      }}
-                    />
-                  </Group>
+                  />
                 )}
                 {selected === "image" && userImage && (
                   <Transformer
@@ -434,7 +322,10 @@ export default function CardPreview() {
                 {selected === "text" && wishMessage && (
                   <Transformer
                     ref={tr => tr && tr.nodes([textRef.current])}
-                    enabledAnchors={["top-left", "top-right", "bottom-left", "bottom-right"]}
+                    enabledAnchors={[
+                      "top-left", "top-right", "bottom-left", "bottom-right",
+                      "middle-left", "middle-right", "top-center", "bottom-center"
+                    ]}
                     boundBoxFunc={(oldBox, newBox) => {
                       if (newBox.width < 50 || newBox.height < 20) {
                         return oldBox;
@@ -445,12 +336,13 @@ export default function CardPreview() {
                 )}
                 {wishName && template && (
                   <Text
+                    ref={wishNameRef}
                     fontFamily={fontFamily}
                     text={`– ${wishName}`}
                     x={wishNamePos.x}
                     y={wishNamePos.y}
-                    width={textWidth}
-                    fontSize={12}
+                    width={wishNameWidth}
+                    fontSize={wishNameFontSize}
                     fill={fontColor}
                     fontStyle="600"
                     align="left"
@@ -462,12 +354,22 @@ export default function CardPreview() {
                     }}
                     onClick={() => setSelected("wishName")}
                     onTap={() => setSelected("wishName")}
+                    onTransformEnd={e => {
+                      const node = wishNameRef.current;
+                      setWishNameWidth(node.width() * node.scaleX());
+                      setWishNameFontSize(wishNameFontSize * node.scaleY());
+                      node.scaleX(1);
+                      node.scaleY(1);
+                    }}
                   />
                 )}
                 {selected === "wishName" && wishName && (
                   <Transformer
-                    ref={tr => tr && tr.nodes([textRef.current])}
-                    enabledAnchors={["middle-left", "middle-right", "top-center", "bottom-center"]}
+                    ref={tr => tr && tr.nodes([wishNameRef.current])}
+                    enabledAnchors={[
+                      "top-left", "top-right", "bottom-left", "bottom-right",
+                      "middle-left", "middle-right", "top-center", "bottom-center"
+                    ]}
                     boundBoxFunc={(oldBox, newBox) => {
                       if (newBox.width < 30 || newBox.height < 10) {
                         return oldBox;
