@@ -122,13 +122,19 @@ export default function WishForm() {
   const GroomIcon = iconMap[groomIconKey] || FaUserTie;
   const BrideIcon = iconMap[brideIconKey] || FaUser;
 
+  // เช็คว่ามี icon image หรือไม่
+  const groomIconImage = event?.groomIconImage || event?.groom_icon_image;
+  const brideIconImage = event?.brideIconImage || event?.bride_icon_image;
+
   return (
     <div
       className="w-screen h-[100svh] bg-cover bg-center flex justify-center items-center font-prompt"
       style={{
-        backgroundImage: event?.cover_image
-          ? `url(${event.cover_image})`
-          : "linear-gradient(to bottom, #fef3c7, #ffffff)",
+        backgroundImage: event?.cover_image2
+          ? `url(${event.cover_image2})`
+          : event?.cover_image
+            ? `url(${event.cover_image})`
+            : "linear-gradient(to bottom, #fef3c7, #ffffff)",
       }}
     >
       <div className="w-full max-w-xl h-[100svh] bg-white overflow-auto shadow-xl border border-gray-200 animate-fade-in">
@@ -173,11 +179,19 @@ export default function WishForm() {
                   : "border-gray-300 bg-white hover:bg-gray-50"
               }`}
             >
-              <GroomIcon
-                className={`text-2xl mb-1 ${
-                  side === "groom" ? "text-blue-500" : "text-gray-400"
-                }`}
-              />
+              {groomIconImage ? (
+                <img
+                  src={groomIconImage}
+                  alt="groom icon"
+                  className={`w-8 h-8 mb-1 ${side === "groom" ? "" : "grayscale opacity-60"}`}
+                />
+              ) : (
+                <GroomIcon
+                  className={`text-2xl mb-1 ${
+                    side === "groom" ? "text-blue-500" : "text-gray-400"
+                  }`}
+                />
+              )}
               <span className="text-sm">{groomLabel}</span>
             </button>
             <button
@@ -188,11 +202,19 @@ export default function WishForm() {
                   : "border-gray-300 bg-white hover:bg-gray-50"
               }`}
             >
-              <BrideIcon
-                className={`text-2xl mb-1 ${
-                  side === "bride" ? "text-pink-500" : "text-gray-400"
-                }`}
-              />
+              {brideIconImage ? (
+                <img
+                  src={brideIconImage}
+                  alt="bride icon"
+                  className={`w-8 h-8 mb-1 ${side === "bride" ? "" : "grayscale opacity-60"}`}
+                />
+              ) : (
+                <BrideIcon
+                  className={`text-2xl mb-1 ${
+                    side === "bride" ? "text-pink-500" : "text-gray-400"
+                  }`}
+                />
+              )}
               <span className="text-sm">{brideLabel}</span>
             </button>
           </div>
@@ -260,13 +282,10 @@ export default function WishForm() {
           {/* ✅ Submit Button */}
           <button
             onClick={handleSubmit}
-            className={`w-full py-3 rounded-full text-sm font-semibold transition ${
-              agree ? "shadow-lg" : "bg-gray-300 cursor-not-allowed"
-            }`}
-            disabled={!agree}
+            className="w-full py-3 rounded-full text-sm font-semibold transition shadow-lg"
             style={{
-              backgroundColor: agree ? buttonBg : "#d1d5db",
-              color: agree ? buttonTextColor : "#888",
+              backgroundColor: buttonBg,
+              color: buttonTextColor,
             }}
           >
             ต่อไป →
