@@ -83,7 +83,7 @@ export default function WishGalleryList() {
           ← กลับ
         </button>
       </div>
-      <h1 className="text-2xl font-bold text-center mb-6">แกลเลอรี่อวยพร</h1>
+      <h1 className="text-2xl font-bold text-center mb-6">แกลเลอรี่</h1>
       {images.length > 0 && (
         <div className="flex justify-end max-w-5xl mx-auto mb-4">
           <button
