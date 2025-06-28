@@ -121,7 +121,7 @@ export default function WishGalleryList() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-80">
           <div className="relative max-w-2xl w-full flex flex-col items-center">
             <button
-              className="absolute top-2 right-2 text-white text-2xl"
+              className="absolute top-2 right-2 text-white text-2xl bg-black/70 hover:bg-black rounded-full w-10 h-10 flex items-center justify-center transition"
               onClick={closeModal}
               aria-label="ปิด"
             >×</button>
