@@ -21,7 +21,7 @@ export default function TemplateSelect() {
     const fetchTemplates = async () => {
       try {
         const res = await axios.get(
-          `${BASE_URL}/api/events/${eventId}/templates`
+          `${BASE_URL}/api/templates/event/${eventId}`
         );
         setTemplates(res.data);
       } catch (err) {
