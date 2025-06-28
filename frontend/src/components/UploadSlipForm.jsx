@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import Swal from "sweetalert2";
 import axios from "axios";
+import PromptPay from 'promptpay-qr';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://pbphoto-api-fae29207c672.herokuapp.com";
 
@@ -44,8 +45,18 @@ export default function UploadSlipForm() {
     });
   };
 
-  // สร้าง QR url
-  const getQR = (number) => number ? `https://promptpay.io/${number}.png` : "https://promptpay.io/0000000000.png";
+  // สร้าง QR url (รองรับทั้งเบอร์โทรและเลขบัตรประชาชน)
+  const getQR = (number) => {
+    if (!number) return "https://promptpay.io/0000000000.png";
+    // ตรวจสอบว่าเป็นเบอร์โทร (10 หลัก) หรือเลขบัตร (13 หลัก)
+    const isPhone = /^0[0-9]{9}$/.test(number);
+    const isCitizen = /^[0-9]{13}$/.test(number);
+    if (!isPhone && !isCitizen) return "https://promptpay.io/0000000000.png";
+    // ใช้ promptpay-qr สร้าง payload แล้วแปลงเป็น QR image
+    const payload = PromptPay.generatePayload(number);
+    // ใช้ promptpay.io เพื่อแสดง QR image (หรือจะใช้ lib สร้าง base64 ก็ได้)
+    return `https://promptpay.io/${number}.png`;
+  };
 
   // ฟังก์ชันส่งสลิป
   const handleSubmit = async () => {
