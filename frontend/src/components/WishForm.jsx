@@ -99,41 +99,58 @@ export default function WishForm() {
   };
 
   const handleSubmit = async () => {
-    // ✅ เก็บไว้ใช้หน้า template/preview
-    localStorage.setItem("wishName", name);
-    localStorage.setItem("wishMessage", message);
-    localStorage.setItem("eventId", eventId);
-    localStorage.setItem("side", side); // เก็บ side (groom/bride)
-    localStorage.setItem("agree", agree.toString()); // เก็บ agree เป็น string "true" / "false"
-    if (image) {
-      localStorage.setItem("wishImage", image);
+    // ✅ ตรวจสอบข้อมูลที่จำเป็น
+    if (!name.trim()) {
+      alert("กรุณาใส่ชื่อของคุณ");
+      return;
     }
-    navigate(`/template/${eventId}`);
-    // const formData = new FormData();
-    // formData.append("side", side === "groom" ? "เจ้าบ่าว" : "เจ้าสาว");
-    // formData.append("name", name);
-    // formData.append("message", message);
-    // formData.append("agree", agree);
-    // formData.append("eventId", eventId);
-    // if (imageFile) {
-    //   formData.append("image", imageFile);
-    // }
+    if (!message.trim()) {
+      alert("กรุณาใส่คำอวยพร");
+      return;
+    }
+    if (!image) {
+      alert("กรุณาเลือกรูปโปรไฟล์");
+      return;
+    }
 
-    // try {
-    //   const res = await fetch(`${BASE_URL}/api/wishes`, {
-    //     method: "POST",
-    //     body: formData,
-    //   });
+    try {
+      // ✅ ส่ง profile_image ไป backend
+      const formData = new FormData();
+      formData.append("name", name);
+      formData.append("message", message);
+      formData.append("side", side);
+      formData.append("agree", agree.toString());
+      formData.append("eventId", eventId);
+      
+      // แปลง base64 เป็นไฟล์
+      if (image.startsWith('data:image')) {
+        const response = await fetch(image);
+        const blob = await response.blob();
+        formData.append("profile_image", blob, "profile.jpg");
+      }
 
-    //   if (res.ok) {
-    //     navigate(`/template/${eventId}`);
-    //   } else {
-    //     alert("❌ ส่งคำอวยพรไม่สำเร็จ");
-    //   }
-    // // eslint-disable-next-line no-unused-vars
-    // } catch (err) {
-    //   alert("❌ เกิดข้อผิดพลาดในการเชื่อมต่อ API");
-    // }
+      const res = await axios.post(`${BASE_URL}/api/wishes`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+
+      if (res.status === 200 || res.status === 201) {
+        // ✅ เก็บข้อมูลไว้ใช้หน้า template/preview
+        localStorage.setItem("wishName", name);
+        localStorage.setItem("wishMessage", message);
+        localStorage.setItem("eventId", eventId);
+        localStorage.setItem("side", side);
+        localStorage.setItem("agree", agree.toString());
+        if (image) {
+          localStorage.setItem("wishImage", image); // เก็บไว้ preview
+        }
+        navigate(`/template/${eventId}`);
+      } else {
+        alert("❌ ส่งคำอวยพรไม่สำเร็จ");
+      }
+    } catch (err) {
+      console.error("❌ ส่งคำอวยพร error:", err);
+      alert("❌ เกิดข้อผิดพลาดในการเชื่อมต่อ API");
+    }
   };
 
   const groomLabel = event?.groom_label || "ฝ่ายเจ้าบ่าว";
@@ -146,9 +163,18 @@ export default function WishForm() {
   const GroomIcon = iconMap[groomIconKey] || FaUserTie;
   const BrideIcon = iconMap[brideIconKey] || FaUser;
 
-  // เช็คว่ามี icon image หรือไม่
-  const groomIconImage = event?.groomIconImage || event?.groom_icon_image || iconImageOptions[event?.groom_icon];
-  const brideIconImage = event?.brideIconImage || event?.bride_icon_image || iconImageOptions[event?.bride_icon];
+  // เช็คว่ามี icon image หรือไม่ (รองรับทั้ง URL และ key)
+  const groomIconImage = event?.groom_icon_image
+    ? event.groom_icon_image.startsWith('http')
+      ? event.groom_icon_image
+      : iconImageOptions[event.groom_icon_image]
+    : iconImageOptions[event?.groom_icon];
+
+  const brideIconImage = event?.bride_icon_image
+    ? event.bride_icon_image.startsWith('http')
+      ? event.bride_icon_image
+      : iconImageOptions[event.bride_icon_image]
+    : iconImageOptions[event?.bride_icon];
 
   return (
     <div

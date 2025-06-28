@@ -8,78 +8,111 @@ import {
 } from "react-icons/fa";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
+import axios from "axios";
+import toast from "react-hot-toast";
+
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://pbphoto-api-fae29207c672.herokuapp.com";
 
 export default function ManageEventSlips() {
   const [events, setEvents] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [slipDetails, setSlipDetails] = useState({});
+
+  // ดึงข้อมูลสรุปยอด slip ทั้งหมด
+  const fetchSlipSummary = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get(`${BASE_URL}/api/slips/summary`);
+      setEvents(response.data);
+    } catch (error) {
+      console.error('Error fetching slip summary:', error);
+      toast.error('ไม่สามารถโหลดข้อมูลได้');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ดึงรายละเอียด slip ของแต่ละ event
+  const fetchSlipDetails = async (eventId) => {
+    try {
+      const response = await axios.get(`${BASE_URL}/api/slips/event/${eventId}`);
+      setSlipDetails(prev => ({
+        ...prev,
+        [eventId]: response.data
+      }));
+    } catch (error) {
+      console.error('Error fetching slip details:', error);
+      toast.error('ไม่สามารถโหลดรายละเอียดได้');
+    }
+  };
 
   useEffect(() => {
-    const mockEvents = [
-      {
-        event_id: 1,
-        event_name: "งานแต่ง เจน & ต้น",
-        total_bride: 15000,
-        total_groom: 20000,
-        total_slips: 10
-      },
-      {
-        event_id: 2,
-        event_name: "งานหมั้น มิ้น & บอส",
-        total_bride: 12000,
-        total_groom: 18000,
-        total_slips: 8
-      },
-      {
-        event_id: 3,
-        event_name: "พิธีสมรส แพรว & นัท",
-        total_bride: 25000,
-        total_groom: 30000,
-        total_slips: 15
-      }
-    ];
-    setEvents(mockEvents);
+    fetchSlipSummary();
   }, []);
 
-  const mockSlipDetails = {
-    1: [
-      { name: "คุณเอ", amount: 5000, side: "เจ้าสาว" },
-      { name: "คุณบี", amount: 10000, side: "เจ้าบ่าว" }
-    ],
-    2: [
-      { name: "คุณซี", amount: 7000, side: "เจ้าสาว" },
-      { name: "คุณดี", amount: 8000, side: "เจ้าบ่าว" }
-    ],
-    3: [
-      { name: "คุณอี", amount: 15000, side: "เจ้าสาว" },
-      { name: "คุณเอฟ", amount: 20000, side: "เจ้าบ่าว" }
-    ]
+  const exportToExcel = async (eventId, eventName) => {
+    try {
+      // ถ้ายังไม่มีข้อมูลรายละเอียด ให้ดึงมา
+      if (!slipDetails[eventId]) {
+        await fetchSlipDetails(eventId);
+        // รอให้ state อัพเดท
+        setTimeout(() => {
+          exportToExcel(eventId, eventName);
+        }, 500);
+        return;
+      }
+
+      const details = slipDetails[eventId] || [];
+
+      const data = details.map((d) => ({
+        "ชื่อผู้โอน": d.name,
+        "ยอดโอน (บาท)": d.amount,
+        "ฝั่ง": d.side === 'bride' ? 'เจ้าสาว' : 'เจ้าบ่าว',
+        "วันที่": new Date(d.created_at).toLocaleDateString('th-TH')
+      }));
+
+      const ws = XLSX.utils.json_to_sheet(data);
+
+      // เพิ่ม summary row
+      const total = details.reduce((sum, d) => sum + d.amount, 0);
+      const totalBride = details.filter(d => d.side === 'bride').reduce((sum, d) => sum + d.amount, 0);
+      const totalGroom = details.filter(d => d.side === 'groom').reduce((sum, d) => sum + d.amount, 0);
+      
+      XLSX.utils.sheet_add_aoa(ws, [
+        ["", "", "", ""],
+        ["สรุปยอด", "", "", ""],
+        ["เจ้าสาว", totalBride, "บาท", ""],
+        ["เจ้าบ่าว", totalGroom, "บาท", ""],
+        ["รวมทั้งหมด", total, "บาท", ""]
+      ], {
+        origin: -1
+      });
+
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Slip Summary");
+
+      const wbout = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+      saveAs(
+        new Blob([wbout], { type: "application/octet-stream" }),
+        `Slip_Summary_${eventName}_${new Date().toISOString().split('T')[0]}.xlsx`
+      );
+
+      toast.success('ดาวน์โหลด Excel สำเร็จ');
+    } catch (error) {
+      console.error('Error exporting to Excel:', error);
+      toast.error('ไม่สามารถดาวน์โหลด Excel ได้');
+    }
   };
 
-  const exportToExcel = (eventId, eventName) => {
-    const details = mockSlipDetails[eventId] || [];
-
-    const data = details.map((d) => ({
-      "ชื่อผู้โอน": d.name,
-      "ยอดโอน (บาท)": d.amount,
-      ฝั่ง: d.side
-    }));
-
-    const ws = XLSX.utils.json_to_sheet(data);
-
-    // เพิ่ม summary row
-    const total = details.reduce((sum, d) => sum + d.amount, 0);
-    XLSX.utils.sheet_add_aoa(ws, [["รวมทั้งหมด", total, "บาท"]], {
-      origin: -1
-    });
-
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Slip Summary");
-
-    const wbout = XLSX.write(wb, { bookType: "xlsx", type: "array" });
-    saveAs(
-      new Blob([wbout], { type: "application/octet-stream" }),
-      `Slip_Summary_${eventName}.xlsx`
+  if (loading) {
+    return (
+      <div className="p-6 font-prompt">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-lg text-gray-600">กำลังโหลดข้อมูล...</div>
+        </div>
+      </div>
     );
-  };
+  }
 
   return (
     <div className="p-6 font-prompt">
@@ -124,18 +157,18 @@ export default function ManageEventSlips() {
               <tr key={ev.event_id} className="border-t hover:bg-gray-50">
                 <td className="p-3 font-medium">{ev.event_name}</td>
                 <td className="p-3 text-center text-pink-600 font-semibold">
-                  {ev.total_bride.toLocaleString()} บาท
+                  {ev.total_bride ? ev.total_bride.toLocaleString() : '0'} บาท
                 </td>
                 <td className="p-3 text-center text-blue-600 font-semibold">
-                  {ev.total_groom.toLocaleString()} บาท
+                  {ev.total_groom ? ev.total_groom.toLocaleString() : '0'} บาท
                 </td>
                 <td className="p-3 text-center font-bold">
-                  {(ev.total_bride + ev.total_groom).toLocaleString()} บาท
+                  {ev.total_amount ? ev.total_amount.toLocaleString() : '0'} บาท
                 </td>
-                <td className="p-3 text-center">{ev.total_slips} รายการ</td>
+                <td className="p-3 text-center">{ev.total_slips || 0} รายการ</td>
                 <td className="p-3 text-center">
                   <button
-                    className="text-sm text-white bg-green-500 px-3 py-1.5 rounded hover:bg-green-600"
+                    className="text-sm text-white bg-green-500 px-3 py-1.5 rounded hover:bg-green-600 transition"
                     onClick={() => exportToExcel(ev.event_id, ev.event_name)}
                   >
                     ดาวน์โหลด Excel

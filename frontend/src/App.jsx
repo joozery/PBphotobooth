@@ -13,6 +13,8 @@ import AdminLogin from "./components/AdminLogin";
 import CreateEvent from "./components/Dashboard/pages/CreateEvent";
 import TemplateBuilder from "./components/Dashboard/pages/TemplateBuilder"; // ✅ เพิ่มตรงนี้
 import UploadSlipForm from "./components/UploadSlipForm";
+import WishGallery from "./components/Dashboard/pages/WishGallery";
+import WishGalleryList from "./components/WishGalleryList";
 import WishGallerySlideshow from "./components/WishGallerySlideshow";
 
 function App() {
@@ -30,8 +32,11 @@ function App() {
         <Route path="/thankyou/:eventId" element={<ThankYou />} /> {/* ✅ แก้ตรงนี้ */}
         <Route path="/template/:eventId" element={<TemplateSelect />} />
         <Route path="/select-template/:eventId" element={<TemplateSelect />} />
-        <Route path="/upload-slip" element={<UploadSlipForm />} />
-        <Route path="/wish-gallery" element={<WishGallerySlideshow />} />
+        <Route path="/upload-slip/:eventId" element={<UploadSlipForm />} />
+        <Route path="/wish-gallery" element={<WishGallery />} />
+        <Route path="/wish-gallery/:eventId" element={<WishGallery />} />
+        <Route path="/wish-gallery-list/:eventId" element={<WishGalleryList />} /> {/* ✅ เพิ่ม route ใหม่ */}
+        <Route path="/slideshow/:eventId" element={<WishGallerySlideshow />} />
 
         {/* ✅ เส้นทางแอดมิน */}
         <Route path="/admin/login" element={<AdminLogin />} />

@@ -1,54 +1,71 @@
-import React, { useState } from "react";
-import FolderDetailDialog from "./FolderDetailDialog"; // 👈 import component ป๊อปอัป
+import React, { useState, useEffect } from "react";
+import { useParams } from "react-router-dom";
+import axios from "axios";
+import FolderDetailDialog from "./FolderDetailDialog";
 
-export default function WishGalleryListMockup() {
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://pbphoto-api-fae29207c672.herokuapp.com";
+
+export default function WishGallery() {
+  const { eventId } = useParams();
   const [openDialog, setOpenDialog] = useState(false);
   const [selectedFolder, setSelectedFolder] = useState(null);
+  const [events, setEvents] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [wishCards, setWishCards] = useState([]);
 
-  const events = [
-    {
-      id: 1,
-      title: "งานแต่งโจ้ & จูน",
-      subtitle: "ภาพรวมงานฟรี",
-      event: "Jo & June Wedding",
-      cover_image: "https://res.cloudinary.com/demo/image/upload/sample.jpg",
-      wish_count: 12,
-    },
-    {
-      id: 2,
-      title: "งานหมั้นบี & เบิร์ด",
-      subtitle: "อวยพรบ่าวสาว",
-      event: "B&B Engagement",
-      cover_image: "https://res.cloudinary.com/demo/image/upload/sample.jpg",
-      wish_count: 8,
-    },
-    {
-      id: 3,
-      title: "งานแต่งมิว & นัท",
-      subtitle: "รวมคำอวยพรจากแขก",
-      event: "Mew & Nut Wedding",
-      cover_image: "https://res.cloudinary.com/demo/image/upload/sample.jpg",
-      wish_count: 15,
-    },
-  ];
+  // โหลด event ทั้งหมด
+  useEffect(() => {
+    if (!eventId) {
+      axios.get(`${BASE_URL}/api/events`).then(res => {
+        setEvents(res.data || []);
+        setLoading(false);
+      }).catch(() => setLoading(false));
+    }
+  }, [eventId]);
 
-  const handleOpenFolder = (folder) => {
-    setSelectedFolder({
-      name: folder.title,
-      subtitle: folder.subtitle,
-      event: folder.event,
-      itemsCount: folder.wish_count,
-    });
-    setOpenDialog(true);
-  };
+  // โหลด event เดียวและ wish card ถ้ามี eventId
+  useEffect(() => {
+    if (eventId) {
+      setLoading(true);
+      Promise.all([
+        axios.get(`${BASE_URL}/api/events/${eventId}`),
+        axios.get(`${BASE_URL}/api/wishes?eventId=${eventId}`)
+      ]).then(([eventRes, wishesRes]) => {
+        setSelectedFolder({
+          ...eventRes.data,
+          name: eventRes.data.title,
+          subtitle: eventRes.data.subtitle || '',
+          event: eventRes.data.title,
+          itemsCount: wishesRes.data.length,
+        });
+        setWishCards(wishesRes.data.map((url, i) => ({ url, index: i + 1 })));
+        setLoading(false);
+      }).catch(() => setLoading(false));
+    }
+  }, [eventId]);
 
+  // กรณี /wish-gallery/:eventId
+  if (eventId && selectedFolder) {
+    return (
+      <div className="font-prompt min-h-screen bg-gradient-to-br from-pink-50 to-yellow-50 p-6">
+        <FolderDetailDialog
+          isOpen={true}
+          onOpenChange={() => {}}
+          folder={selectedFolder}
+          wishCards={wishCards}
+          onImageClick={() => {}}
+        />
+      </div>
+    );
+  }
+
+  // กรณี /wish-gallery (ไม่มี eventId)
   return (
     <div className="font-prompt min-h-screen bg-gradient-to-br from-pink-50 to-yellow-50 p-6">
       <div className="max-w-6xl mx-auto">
         <h1 className="text-4xl font-bold text-pink-700 text-center mb-10">
-          รายการงานและจำนวนคำอวยพร
+          รายการงานและจำนวนรูป card อวยพรทั้งหมด
         </h1>
-
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
           {events.map((event) => (
             <div
@@ -62,7 +79,7 @@ export default function WishGalleryListMockup() {
                   className="w-full h-48 object-cover rounded-t-3xl"
                 />
                 <div className="absolute top-2 right-2 bg-pink-600 text-white text-xs px-2 py-0.5 rounded-full shadow">
-                  {event.wish_count} ภาพอวยพร
+                  {event.wish_count || 0} การ์ดอวยพร
                 </div>
               </div>
               <div className="p-5">
@@ -71,14 +88,26 @@ export default function WishGalleryListMockup() {
                 </h2>
                 <button
                   className="mt-3 bg-pink-500 hover:bg-pink-600 text-white text-sm px-4 py-2 rounded-full shadow"
-                  onClick={() => handleOpenFolder(event)}
+                  onClick={async () => {
+                    setLoading(true);
+                    const wishesRes = await axios.get(`${BASE_URL}/api/wishes?eventId=${event.id}`);
+                    setSelectedFolder({
+                      ...event,
+                      name: event.title,
+                      subtitle: event.subtitle || '',
+                      event: event.title,
+                      itemsCount: wishesRes.data.length,
+                    });
+                    setWishCards(wishesRes.data.map((url, i) => ({ url, index: i + 1 })));
+                    setOpenDialog(true);
+                    setLoading(false);
+                  }}
                 >
-                  ดูคำอวยพรทั้งหมด
+                  ดูรูป card อวยพรทั้งหมด
                 </button>
               </div>
             </div>
           ))}
-
           {events.length === 0 && (
             <p className="col-span-full text-center text-gray-400">
               ยังไม่มีงานที่สร้าง
@@ -86,12 +115,12 @@ export default function WishGalleryListMockup() {
           )}
         </div>
       </div>
-
-      {/* 🔍 Dialog แสดงอัลบั้ม */}
+      {/* Dialog แสดงอัลบั้ม */}
       <FolderDetailDialog
         isOpen={openDialog}
         onOpenChange={setOpenDialog}
         folder={selectedFolder}
+        wishCards={wishCards}
         onImageClick={(imgUrl, allImgs, index) =>
           console.log("Clicked:", imgUrl)
         }

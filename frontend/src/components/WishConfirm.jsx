@@ -4,10 +4,53 @@ import { useLoading, Oval } from "@agney/react-loading";
 import { Group, Stage, Layer, Image as KonvaImage, Text, Shape, Rect } from "react-konva";
 import axios from "axios";
 import Swal from "sweetalert2";
+import {
+  FaUserTie,
+  FaUser,
+  FaStar,
+  FaHeart,
+  FaSmile,
+  FaCat,
+  FaDog,
+  FaRing,
+} from "react-icons/fa";
+import { IoIosFemale, IoMdFemale } from "react-icons/io";
+import beerIcon from "../assets/icons/beer.png";
+import femaleIcon from "../assets/icons/female.png";
+import maleIcon from "../assets/icons/male.png";
+import manthaiIcon from "../assets/icons/manthai.png";
+import thaicolorIcon from "../assets/icons/thaicolor.png";
+import wineIcon from "../assets/icons/wine.png";
+import womancolorIcon from "../assets/icons/womancolor.png";
+import woomanthaiIcon from "../assets/icons/woomanthai.png";
 
 const BASE_URL =
   import.meta.env.VITE_API_BASE_URL ||
   "https://pbphoto-api-fae29207c672.herokuapp.com";
+
+const iconMap = {
+  FaUser,
+  FaUserTie,
+  FaStar,
+  FaHeart,
+  FaSmile,
+  FaCat,
+  FaDog,
+  FaRing,
+  IoIosFemale,
+  IoMdFemale,
+};
+
+const iconImageOptions = {
+  beer: beerIcon,
+  female: femaleIcon,
+  male: maleIcon,
+  manthai: manthaiIcon,
+  thaicolor: thaicolorIcon,
+  wine: wineIcon,
+  womancolor: womancolorIcon,
+  woomanthai: woomanthaiIcon,
+};
 
 const useImage = (url) => {
   const [image, setImage] = useState(null);
@@ -29,6 +72,7 @@ export default function WishConfirm() {
   const [template, setTemplate] = useState(null);
   const [wishMessagePos, setWishMessagePos] = useState(null);
   const [event, setEvent] = useState(null);
+  const stageRef = useRef();
 
   const imageElement = template?.elements?.find((el) => el.type === "image");
   const textElement = template?.elements?.find((el) => el.type === "text");
@@ -62,6 +106,8 @@ export default function WishConfirm() {
 
   // ใช้ wishMessagePosState สำหรับ state ภายใน component
   const [wishMessagePosState, setWishMessagePosState] = useState(wishMessagePosValue);
+  const [wishMessageWidthState, setWishMessageWidthState] = useState(wishMessageWidth);
+  const [wishFontSizeState, setWishFontSizeState] = useState(wishFontSize);
 
   // เพิ่มการดึง cover_image2 จาก template หรือ event
   const coverImage2 =
@@ -70,6 +116,19 @@ export default function WishConfirm() {
     template?.cover_image2 ||
     template?.coverImage2 ||
     null;
+
+  // เพิ่มการดึง icon จาก event
+  const groomIconKey = event?.groom_icon || "FaUserTie";
+  const brideIconKey = event?.bride_icon || "FaUser";
+  const GroomIcon = iconMap[groomIconKey] || FaUserTie;
+  const BrideIcon = iconMap[brideIconKey] || FaUser;
+
+  // เช็คว่ามี icon image หรือไม่
+  const groomIconImage = event?.groom_icon_image || iconImageOptions[event?.groom_icon];
+  const brideIconImage = event?.bride_icon_image || iconImageOptions[event?.bride_icon];
+
+  const groomLabel = event?.groom_label || "ฝ่ายเจ้าบ่าว";
+  const brideLabel = event?.bride_label || "ฝ่ายเจ้าสาว";
 
   useEffect(() => {
     if (templateId) {
@@ -95,57 +154,60 @@ export default function WishConfirm() {
   const handleSubmit = async () => {
     setLoading(true);
     try {
+      // 1. Snapshot Stage เป็น JPEG
+      const dataUrl = stageRef.current.toDataURL({ mimeType: "image/jpeg", quality: 1, pixelRatio: 3 });
+      // 2. แปลง base64 เป็น Blob
+      function dataURLtoBlob(dataurl) {
+        var arr = dataurl.split(','), mime = arr[0].match(/:(.*?);/)[1],
+          bstr = atob(arr[1]), n = bstr.length, u8arr = new Uint8Array(n);
+        while(n--){
+          u8arr[n] = bstr.charCodeAt(n);
+        }
+        return new Blob([u8arr], {type:mime});
+      }
+      const imageBlob = dataURLtoBlob(dataUrl);
+
+      // 3. ส่งเฉพาะ image (snapshot) ไป backend
       const formData = new FormData();
-      formData.append("name", name);
-      formData.append("message", message);
-      formData.append("side", side || "groom");
-      formData.append("agreement", agree.toString() || "true");
-      formData.append("eventId", eventId);
+      formData.append('image', imageBlob, 'wish.jpg'); // ส่งเฉพาะ snapshot
+      formData.append('eventId', eventId);
+      formData.append('name', name);
+      formData.append('message', message);
+      formData.append('side', side);
 
-      const res = await fetch(image);
-      const blob = await res.blob();
-      formData.append("image", blob, "wish-image.png");
-
-      const response = await axios.post(`${BASE_URL}/api/wishes`, formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
+      await axios.post(`${BASE_URL}/api/wishes/image`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
       });
 
-      if (response.data.success) {
-        // ✅ ล้าง localStorage ที่เกี่ยวข้อง
-        localStorage.removeItem("wishName");
-        localStorage.removeItem("wishMessage");
-        localStorage.removeItem("wishImage");
-        localStorage.removeItem("wishPosition");
-        localStorage.removeItem("wishScale");
-        localStorage.removeItem("side");
-        localStorage.removeItem("agree");
-        localStorage.removeItem("templateId");
-        localStorage.removeItem("wishMessagePos");
-        localStorage.removeItem("wishMessageWidth");
-        localStorage.removeItem("wishFontSize");
-        localStorage.removeItem("wishFontFamily");
-        localStorage.removeItem("wishFontColor");
-        localStorage.removeItem("wishFrameShape");
-        localStorage.removeItem("imgProps");
-        localStorage.removeItem("wishNamePos");
-        localStorage.removeItem("wishNameWidth");
-        localStorage.removeItem("wishNameFontSize");
-        await Swal.fire({
-          icon: "success",
-          title: "ส่งคำอวยพรเรียบร้อย!",
-          showConfirmButton: false,
-          timer: 1800
-        });
-        navigate(`/thankyou/${eventId}`);
-      } else {
-        await Swal.fire({
-          icon: "error",
-          title: "เกิดข้อผิดพลาดในการส่งคำอวยพร",
-          text: response.data.message || "ไม่สามารถส่งคำอวยพรได้",
-        });
-      }
+      // ✅ ล้าง localStorage ที่เกี่ยวข้อง
+      localStorage.removeItem("wishName");
+      localStorage.removeItem("wishMessage");
+      localStorage.removeItem("wishImage");
+      localStorage.removeItem("wishPosition");
+      localStorage.removeItem("wishScale");
+      localStorage.removeItem("side");
+      localStorage.removeItem("agree");
+      localStorage.removeItem("templateId");
+      localStorage.removeItem("wishMessagePos");
+      localStorage.removeItem("wishMessageWidth");
+      localStorage.removeItem("wishFontSize");
+      localStorage.removeItem("wishFontFamily");
+      localStorage.removeItem("wishFontColor");
+      localStorage.removeItem("wishFrameShape");
+      localStorage.removeItem("imgProps");
+      localStorage.removeItem("wishNamePos");
+      localStorage.removeItem("wishNameWidth");
+      localStorage.removeItem("wishNameFontSize");
+      localStorage.removeItem("showShadow");
+      localStorage.removeItem("showStroke");
+
+      await Swal.fire({
+        icon: "success",
+        title: "ส่งคำอวยพรเรียบร้อย!",
+        showConfirmButton: false,
+        timer: 1800
+      });
+      navigate(`/thankyou/${eventId}`);
     } catch (error) {
       console.error("❌ ส่งคำอวยพร error:", error);
       await Swal.fire({
@@ -177,6 +239,21 @@ export default function WishConfirm() {
     }
   }, [frameShape]);
 
+  // Sync state กับ localStorage ทุกครั้งที่ mount หรือ localStorage เปลี่ยน
+  useEffect(() => {
+    const syncFromLocalStorage = () => {
+      const pos = JSON.parse(localStorage.getItem("wishMessagePos") || '{"x":60,"y":60}');
+      const width = parseFloat(localStorage.getItem("wishMessageWidth") || "300");
+      const fontSize = parseFloat(localStorage.getItem("wishFontSize") || "24");
+      setWishMessagePosState(pos);
+      setWishMessageWidthState(width);
+      setWishFontSizeState(fontSize);
+    };
+    syncFromLocalStorage();
+    window.addEventListener('storage', syncFromLocalStorage);
+    return () => window.removeEventListener('storage', syncFromLocalStorage);
+  }, []);
+
   return (
     <div
       className="w-screen h-[100svh] text-white font-prompt flex flex-col justify-center items-center px-4"
@@ -196,7 +273,7 @@ export default function WishConfirm() {
         ref={containerRef}
         className="relative w-full flex justify-center items-center overflow-hidden mb-3"
       >
-        <Stage width={420} height={280}>
+        <Stage ref={stageRef} width={420} height={280} className="border">
           <Layer>
             {bgImage && <KonvaImage image={bgImage} width={420} height={280} />}
             {textboxImage && template && (
@@ -223,8 +300,8 @@ export default function WishConfirm() {
                 text={message}
                 x={wishMessagePosState.x}
                 y={wishMessagePosState.y}
-                width={wishMessageWidth}
-                fontSize={wishFontSize}
+                width={wishMessageWidthState}
+                fontSize={wishFontSizeState}
                 fill={fontColor}
                 align="center"
                 lineHeight={1.5}

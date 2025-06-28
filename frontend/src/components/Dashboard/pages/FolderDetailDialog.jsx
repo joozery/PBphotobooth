@@ -1,13 +1,100 @@
 import React from 'react';
 
-export default function FolderDetailDialog({ isOpen, onOpenChange, folder, onImageClick }) {
+export default function FolderDetailDialog({ isOpen, onOpenChange, folder, wishCards, onImageClick }) {
   if (!isOpen || !folder) return null;
 
-  // mock images array
-  const images = Array.from({ length: folder.itemsCount || 12 }, (_, i) => ({
-    url: 'https://res.cloudinary.com/demo/image/upload/sample.jpg',
-    index: i + 1,
-  }));
+  // ถ้ามี wishCards จริงให้ใช้ wishCards, ถ้าไม่มีก็ใช้ mockWishCards
+  const mockWishCards = [
+    {
+      url: 'https://images.unsplash.com/photo-1518895949257-7621c3c786d7?w=400&h=280&fit=crop',
+      name: 'คุณสมชาย',
+      message: 'ขอให้มีความสุขมากๆ นะครับ',
+      side: 'groom'
+    },
+    {
+      url: 'https://images.unsplash.com/photo-1518895949257-7621c3c786d7?w=400&h=280&fit=crop',
+      name: 'คุณสมหญิง',
+      message: 'ขอให้รักกันตลอดไป',
+      side: 'bride'
+    },
+    {
+      url: 'https://images.unsplash.com/photo-1518895949257-7621c3c786d7?w=400&h=280&fit=crop',
+      name: 'คุณพ่อ',
+      message: 'ขอให้ลูกมีความสุขในชีวิตคู่',
+      side: 'groom'
+    },
+    {
+      url: 'https://images.unsplash.com/photo-1518895949257-7621c3c786d7?w=400&h=280&fit=crop',
+      name: 'คุณแม่',
+      message: 'ขอให้ลูกสาวมีความสุขมากๆ',
+      side: 'bride'
+    },
+    {
+      url: 'https://images.unsplash.com/photo-1518895949257-7621c3c786d7?w=400&h=280&fit=crop',
+      name: 'เพื่อนร่วมงาน',
+      message: 'ขอให้มีความสุขในชีวิตใหม่',
+      side: 'groom'
+    },
+    {
+      url: 'https://images.unsplash.com/photo-1518895949257-7621c3c786d7?w=400&h=280&fit=crop',
+      name: 'เพื่อนสมัยเรียน',
+      message: 'ขอให้รักกันตลอดไปนะ',
+      side: 'bride'
+    },
+    {
+      url: 'https://images.unsplash.com/photo-1518895949257-7621c3c786d7?w=400&h=280&fit=crop',
+      name: 'ญาติผู้ใหญ่',
+      message: 'ขอให้มีความสุขในชีวิตคู่',
+      side: 'groom'
+    },
+    {
+      url: 'https://images.unsplash.com/photo-1518895949257-7621c3c786d7?w=400&h=280&fit=crop',
+      name: 'เพื่อนบ้าน',
+      message: 'ขอให้รักกันตลอดไป',
+      side: 'bride'
+    },
+    {
+      url: 'https://images.unsplash.com/photo-1518895949257-7621c3c786d7?w=400&h=280&fit=crop',
+      name: 'เพื่อนสนิท',
+      message: 'ขอให้มีความสุขมากๆ',
+      side: 'groom'
+    },
+    {
+      url: 'https://images.unsplash.com/photo-1518895949257-7621c3c786d7?w=400&h=280&fit=crop',
+      name: 'เพื่อนสมัยมหาวิทยาลัย',
+      message: 'ขอให้รักกันตลอดไปนะ',
+      side: 'bride'
+    },
+    {
+      url: 'https://images.unsplash.com/photo-1518895949257-7621c3c786d7?w=400&h=280&fit=crop',
+      name: 'เพื่อนร่วมทีม',
+      message: 'ขอให้มีความสุขในชีวิตใหม่',
+      side: 'groom'
+    },
+    {
+      url: 'https://images.unsplash.com/photo-1518895949257-7621c3c786d7?w=400&h=280&fit=crop',
+      name: 'เพื่อนสมัยเด็ก',
+      message: 'ขอให้รักกันตลอดไป',
+      side: 'bride'
+    }
+  ];
+
+  const images = (wishCards && wishCards.length > 0
+    ? wishCards.map((card, i) => ({
+        url: card.url || card,
+        name: card.name || `Guest ${i + 1}`,
+        message: card.message || '',
+        side: card.side || '',
+        index: card.index || i + 1,
+      }))
+    : mockWishCards.slice(0, folder.itemsCount || 12).map((card, i) => ({
+        url: card.url,
+        name: card.name,
+        message: card.message,
+        side: card.side,
+        index: i + 1,
+      }))
+  );
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
@@ -15,9 +102,9 @@ export default function FolderDetailDialog({ isOpen, onOpenChange, folder, onIma
         {/* Header */}
         <div className="mb-2 flex items-center justify-between">
           <div>
-            <h2 className="text-2xl font-bold text-gray-800 mb-1">รวมภาพถ่ายงาน {folder.name}</h2>
+            <h2 className="text-2xl font-bold text-gray-800 mb-1">รูป card อวยพรทั้งหมด - {folder.name}</h2>
             <div className="text-gray-500 text-sm">
-              {folder.subtitle} • {folder.itemsCount} รายการ • {folder.event}
+              {folder.subtitle} • {folder.itemsCount} การ์ดอวยพร • {folder.event}
             </div>
           </div>
           <button
@@ -39,12 +126,12 @@ export default function FolderDetailDialog({ isOpen, onOpenChange, folder, onIma
               >
                 <img
                   src={img.url}
-                  alt={`wish-${img.index}`}
-                  className="w-full h-full object-cover rounded-lg opacity-0"
+                  alt={`wish-card-${img.index}`}
+                  className="w-full h-full object-cover rounded-lg"
                   draggable={false}
                 />
-                <span className="absolute text-xs font-bold bg-gray-700 text-white px-2 py-1 rounded-lg left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 opacity-80">
-                  {img.index}
+                <span className="absolute text-xs font-bold bg-pink-600 text-white px-2 py-1 rounded-lg left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 opacity-90">
+                  {img.name}
                 </span>
               </div>
             ))}
@@ -52,16 +139,16 @@ export default function FolderDetailDialog({ isOpen, onOpenChange, folder, onIma
           {/* Footer */}
           <div className="flex justify-between items-center mt-6">
             <div className="text-gray-500 text-sm">
-              แสดง {images.length} รายการจากทั้งหมด {images.length} รายการ
+              แสดง {images.length} การ์ดอวยพรจากทั้งหมด {images.length} การ์ด
             </div>
             <div className="flex gap-2">
               <button className="flex items-center gap-1 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-gray-700 text-sm font-medium">
                 <span className="material-icons text-base">download</span>
-                ดาวน์โหลดทั้งหมด
+                ดาวน์โหลดการ์ดทั้งหมด
               </button>
               <button className="flex items-center gap-1 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-gray-700 text-sm font-medium">
                 <span className="material-icons text-base">share</span>
-                แชร์โฟลเดอร์
+                แชร์การ์ดอวยพร
               </button>
             </div>
           </div>

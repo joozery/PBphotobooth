@@ -122,7 +122,7 @@ function ManageEvents({ onSelectPage }) {
                   </td>
                   <td className="px-2 py-3">
                     <Link
-                      to={viewWishLink}
+                      to={`/slideshow/${event.id}`}
                       className="text-orange-600 hover:underline flex items-center justify-center gap-1 text-sm"
                     >
                       <FaRegEye size={12} />

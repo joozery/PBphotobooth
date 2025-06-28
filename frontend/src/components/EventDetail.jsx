@@ -58,7 +58,7 @@ export default function EventDetail() {
 
           {event.show_slip_button === 1 && (
             <button
-              onClick={() => navigate("/slip")}
+              onClick={() => navigate(`/upload-slip/${eventId}`)}
               className="w-full py-3 rounded-full shadow flex items-center justify-center gap-2 text-sm font-medium border"
               style={{
                 backgroundColor: event.slip_button_bg || "#ffffff",
@@ -72,7 +72,7 @@ export default function EventDetail() {
 
           {event.show_view_wishes_button === 1 && (
             <button
-              onClick={() => navigate("/wishes")}
+              onClick={() => navigate(`/wish-gallery/${eventId}`)}
               className="w-full py-3 rounded-full shadow flex items-center justify-center gap-2 text-sm font-medium border"
               style={{
                 backgroundColor: event.view_wishes_button_bg || "#f97316",
@@ -80,7 +80,7 @@ export default function EventDetail() {
               }}
             >
               <FaRegEye className="text-base" />
-              {event.view_wishes_button_text || "ดูคำอวยพร"}
+              {event.view_wishes_button_text || "ดูรูป card อวยพรทั้งหมด"}
             </button>
           )}
         </div>

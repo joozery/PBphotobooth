@@ -84,9 +84,18 @@ export default function WeddingLanding() {
             <FaPenNib className="text-base" />
             {t.startWish}
           </button>
-          <button className="w-full bg-white text-blue-700 border py-3 rounded-full shadow flex items-center justify-center gap-2 text-sm font-medium">
+          <button 
+            disabled
+            className="w-full bg-gray-300 text-gray-500 py-3 rounded-full shadow flex items-center justify-center gap-2 text-sm font-medium cursor-not-allowed"
+          >
             <FaReceipt className="text-base" />
             {t.uploadSlip}
+          </button>
+          <button
+            className="w-full bg-pink-600 text-white py-3 rounded-full shadow flex items-center justify-center gap-2 text-sm font-medium"
+            onClick={() => navigate("/wish-gallery")}
+          >
+            📸 ดูรูป card อวยพรทั้งหมด
           </button>
         </div>
       </div>

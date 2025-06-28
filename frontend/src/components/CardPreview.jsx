@@ -87,14 +87,14 @@ export default function CardPreview() {
 
   useEffect(() => {
     const savedTemplateId = localStorage.getItem("templateId");
-    const savedImage = localStorage.getItem("wishImage");
+    const savedImage = localStorage.getItem("wishImage"); // profile_image จาก localStorage
     const savedPos = localStorage.getItem("wishPosition");
     const savedScale = localStorage.getItem("wishScale");
     const savedName = localStorage.getItem("wishName");
     const savedMessage = localStorage.getItem("wishMessage");
     const savedEventId = localStorage.getItem("eventId");
 
-    if (savedImage) setImageURL(savedImage);
+    if (savedImage) setImageURL(savedImage); // ใช้ profile_image สำหรับ preview
     if (savedPos) setPosition(JSON.parse(savedPos));
     if (savedScale) setScale(parseFloat(savedScale));
     if (savedName) setWishName(savedName);
@@ -141,16 +141,14 @@ export default function CardPreview() {
 
   useEffect(() => {
     if (template && textElement) {
-      // โหลด wishMessagePos
-      const savedPos = localStorage.getItem("wishMessagePos");
-      if (savedPos) {
-        setWishMessagePos(JSON.parse(savedPos));
-      } else {
-        setWishMessagePos({
-          x: textElement.x,
-          y: textElement.y,
-        });
-      }
+      const newPos = {
+        x: textElement.x,
+        y: textElement.y,
+      };
+      setWishMessagePos(newPos);
+      localStorage.setItem("wishMessagePos", JSON.stringify(newPos));
+      setTextWidth(textElement.width || 300);
+      setFontSize(textElement.fontSize || 24);
 
       // โหลด fontFamily
       const savedFontFamily = localStorage.getItem("wishFontFamily");
@@ -199,18 +197,6 @@ export default function CardPreview() {
       });
     }
   }, [userImage, imageElement]);
-
-  // จัดตำแหน่งข้อความให้อยู่ใน textbox อัตโนมัติเมื่อเปลี่ยน template
-  useEffect(() => {
-    if (template && textElement) {
-      setWishMessagePos({
-        x: textElement.x,
-        y: textElement.y,
-      });
-      setTextWidth(textElement.width || 300);
-      setFontSize(textElement.fontSize || 24);
-    }
-  }, [template, textElement]);
 
   const handleRemoveBg = async () => {
     setLoadingRemoveBg(true);
@@ -672,10 +658,12 @@ export default function CardPreview() {
                 }
                 // รีเซ็ตข้อความให้อยู่ใน textbox
                 if (textElement) {
-                  setWishMessagePos({
+                  const newPos = {
                     x: textElement.x,
                     y: textElement.y,
-                  });
+                  };
+                  setWishMessagePos(newPos);
+                  localStorage.setItem("wishMessagePos", JSON.stringify(newPos));
                   setTextWidth(textElement.width || 300);
                   setFontSize(textElement.fontSize || 24);
                 }

@@ -80,13 +80,15 @@ function CreateEvent() {
     slipButtonBg: "#ffffff",
     slipButtonTextColor: "#1d4ed8",
     showViewWishesButton: true,
-    viewWishesButtonText: "ดูคำอวยพร",
+    viewWishesButtonText: "ดูรูป card อวยพรทั้งหมด",
     viewWishesButtonBg: "#f97316",
     viewWishesButtonTextColor: "#ffffff",
     groom_label: "ฝ่ายเจ้าบ่าว",
     bride_label: "ฝ่ายเจ้าสาว",
     groom_icon: "FaUserTie",
     bride_icon: "FaUser",
+    promptpay_groom: "",
+    promptpay_bride: "",
   });
 
   const [coverImage, setCoverImage] = useState(null);
@@ -97,6 +99,15 @@ function CreateEvent() {
   const [coverImage2, setCoverImage2] = useState(null);
   const [previewUrl2, setPreviewUrl2] = useState(null);
 
+  const [previewGroomIcon, setPreviewGroomIcon] = useState(null);
+  const [previewBrideIcon, setPreviewBrideIcon] = useState(null);
+
+  // เพิ่ม state สำหรับ dropdown และไฟล์
+  const [groomIconKey, setGroomIconKey] = useState("");
+  const [groomIconFile, setGroomIconFile] = useState(null);
+  const [brideIconKey, setBrideIconKey] = useState("");
+  const [brideIconFile, setBrideIconFile] = useState(null);
+
   useEffect(() => {
     const fetchEventAndTemplates = async () => {
       try {
@@ -104,6 +115,40 @@ function CreateEvent() {
         if (eventId) {
           const res = await axios.get(`${BASE_URL}/api/events/${eventId}`);
           const data = res.data;
+
+          // ตั้งค่า icon ฝ่ายเจ้าบ่าว
+          if (data.groom_icon_image) {
+            if (data.groom_icon_image.startsWith('http')) {
+              setGroomIconKey("");
+              setGroomIconFile(null);
+              setPreviewGroomIcon(data.groom_icon_image);
+            } else {
+              setGroomIconKey(data.groom_icon_image);
+              setGroomIconFile(null);
+              setPreviewGroomIcon(null);
+            }
+          } else {
+            setGroomIconKey("");
+            setGroomIconFile(null);
+            setPreviewGroomIcon(null);
+          }
+
+          // ตั้งค่า icon ฝ่ายเจ้าสาว
+          if (data.bride_icon_image) {
+            if (data.bride_icon_image.startsWith('http')) {
+              setBrideIconKey("");
+              setBrideIconFile(null);
+              setPreviewBrideIcon(data.bride_icon_image);
+            } else {
+              setBrideIconKey(data.bride_icon_image);
+              setBrideIconFile(null);
+              setPreviewBrideIcon(null);
+            }
+          } else {
+            setBrideIconKey("");
+            setBrideIconFile(null);
+            setPreviewBrideIcon(null);
+          }
 
           setForm({
             title: data.title || "",
@@ -124,8 +169,8 @@ function CreateEvent() {
             bride_label: data.bride_label || "ฝ่ายเจ้าสาว",
             groom_icon: data.groom_icon || "FaUserTie",
             bride_icon: data.bride_icon || "FaUser",
-            groomIconImage: data.groom_icon_image || "",
-            brideIconImage: data.bride_icon_image || "",
+            promptpay_groom: data.promptpay_groom || "",
+            promptpay_bride: data.promptpay_bride || "",
           });
 
           if (data.cover_image) {
@@ -205,12 +250,29 @@ function CreateEvent() {
         formData.append(key, value);
       });
 
+      formData.set("promptpay_groom", form.promptpay_groom || "");
+      formData.set("promptpay_bride", form.promptpay_bride || "");
+
       formData.set("groom_label", form.groomLabel);
       formData.set("bride_label", form.brideLabel);
       formData.set("groom_icon", form.groomIcon);
       formData.set("bride_icon", form.brideIcon);
-      formData.append("groom_icon_image", form.groomIconImage || "");
-      formData.append("bride_icon_image", form.brideIconImage || "");
+      // groom icon
+      if (groomIconFile) {
+        formData.append("groom_icon_image", groomIconFile);
+      } else if (groomIconKey) {
+        formData.append("groom_icon_image", groomIconKey);
+      } else {
+        formData.append("groom_icon_image", "");
+      }
+      // bride icon
+      if (brideIconFile) {
+        formData.append("bride_icon_image", brideIconFile);
+      } else if (brideIconKey) {
+        formData.append("bride_icon_image", brideIconKey);
+      } else {
+        formData.append("bride_icon_image", "");
+      }
 
       if (!eventId || coverImage) {
         formData.append("cover", coverImage);
@@ -356,7 +418,7 @@ function CreateEvent() {
                   checked={form.showWishButton}
                   onChange={handleChange}
                 />
-                แสดงปุ่ม “คำอวยพร”
+                แสดงปุ่ม "คำอวยพร"
               </label>
 
               <input
@@ -416,7 +478,7 @@ function CreateEvent() {
                   checked={form.showSlipButton}
                   onChange={handleChange}
                 />
-                แสดงปุ่ม “แนบสลิป”
+                แสดงปุ่ม "แนบสลิป"
               </label>
 
               <input
@@ -477,14 +539,14 @@ function CreateEvent() {
                 checked={form.showViewWishesButton}
                 onChange={handleChange}
               />
-              แสดงปุ่ม “ดูคำอวยพร”
+              แสดงปุ่ม "ดูรูป card อวยพรทั้งหมด"
             </label>
 
             <input
               type="text"
               name="viewWishesButtonText"
               className="w-full px-3 py-2 border rounded"
-              placeholder="ข้อความบนปุ่มดูคำอวยพร"
+              placeholder="ข้อความบนปุ่มดูรูป card อวยพรทั้งหมด"
               value={form.viewWishesButtonText}
               onChange={handleChange}
             />
@@ -528,7 +590,7 @@ function CreateEvent() {
             </div>
           </div>
 
-          {/* View Wishes Button */}
+          {/* ตั้งค่าปุ่มเลือกฝ่าย */}
           <hr className="my-8" />
           <h3 className="text-lg font-semibold text-gray-700">
             ตั้งค่าปุ่มเลือกฝ่าย
@@ -562,35 +624,34 @@ function CreateEvent() {
             <label className="text-sm block mb-1">เลือกไอคอนฝ่ายเจ้าบ่าว</label>
             <div className="flex items-center gap-2">
               <select
-                name="groomIconImage"
-                value={form.groomIconImage || ""}
-                onChange={(e) =>
-                  setForm((prev) => ({
-                    ...prev,
-                    groomIconImage: e.target.value,
-                  }))
-                }
+                value={groomIconKey}
+                onChange={e => {
+                  setGroomIconKey(e.target.value);
+                  setGroomIconFile(null);
+                  setPreviewGroomIcon(null);
+                }}
                 className="w-full px-3 py-2 border rounded"
               >
                 <option value="">-- เลือกไอคอน --</option>
-                {iconImageOptions.map((opt) => (
-                  <option key={opt.key} value={opt.key}>
-                    {opt.label}
-                  </option>
+                {iconImageOptions.map(opt => (
+                  <option key={opt.key} value={opt.key}>{opt.label}</option>
                 ))}
               </select>
-
-              {form.groomIconImage && (
-                <img
-                  src={
-                    iconImageOptions.find(
-                      (opt) => opt.key === form.groomIconImage
-                    )?.src
-                  }
-                  alt="icon"
-                  className="w-8 h-8"
-                />
-              )}
+              <input
+                type="file"
+                accept="image/*"
+                onChange={e => {
+                  const file = e.target.files[0];
+                  setGroomIconFile(file);
+                  setPreviewGroomIcon(file ? URL.createObjectURL(file) : null);
+                }}
+                className="w-full px-3 py-2 border rounded"
+              />
+              {groomIconFile ? (
+                <img src={previewGroomIcon} alt="icon" className="w-8 h-8" />
+              ) : groomIconKey ? (
+                <img src={iconImageOptions.find(opt => opt.key === groomIconKey)?.src} alt="icon" className="w-8 h-8" />
+              ) : null}
             </div>
           </div>
 
@@ -598,35 +659,68 @@ function CreateEvent() {
             <label className="text-sm block mb-1">เลือกไอคอนฝ่ายเจ้าสาว</label>
             <div className="flex items-center gap-2">
               <select
-                name="brideIconImage"
-                value={form.brideIconImage || ""}
-                onChange={(e) =>
-                  setForm((prev) => ({
-                    ...prev,
-                    brideIconImage: e.target.value,
-                  }))
-                }
+                value={brideIconKey}
+                onChange={e => {
+                  setBrideIconKey(e.target.value);
+                  setBrideIconFile(null);
+                  setPreviewBrideIcon(null);
+                }}
                 className="w-full px-3 py-2 border rounded"
               >
                 <option value="">-- เลือกไอคอน --</option>
-                {iconImageOptions.map((opt) => (
-                  <option key={opt.key} value={opt.key}>
-                    {opt.label}
-                  </option>
+                {iconImageOptions.map(opt => (
+                  <option key={opt.key} value={opt.key}>{opt.label}</option>
                 ))}
               </select>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={e => {
+                  const file = e.target.files[0];
+                  setBrideIconFile(file);
+                  setPreviewBrideIcon(file ? URL.createObjectURL(file) : null);
+                }}
+                className="w-full px-3 py-2 border rounded"
+              />
+              {brideIconFile ? (
+                <img src={previewBrideIcon} alt="icon" className="w-8 h-8" />
+              ) : brideIconKey ? (
+                <img src={iconImageOptions.find(opt => opt.key === brideIconKey)?.src} alt="icon" className="w-8 h-8" />
+              ) : null}
+            </div>
+          </div>
 
-              {form.brideIconImage && (
-                <img
-                  src={
-                    iconImageOptions.find(
-                      (opt) => opt.key === form.brideIconImage
-                    )?.src
-                  }
-                  alt="icon"
-                  className="w-8 h-8"
-                />
-              )}
+          {/* ตั้งค่าเลขพร้อมเพย์ */}
+          <hr className="my-8" />
+          <h3 className="text-lg font-semibold text-gray-700">
+            ตั้งค่าเลขพร้อมเพย์
+          </h3>
+          <p className="text-sm text-gray-600 mb-4">
+            หมายเลขพร้อมเพย์สำหรับรับเงินโอนจากแขก
+          </p>
+          
+          <div className="grid md:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-sm font-medium mb-1">เลขพร้อมเพย์เจ้าบ่าว</label>
+              <input
+                type="text"
+                name="promptpay_groom"
+                value={form.promptpay_groom}
+                onChange={handleChange}
+                className="w-full px-4 py-2 border rounded"
+                placeholder="เช่น 0812345678"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">เลขพร้อมเพย์เจ้าสาว</label>
+              <input
+                type="text"
+                name="promptpay_bride"
+                value={form.promptpay_bride}
+                onChange={handleChange}
+                className="w-full px-4 py-2 border rounded"
+                placeholder="เช่น 0898765432"
+              />
             </div>
           </div>
 
