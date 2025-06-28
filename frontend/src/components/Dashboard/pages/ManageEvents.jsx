@@ -101,6 +101,8 @@ function ManageEvents({ onSelectPage }) {
                     <Link
                       to={localLink}
                       className="text-blue-600 hover:underline flex items-center justify-center gap-1"
+                      target="_blank"
+                      rel="noopener noreferrer"
                     >
                       <FaExternalLinkAlt size={12} /> ไปยังลิงก์
                     </Link>
@@ -124,6 +126,8 @@ function ManageEvents({ onSelectPage }) {
                     <Link
                       to={`/slideshow/${event.id}`}
                       className="text-orange-600 hover:underline flex items-center justify-center gap-1 text-sm"
+                      target="_blank"
+                      rel="noopener noreferrer"
                     >
                       <FaRegEye size={12} />
                       ดูสไลด์การ์ด

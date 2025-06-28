@@ -40,44 +40,37 @@ export default function ThankYou() {
   return (
     <div className="w-screen h-screen font-prompt flex justify-center items-center bg-[#eee]">
       <div
-        className="w-full max-w-xl h-[100svh] bg-cover bg-center bg-no-repeat flex flex-col justify-between px-6 py-10 shadow-xl rounded-none border border-white"
+        className="w-full max-w-xl h-[100svh] bg-cover bg-center bg-no-repeat flex flex-col justify-end px-6 py-10 shadow-xl rounded-none border border-white"
         style={{
           backgroundImage: `url(${cover || "/default-bg.jpg"})`,
         }}
       >
-        <div className="flex flex-col justify-between h-full w-full  px-4 py-6 rounded">
+        <div className="flex flex-col justify-end h-full w-full px-4 py-6 rounded gap-3">
           {/* 💌 Heading */}
-          <div className="text-center">
-          </div>
+          <div className="text-center mb-6"></div>
 
           {/* 🎁 Action Buttons */}
-          <div className="flex flex-col gap-3 mt-10">
-            <button
-              className="w-full py-2 rounded-full flex items-center justify-center gap-2 font-medium shadow hover:opacity-90 transition-all"
-              style={{ backgroundColor: viewWishesButtonBg, color: viewWishesButtonTextColor }}
-              onClick={() => navigate(`/wish-gallery-list/${eventId}`)}
-            >
-              <FaImage /> {viewWishesButtonText}
-            </button>
-            <button
-              onClick={() => navigate(`/upload-slip/${eventId}`)}
-              className="flex-1 py-2 rounded-full font-semibold shadow hover:opacity-90 transition"
-              style={{ backgroundColor: slipButtonBg, color: slipButtonTextColor }}
-            >
-              {slipButtonText}
-            </button>
-          </div>
-
-          {/* ⬅️ Return */}
-          <div className="mt-10">
-            <button
-              onClick={() => navigate(`/event/${eventId}`)}
-              className="w-full py-3 rounded-full font-semibold shadow-lg hover:opacity-90 transition"
-              style={{ backgroundColor: wishButtonBg, color: wishButtonTextColor }}
-            >
-              กลับหน้าแรก
-            </button>
-          </div>
+          <button
+            className="w-full py-2 rounded-full flex items-center justify-center gap-2 font-medium shadow hover:opacity-90 transition-all"
+            style={{ backgroundColor: viewWishesButtonBg, color: viewWishesButtonTextColor }}
+            onClick={() => navigate(`/wish-gallery-list/${eventId}`)}
+          >
+            <FaImage /> {viewWishesButtonText}
+          </button>
+          <button
+            onClick={() => navigate(`/upload-slip/${eventId}`)}
+            className="w-full py-2 rounded-full font-semibold shadow hover:opacity-90 transition"
+            style={{ backgroundColor: slipButtonBg, color: slipButtonTextColor }}
+          >
+            {slipButtonText}
+          </button>
+          <button
+            onClick={() => navigate(`/event/${eventId}`)}
+            className="w-full py-3 rounded-full font-semibold shadow-lg hover:opacity-90 transition mt-6"
+            style={{ backgroundColor: wishButtonBg, color: wishButtonTextColor }}
+          >
+            กลับหน้าแรก
+          </button>
         </div>
       </div>
     </div>

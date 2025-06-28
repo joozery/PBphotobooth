@@ -72,7 +72,7 @@ export default function EventDetail() {
 
           {event.show_view_wishes_button === 1 && (
             <button
-              onClick={() => navigate(`/wish-gallery/${eventId}`)}
+              onClick={() => navigate(`/wish-gallery-list/${eventId}`)}
               className="w-full py-3 rounded-full shadow flex items-center justify-center gap-2 text-sm font-medium border"
               style={{
                 backgroundColor: event.view_wishes_button_bg || "#f97316",

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import JSZip from "jszip";
 
@@ -7,6 +7,7 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://pbphoto-api-fae29
 
 export default function WishGalleryList() {
   const { eventId } = useParams();
+  const navigate = useNavigate();
   const [images, setImages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
@@ -73,6 +74,15 @@ export default function WishGalleryList() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 to-yellow-50 font-prompt p-6">
+      {/* ปุ่มย้อนกลับ */}
+      <div className="max-w-5xl mx-auto mb-2 flex">
+        <button
+          onClick={() => navigate(-1)}
+          className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded shadow text-sm font-medium"
+        >
+          ← กลับ
+        </button>
+      </div>
       <h1 className="text-2xl font-bold text-center mb-6">แกลเลอรี่อวยพร</h1>
       {images.length > 0 && (
         <div className="flex justify-end max-w-5xl mx-auto mb-4">
