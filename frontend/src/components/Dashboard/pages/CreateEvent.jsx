@@ -183,7 +183,7 @@ function CreateEvent() {
 
           // โหลด template ที่เลือกไว้ใน event
           const selectedTemplateRes = await axios.get(
-            `${BASE_URL}/api/templates/event/${eventId}`
+            `${BASE_URL}/api/events/${eventId}/templates`
           );
           const selectedTemplateIds = selectedTemplateRes.data.map(
             (tpl) => tpl.template_id
@@ -253,10 +253,11 @@ function CreateEvent() {
       formData.set("promptpay_groom", form.promptpay_groom || "");
       formData.set("promptpay_bride", form.promptpay_bride || "");
 
-      formData.set("groom_label", form.groomLabel);
-      formData.set("bride_label", form.brideLabel);
-      formData.set("groom_icon", form.groomIcon);
-      formData.set("bride_icon", form.brideIcon);
+      formData.set("groom_label", form.groom_label);
+      formData.set("bride_label", form.bride_label);
+      formData.set("groom_icon", form.groom_icon);
+      formData.set("bride_icon", form.bride_icon);
+      
       // groom icon
       if (groomIconFile) {
         formData.append("groom_icon_image", groomIconFile);
@@ -601,8 +602,8 @@ function CreateEvent() {
               <label className="text-sm block mb-1">ข้อความฝ่ายเจ้าบ่าว</label>
               <input
                 type="text"
-                name="groomLabel"
-                value={form.groomLabel}
+                name="groom_label"
+                value={form.groom_label}
                 onChange={handleChange}
                 className="w-full px-3 py-2 border rounded"
                 placeholder="ฝ่ายเจ้าบ่าว"
@@ -612,8 +613,8 @@ function CreateEvent() {
               <label className="text-sm block mb-1">ข้อความฝ่ายเจ้าสาว</label>
               <input
                 type="text"
-                name="brideLabel"
-                value={form.brideLabel}
+                name="bride_label"
+                value={form.bride_label}
                 onChange={handleChange}
                 className="w-full px-3 py-2 border rounded"
                 placeholder="ฝ่ายเจ้าสาว"
