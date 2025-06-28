@@ -4,6 +4,8 @@ import { FaPenNib, FaReceipt, FaRegEye } from "react-icons/fa";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import bgFlower from "../assets/bgflower.jpg";
+import { useTranslation } from 'react-i18next';
+import i18n from '../i18n';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -11,6 +13,7 @@ export default function EventDetail() {
   const { eventId } = useParams();
   const navigate = useNavigate();
   const [event, setEvent] = useState(null);
+  const { t } = useTranslation();
 
   useEffect(() => {
     const fetchEvent = async () => {
@@ -30,7 +33,7 @@ export default function EventDetail() {
     console.log("🌈 Event Data:", event);
   }, [event]);
 
-  if (!event) return <div className="p-6">กำลังโหลดข้อมูล...</div>;
+  if (!event) return <div className="p-6">{t('กำลังโหลดข้อมูล...')}</div>;
 
   return (
     <div className="w-screen h-screen flex items-center justify-center font-prompt bg-[#eee]">
@@ -40,6 +43,11 @@ export default function EventDetail() {
           backgroundImage: `url(${event.cover_image || bgFlower})`,
         }}
       >
+        {/* 🔘 ปุ่มเปลี่ยนภาษา */}
+        <div className="absolute top-4 right-4 z-20 flex gap-2">
+          <button onClick={() => i18n.changeLanguage('th')} className={`px-2 py-1 rounded text-xs font-bold ${i18n.language === 'th' ? 'bg-gray-800 text-white' : 'bg-white text-gray-800 border'}`}>TH</button>
+          <button onClick={() => i18n.changeLanguage('en')} className={`px-2 py-1 rounded text-xs font-bold ${i18n.language === 'en' ? 'bg-gray-800 text-white' : 'bg-white text-gray-800 border'}`}>EN</button>
+        </div>
         {/* 🔘 Action Buttons */}
         <div className="w-full px-6 z-10 flex flex-col gap-3  pt-4 pb-6 ">
           {event.show_wish_button === 1 && (
@@ -52,7 +60,7 @@ export default function EventDetail() {
               }}
             >
               <FaPenNib className="text-base" />
-              {event.wish_button_text || "เริ่มเขียนคำอวยพร"}
+              {t(event.wish_button_text || "เริ่มเขียนคำอวยพร")}
             </button>
           )}
 
@@ -66,7 +74,7 @@ export default function EventDetail() {
               }}
             >
               <FaReceipt className="text-base" />
-              {event.slip_button_text || "แนบสลิปพร้อมเพย์"}
+              {t(event.slip_button_text || "แนบสลิปพร้อมเพย์")}
             </button>
           )}
 
@@ -80,7 +88,7 @@ export default function EventDetail() {
               }}
             >
               <FaRegEye className="text-base" />
-              {event.view_wishes_button_text || "ดูรูป card อวยพรทั้งหมด"}
+              {t(event.view_wishes_button_text || "ดูรูป card อวยพรทั้งหมด")}
             </button>
           )}
         </div>

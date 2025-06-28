@@ -20,6 +20,7 @@ import thaicolorIcon from "../assets/icons/thaicolor.png";
 import wineIcon from "../assets/icons/wine.png";
 import womancolorIcon from "../assets/icons/womancolor.png";
 import woomanthaiIcon from "../assets/icons/woomanthai.png";
+import { useTranslation } from 'react-i18next';
 
 const BASE_URL =
   import.meta.env.VITE_API_BASE_URL ||
@@ -52,6 +53,7 @@ const iconImageOptions = {
 export default function WishForm() {
   const { eventId } = useParams();
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const [side, setSide] = useState("groom");
   const [name, setName] = useState("");
@@ -274,7 +276,7 @@ export default function WishForm() {
           {/* 👤 Name */}
           <div className="mb-4">
             <label className="block text-sm font-medium mb-1 text-gray-600">
-              ชื่อ
+              {t('ชื่อ')}
             </label>
             <input
               type="text"
@@ -292,7 +294,7 @@ export default function WishForm() {
           {/* 📝 Message */}
           <div className="mb-4">
             <label className="block text-sm font-medium mb-1 text-gray-600">
-              คำอวยพร
+              {t('คำอวยพร')}
             </label>
             <textarea
               rows={4}
@@ -300,7 +302,7 @@ export default function WishForm() {
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               maxLength={200}
-              placeholder="พิมพ์คำอวยพรของคุณ..."
+              placeholder={t('พิมพ์คำอวยพรของคุณ...')}
             />
             <div className="text-xs text-right mt-1 text-gray-400">
               {message.length} / 200
@@ -317,7 +319,7 @@ export default function WishForm() {
         : "bg-white text-gray-600 border-gray-300 hover:bg-gray-100"
     }`}
   >
-    แสดงข้อความของคุณในสไลด์โชว์
+    {t('แสดงข้อความของคุณในสไลด์โชว์')}
   </button>
   <button
     onClick={() => setAgree(false)}
@@ -327,7 +329,7 @@ export default function WishForm() {
         : "bg-white text-gray-600 border-gray-300 hover:bg-gray-100"
     }`}
   >
-    ไม่แสดงข้อความของคุณในสไลด์โชว์
+    {t('ไม่แสดงข้อความของคุณในสไลด์โชว์')}
   </button>
 </div>
 
@@ -340,7 +342,7 @@ export default function WishForm() {
               color: buttonTextColor,
             }}
           >
-            ต่อไป →
+            {t('ต่อไป →')}
           </button>
         </div>
       </div>

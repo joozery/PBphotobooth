@@ -23,6 +23,7 @@ import thaicolorIcon from "../assets/icons/thaicolor.png";
 import wineIcon from "../assets/icons/wine.png";
 import womancolorIcon from "../assets/icons/womancolor.png";
 import woomanthaiIcon from "../assets/icons/woomanthai.png";
+import { useTranslation } from 'react-i18next';
 
 const BASE_URL =
   import.meta.env.VITE_API_BASE_URL ||
@@ -73,6 +74,7 @@ export default function WishConfirm() {
   const [wishMessagePos, setWishMessagePos] = useState(null);
   const [event, setEvent] = useState(null);
   const stageRef = useRef();
+  const { t } = useTranslation();
 
   const imageElement = template?.elements?.find((el) => el.type === "image");
   const textElement = template?.elements?.find((el) => el.type === "text");
@@ -535,14 +537,14 @@ export default function WishConfirm() {
           {loading ? (
             <span {...containerProps}>{indicatorEl}</span>
           ) : (
-            <>ส่งคำอวยพร</>
+            <>{t('ส่งคำอวยพร')}</>
           )}
         </button>
         <div
           className="mt-4 text-center text-sm underline cursor-pointer text-blue-700 hover:text-blue-900"
           onClick={() => navigate(-1)}
         >
-          ย้อนกลับ
+          {t('ย้อนกลับ')}
         </div>
       </div>
     </div>

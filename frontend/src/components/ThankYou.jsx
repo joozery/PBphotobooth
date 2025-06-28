@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { FaImage, FaQrcode } from "react-icons/fa";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
+import { useTranslation } from 'react-i18next';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://pbphoto-api-fae29207c672.herokuapp.com";
 
@@ -10,6 +11,7 @@ export default function ThankYou() {
   const { eventId } = useParams();
   const [cover, setCover] = useState("");
   const [event, setEvent] = useState(null);
+  const { t } = useTranslation();
 
   useEffect(() => {
     if (eventId) {
@@ -55,21 +57,21 @@ export default function ThankYou() {
             style={{ backgroundColor: viewWishesButtonBg, color: viewWishesButtonTextColor }}
             onClick={() => navigate(`/wish-gallery-list/${eventId}`)}
           >
-            <FaImage /> {viewWishesButtonText}
+            <FaImage /> {t(viewWishesButtonText)}
           </button>
           <button
             onClick={() => navigate(`/upload-slip/${eventId}`)}
             className="w-full py-2 rounded-full font-semibold shadow hover:opacity-90 transition"
             style={{ backgroundColor: slipButtonBg, color: slipButtonTextColor }}
           >
-            {slipButtonText}
+            {t(slipButtonText)}
           </button>
           <button
             onClick={() => navigate(`/event/${eventId}`)}
             className="w-full py-3 rounded-full font-semibold shadow-lg hover:opacity-90 transition mt-6"
             style={{ backgroundColor: wishButtonBg, color: wishButtonTextColor }}
           >
-            กลับหน้าแรก
+            {t('กลับหน้าแรก')}
           </button>
         </div>
       </div>
