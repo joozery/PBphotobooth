@@ -108,6 +108,13 @@ function CreateEvent() {
   const [brideIconKey, setBrideIconKey] = useState("");
   const [brideIconFile, setBrideIconFile] = useState(null);
 
+  const [templateOptions, setTemplateOptions] = useState([]);
+
+  // ✅ เพิ่ม debug log
+  useEffect(() => {
+    console.log("🔍 Current templateOptions:", templateOptions);
+  }, [templateOptions]);
+
   useEffect(() => {
     const fetchEventAndTemplates = async () => {
       try {
@@ -183,18 +190,20 @@ function CreateEvent() {
 
           // โหลด template ที่เลือกไว้ใน event
           const selectedTemplateRes = await axios.get(
-            `${BASE_URL}/api/events/${eventId}/templates`
+            `${BASE_URL}/api/templates/event/${eventId}`
           );
           const selectedTemplateIds = selectedTemplateRes.data.map(
-            (tpl) => tpl.template_id
+            (tpl) => tpl.id
           );
 
           // โหลด template ทั้งหมด
           const allTemplatesRes = await axios.get(`${BASE_URL}/api/templates`);
+          console.log("🔍 All templates response:", allTemplatesRes.data);
           const allTemplates = allTemplatesRes.data.map((tpl) => ({
             ...tpl,
             show_template: selectedTemplateIds.includes(tpl.id),
           }));
+          console.log("🔍 Final template options:", allTemplates);
 
           setTemplateOptions(allTemplates);
         } else {
@@ -329,8 +338,6 @@ function CreateEvent() {
   //   maxMessageLength: 200,
   //   requireAgreement: true,
   // });
-
-  const [templateOptions, setTemplateOptions] = useState([]);
 
   return (
     <div className="w-full min-h-screen bg-gray-50 py-10 px-4 font-prompt">
