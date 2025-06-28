@@ -35,10 +35,10 @@ router.post("/", uploadFields, async (req, res) => {
       viewWishesButtonBg,
       viewWishesButtonTextColor,
 
-      groomLabel,
-      brideLabel,
-      groomIcon,
-      brideIcon,
+      groom_label,
+      bride_label,
+      groom_icon,
+      bride_icon,
       promptpay_groom, // เพิ่ม
       promptpay_bride, // เพิ่ม
     } = req.body;
@@ -146,9 +146,9 @@ router.post("/", uploadFields, async (req, res) => {
       viewWishesButtonText,
       viewWishesButtonBg,
       viewWishesButtonTextColor,
-      groomLabel,
-      brideLabel,
-      groomIcon,
+      groom_label,
+      bride_label,
+      groom_icon,
       groomIconImageUrl,
       brideIconImageUrl,
       coverImage2Url,
@@ -261,10 +261,10 @@ router.put("/:id", uploadFields, async (req, res) => {
       viewWishesButtonBg,
       viewWishesButtonTextColor,
 
-      groomLabel,
-      brideLabel,
-      groomIcon,
-      brideIcon,
+      groom_label,
+      bride_label,
+      groom_icon,
+      bride_icon,
       promptpay_groom, // ✅ เพิ่มตรงนี้
       promptpay_bride, // ✅ เพิ่มตรงนี้
     } = req.body;
@@ -407,10 +407,10 @@ router.put("/:id", uploadFields, async (req, res) => {
       viewWishesButtonText,
       viewWishesButtonBg,
       viewWishesButtonTextColor,
-      groomLabel,
-      brideLabel,
-      groomIcon,
-      brideIcon,
+      groom_label,
+      bride_label,
+      groom_icon,
+      bride_icon,
       groomIconImageUrl,
       brideIconImageUrl,
       coverImage2Url,

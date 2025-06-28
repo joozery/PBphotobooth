@@ -52,9 +52,7 @@ export default function UploadSlipForm() {
     const isPhone = /^0[0-9]{9}$/.test(number);
     const isCitizen = /^[0-9]{13}$/.test(number);
     if (!isPhone && !isCitizen) return "https://promptpay.io/0000000000.png";
-    // ใช้ promptpay-qr สร้าง payload แล้วแปลงเป็น QR image
-    const payload = PromptPay.generatePayload(number);
-    // ใช้ promptpay.io เพื่อแสดง QR image (หรือจะใช้ lib สร้าง base64 ก็ได้)
+    // ไม่ต้อง generatePayload ก็ได้ ใช้ promptpay.io ได้เลย
     return `https://promptpay.io/${number}.png`;
   };
 
@@ -165,11 +163,11 @@ export default function UploadSlipForm() {
           <div className="flex gap-4 mb-2 mx-6">
             <label className="flex items-center gap-1 text-sm">
               <input type="radio" checked={side === 'groom'} onChange={() => setSide('groom')} />
-              {event.groom_label || 'เจ้าบ่าว'}
+              {event.groom_label ? event.groom_label : 'เจ้าบ่าว'}
             </label>
             <label className="flex items-center gap-1 text-sm">
               <input type="radio" checked={side === 'bride'} onChange={() => setSide('bride')} />
-              {event.bride_label || 'เจ้าสาว'}
+              {event.bride_label ? event.bride_label : 'เจ้าสาว'}
             </label>
           </div>
           {/* Amount */}
