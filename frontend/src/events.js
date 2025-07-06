@@ -156,33 +156,26 @@ router.post("/", uploadFields, async (req, res) => {
       promptpay_bride || null,
     ];
 
-    db.query(sql, values, (err, result) => {
-      if (err) {
-        console.error("❌ MySQL insert error:", err);
-        return res.status(500).json({ error: "Database error" });
+    const result = await db.query(sql, values);
+    const eventId = result.insertId;
+
+    // ✅ Insert templates ที่ลิงก์กับ event นี้
+    if (templateIds.length > 0) {
+      const templateSql = `
+        INSERT INTO event_templates (event_id, template_id)
+        VALUES ${templateIds.map(() => "(?, ?)").join(", ")}
+      `;
+      const templateValues = templateIds.flatMap((id) => [eventId, id]);
+
+      try {
+        await db.query(templateSql, templateValues);
+      } catch (err2) {
+        console.error("❌ Insert event_templates error:", err2);
+        // ไม่ return error เพราะ event หลัก insert สำเร็จแล้ว
       }
+    }
 
-      const eventId = result.insertId;
-
-      // ✅ Insert templates ที่ลิงก์กับ event นี้
-      if (templateIds.length > 0) {
-        const templateSql = `
-          INSERT INTO event_templates (event_id, template_id)
-          VALUES ${templateIds.map(() => "(?, ?)").join(", ")}
-        `;
-        const templateValues = templateIds.flatMap((id) => [eventId, id]);
-
-        db.query(templateSql, templateValues, (err2) => {
-          if (err2) {
-            console.error("❌ Insert event_templates error:", err2);
-            // ไม่ return error เพราะ event หลัก insert สำเร็จแล้ว
-          }
-          res.status(201).json({ success: true, id: eventId });
-        });
-      } else {
-        res.status(201).json({ success: true, id: eventId });
-      }
-    });
+    res.status(201).json({ success: true, id: eventId });
   } catch (error) {
     console.error("❌ Upload or insert error:", error);
     res.status(500).json({ error: "Internal Server Error" });
@@ -190,54 +183,55 @@ router.post("/", uploadFields, async (req, res) => {
 });
 
 // ✅ GET /api/events - ดึงรายการงานทั้งหมด
-router.get("/", (req, res) => {
-  const sql = "SELECT * FROM events ORDER BY id DESC";
-
-  db.query(sql, (err, results) => {
-    if (err) {
-      console.error("❌ MySQL fetch error:", err);
-      return res.status(500).json({ error: "Database error" });
-    }
-
+router.get("/", async (req, res) => {
+  try {
+    const sql = "SELECT * FROM events ORDER BY id DESC";
+    const results = await db.query(sql);
     res.json(results);
-  });
+  } catch (err) {
+    console.error("❌ MySQL fetch error:", err);
+    res.status(500).json({ error: "Database error" });
+  }
 });
 
 // ✅ GET /api/events/:id
-router.get("/:id", (req, res) => {
-  const sqlEvent = "SELECT * FROM events WHERE id = ?";
-  const sqlTemplates =
-    "SELECT template_id FROM event_templates WHERE event_id = ?";
+router.get("/:id", async (req, res) => {
+  try {
+    const sqlEvent = "SELECT * FROM events WHERE id = ?";
+    const sqlTemplates =
+      "SELECT template_id FROM event_templates WHERE event_id = ?";
 
-  db.query(sqlEvent, [req.params.id], (err, results) => {
-    if (err || results.length === 0) {
+    const results = await db.query(sqlEvent, [req.params.id]);
+    if (results.length === 0) {
       return res.status(404).json({ error: "Event not found" });
     }
 
     const event = results[0];
 
-    db.query(sqlTemplates, [req.params.id], (err2, templateRows) => {
-      if (err2) {
-        console.error("❌ Fetch templates error:", err2);
-        return res.json(event); // ❌ แบบนี้ไม่มี templateIds
-      }
-
+    try {
+      const templateRows = await db.query(sqlTemplates, [req.params.id]);
       event.templateIds = templateRows.map((r) => r.template_id); // ✅ ต้องเพิ่มตรงนี้
       res.json(event);
-    });
-  });
+    } catch (err2) {
+      console.error("❌ Fetch templates error:", err2);
+      res.json(event); // ❌ แบบนี้ไม่มี templateIds
+    }
+  } catch (err) {
+    console.error("❌ Get event error:", err);
+    res.status(404).json({ error: "Event not found" });
+  }
 });
 
 // ✅ DELETE /api/events/:id - ลบงาน
-router.delete("/:id", (req, res) => {
-  const sql = "DELETE FROM events WHERE id = ?";
-  db.query(sql, [req.params.id], (err, result) => {
-    if (err) {
-      console.error("❌ MySQL delete error:", err);
-      return res.status(500).json({ error: "Database error" });
-    }
+router.delete("/:id", async (req, res) => {
+  try {
+    const sql = "DELETE FROM events WHERE id = ?";
+    await db.query(sql, [req.params.id]);
     res.json({ success: true });
-  });
+  } catch (err) {
+    console.error("❌ MySQL delete error:", err);
+    res.status(500).json({ error: "Database error" });
+  }
 });
 
 // ✅ PUT /api/events/:id - แก้ไขงาน
@@ -347,16 +341,10 @@ router.put("/:id", uploadFields, async (req, res) => {
 
     // Fallback coverImage2 ถ้า user ไม่ได้อัพโหลดใหม่
     if (!coverImage2Url) {
-      const rows = await new Promise((resolve, reject) => {
-        db.query(
-          "SELECT cover_image2 FROM events WHERE id = ?",
-          [req.params.id],
-          (err, result) => {
-            if (err) return reject(err);
-            resolve(result);
-          }
-        );
-      });
+      const rows = await db.query(
+        "SELECT cover_image2 FROM events WHERE id = ?",
+        [req.params.id]
+      );
       if (rows.length > 0) {
         coverImage2Url = rows[0].cover_image2;
       }
@@ -364,16 +352,10 @@ router.put("/:id", uploadFields, async (req, res) => {
 
     // ✅ ถ้าไม่มีทั้ง req.file และ coverImageUrl → ดึงจาก DB เดิม
     if (!coverImageUrl) {
-      const rows = await new Promise((resolve, reject) => {
-        db.query(
-          "SELECT cover_image FROM events WHERE id = ?",
-          [req.params.id],
-          (err, result) => {
-            if (err) return reject(err);
-            resolve(result);
-          }
-        );
-      });
+      const rows = await db.query(
+        "SELECT cover_image FROM events WHERE id = ?",
+        [req.params.id]
+      );
       if (rows.length > 0) {
         coverImageUrl = rows[0].cover_image;
       }
@@ -419,43 +401,27 @@ router.put("/:id", uploadFields, async (req, res) => {
       req.params.id,
     ];
 
-    db.query(sql, values, (err, result) => {
-      if (err) {
-        console.error("❌ MySQL update error:", err);
-        return res.status(500).json({ error: "Database error" });
+    await db.query(sql, values);
+    const eventId = req.params.id;
+
+    // ✅ ลบ template เดิม และเพิ่มใหม่
+    await db.query("DELETE FROM event_templates WHERE event_id = ?", [eventId]);
+
+    if (templateIds.length > 0) {
+      const insertSql = `
+        INSERT INTO event_templates (event_id, template_id)
+        VALUES ${templateIds.map(() => "(?, ?)").join(", ")}
+      `;
+      const insertValues = templateIds.flatMap((id) => [eventId, id]);
+
+      try {
+        await db.query(insertSql, insertValues);
+      } catch (insertErr) {
+        console.error("❌ Failed to insert new templates:", insertErr);
       }
+    }
 
-      const eventId = req.params.id;
-
-      // ✅ ลบ template เดิม และเพิ่มใหม่
-      db.query(
-        "DELETE FROM event_templates WHERE event_id = ?",
-        [eventId],
-        (delErr) => {
-          if (delErr) {
-            console.error("❌ Failed to delete old templates:", delErr);
-            return res.json({ success: true }); // ไม่หยุด flow
-          }
-
-          if (templateIds.length > 0) {
-            const insertSql = `
-            INSERT INTO event_templates (event_id, template_id)
-            VALUES ${templateIds.map(() => "(?, ?)").join(", ")}
-          `;
-            const insertValues = templateIds.flatMap((id) => [eventId, id]);
-
-            db.query(insertSql, insertValues, (insertErr) => {
-              if (insertErr) {
-                console.error("❌ Failed to insert new templates:", insertErr);
-              }
-              res.json({ success: true });
-            });
-          } else {
-            res.json({ success: true });
-          }
-        }
-      );
-    });
+    res.json({ success: true });
   } catch (error) {
     console.error("❌ Update event error:", error);
     res.status(500).json({ error: "Internal Server Error" });
@@ -464,56 +430,220 @@ router.put("/:id", uploadFields, async (req, res) => {
 
 // POST /api/wishes
 router.post("/wishes", uploadSingle, async (req, res) => {
-  const { name, message, side, eventId } = req.body;
-  let imageUrl = null;
+  try {
+    const { name, message, side, eventId, agree } = req.body;
+    let imageUrl = null;
 
-  if (req.file) {
-    const result = await new Promise((resolve, reject) => {
-      cloudinary.uploader
-        .upload_stream({ folder: "wish_images" }, (error, result) => {
-          if (error) return reject(error);
-          resolve(result);
-        })
-        .end(req.file.buffer);
-    });
-    imageUrl = result.secure_url;
-  }
+    if (req.file) {
+      const result = await new Promise((resolve, reject) => {
+        cloudinary.uploader
+          .upload_stream({ folder: "wish_images" }, (error, result) => {
+            if (error) return reject(error);
+            resolve(result);
+          })
+          .end(req.file.buffer);
+      });
+      imageUrl = result.secure_url;
+    }
 
-  const sql = `INSERT INTO wishes (event_id, name, message, side, image_url) VALUES (?, ?, ?, ?, ?)`;
-  db.query(sql, [eventId, name, message, side, imageUrl], (err, result) => {
-    if (err) return res.status(500).json({ error: "DB error" });
+    const sql = `INSERT INTO wishes (event_id, name, message, side, image_url, show_in_slideshow) VALUES (?, ?, ?, ?, ?, ?)`;
+    const result = await db.query(sql, [eventId, name, message, side, imageUrl, agree === 'true']);
     res.status(201).json({ success: true });
-  });
+  } catch (error) {
+    console.error("❌ Post wish error:", error);
+    res.status(500).json({ error: "DB error" });
+  }
+});
+
+// POST /api/wishes/image - สำหรับส่งเฉพาะรูปภาพ (snapshot)
+router.post("/wishes/image", uploadSingle, async (req, res) => {
+  try {
+    const { name, message, side, eventId, agree } = req.body;
+    let imageUrl = null;
+
+    if (req.file) {
+      const result = await new Promise((resolve, reject) => {
+        cloudinary.uploader
+          .upload_stream({ folder: "wish_images" }, (error, result) => {
+            if (error) return reject(error);
+            resolve(result);
+          })
+          .end(req.file.buffer);
+      });
+      imageUrl = result.secure_url;
+    }
+
+    const sql = `INSERT INTO wishes (event_id, name, message, side, image_url, show_in_slideshow) VALUES (?, ?, ?, ?, ?, ?)`;
+    const result = await db.query(sql, [eventId, name, message, side, imageUrl, agree === 'true']);
+    res.status(201).json({ success: true });
+  } catch (error) {
+    console.error("❌ Upload wish image error:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+// GET /api/wishes?eventId=:eventId - ดึงคำอวยพรของงาน (รองรับทั้ง slideshow และ dashboard)
+router.get("/wishes", async (req, res) => {
+  try {
+    const { eventId, showAll } = req.query;
+    if (!eventId) {
+      return res.status(400).json({ error: "Missing eventId parameter" });
+    }
+
+    let sql;
+    if (showAll === 'true') {
+      // สำหรับ Dashboard - ดูทั้งหมด
+      sql = `
+        SELECT id, image_url, name, message, side, show_in_slideshow, created_at
+        FROM wishes 
+        WHERE event_id = ?
+        ORDER BY created_at DESC
+      `;
+      const results = await db.query(sql, [eventId]);
+      res.json(results);
+    } else {
+      // สำหรับ Slideshow - เฉพาะที่แสดงได้
+      sql = `
+        SELECT image_url, name, message, side, show_in_slideshow
+        FROM wishes 
+        WHERE event_id = ? AND show_in_slideshow = 1
+        ORDER BY created_at ASC
+      `;
+      const results = await db.query(sql, [eventId]);
+      const imageUrls = results.map(wish => wish.image_url).filter(url => url);
+      res.json(imageUrls);
+    }
+  } catch (err) {
+    console.error("❌ Fetch wishes error:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+// DELETE /api/wishes/:id - ลบคำอวยพร
+router.delete("/wishes/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const sql = `DELETE FROM wishes WHERE id = ?`;
+    const result = await db.query(sql, [id]);
+    
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: "Wish not found" });
+    }
+    
+    res.json({ success: true, message: "Wish deleted successfully" });
+  } catch (err) {
+    console.error("❌ Delete wish error:", err);
+    res.status(500).json({ error: "Server error" });
+  }
 });
 
 // GET /api/events/:id/templates
-router.get("/events/:id/templates", (req, res) => {
-  const eventId = req.params.id;
-  const sql = `
-    SELECT t.*
-    FROM event_templates et
-    JOIN templates t ON et.template_id = t.id
-    WHERE et.event_id = ?
-  `;
-  db.query(sql, [eventId], (err, results) => {
-    if (err) {
-      console.error("❌ Load templates by event failed:", err);
-      return res.status(500).json({ error: "Server error" });
-    }
+router.get("/events/:id/templates", async (req, res) => {
+  try {
+    const eventId = req.params.id;
+    const sql = `
+      SELECT t.*
+      FROM event_templates et
+      JOIN templates t ON et.template_id = t.id
+      WHERE et.event_id = ?
+    `;
+    const results = await db.query(sql, [eventId]);
     res.json(results);
-  });
+  } catch (err) {
+    console.error("❌ Load templates by event failed:", err);
+    res.status(500).json({ error: "Server error" });
+  }
 });
 
 // ✅ GET /api/templates - ดึงเทมเพลตทั้งหมด
-router.get("/templates", (req, res) => {
-  const sql = `SELECT id, name FROM templates ORDER BY id DESC`;
-  db.query(sql, (err, results) => {
-    if (err) {
-      console.error("❌ Cannot fetch templates:", err);
-      return res.status(500).json({ error: "Database error" });
-    }
+router.get("/templates", async (req, res) => {
+  try {
+    const sql = `SELECT id, name FROM templates ORDER BY id DESC`;
+    const results = await db.query(sql);
     res.json(results); // 👈 ส่งกลับทั้งหมดให้ frontend
-  });
+  } catch (err) {
+    console.error("❌ Cannot fetch templates:", err);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+// ======= SLIPS API ENDPOINTS =======
+
+// POST /api/slips/upload - อัปโหลดสลิป
+router.post("/slips/upload", uploadSingle, async (req, res) => {
+  try {
+    const { name, side, amount, eventId } = req.body;
+    let slipImageUrl = null;
+
+    if (req.file) {
+      const result = await new Promise((resolve, reject) => {
+        cloudinary.uploader
+          .upload_stream({ folder: "slip_images" }, (error, result) => {
+            if (error) return reject(error);
+            resolve(result);
+          })
+          .end(req.file.buffer);
+      });
+      slipImageUrl = result.secure_url;
+    }
+
+    const sql = `INSERT INTO slips (event_id, name, side, amount, slip_image_url) VALUES (?, ?, ?, ?, ?)`;
+    await db.query(sql, [eventId, name, side, parseFloat(amount), slipImageUrl]);
+    res.status(201).json({ success: true });
+  } catch (error) {
+    console.error("❌ Upload slip error:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+// GET /api/slips/summary - ดึงสรุปยอดสลิปทั้งหมดแยกตามงาน
+router.get("/slips/summary", async (req, res) => {
+  try {
+    const sql = `
+      SELECT 
+        e.id as event_id,
+        e.title as event_name,
+        COALESCE(SUM(CASE WHEN s.side = 'bride' THEN s.amount ELSE 0 END), 0) as total_bride,
+        COALESCE(SUM(CASE WHEN s.side = 'groom' THEN s.amount ELSE 0 END), 0) as total_groom,
+        COALESCE(SUM(s.amount), 0) as total_amount,
+        COUNT(s.id) as total_slips
+      FROM events e
+      LEFT JOIN slips s ON e.id = s.event_id
+      GROUP BY e.id, e.title
+      ORDER BY e.id DESC
+    `;
+    
+    const results = await db.query(sql);
+    res.json(results);
+  } catch (err) {
+    console.error("❌ Fetch slip summary error:", err);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+// GET /api/slips/event/:eventId - ดึงรายละเอียดสลิปของงานเฉพาะ
+router.get("/slips/event/:eventId", async (req, res) => {
+  try {
+    const sql = `
+      SELECT 
+        s.id,
+        s.name,
+        s.side,
+        s.amount,
+        s.slip_image_url,
+        s.created_at
+      FROM slips s
+      WHERE s.event_id = ?
+      ORDER BY s.created_at DESC
+    `;
+    
+    const results = await db.query(sql, [req.params.eventId]);
+    res.json(results);
+  } catch (err) {
+    console.error("❌ Fetch slip details error:", err);
+    res.status(500).json({ error: "Database error" });
+  }
 });
 
 // ✅ export router หลังจากประกาศ route ทั้งหมด

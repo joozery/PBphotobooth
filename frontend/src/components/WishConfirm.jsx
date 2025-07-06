@@ -176,6 +176,7 @@ export default function WishConfirm() {
       formData.append('name', name);
       formData.append('message', message);
       formData.append('side', side);
+      formData.append('agree', agree); // ส่งข้อมูลการยินยอมให้แสดงในสไลด์โชว์
 
       await axios.post(`${BASE_URL}/api/wishes/image`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' }

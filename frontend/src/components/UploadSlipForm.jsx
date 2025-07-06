@@ -23,13 +23,21 @@ export default function UploadSlipForm() {
     if (!eventId) return;
     setLoading(true);
     axios.get(`${BASE_URL}/api/events/${eventId}`)
-      .then(res => setEvent(res.data))
-      .catch(err => {
-        Swal.fire({ icon: 'error', title: 'ไม่พบข้อมูลงาน', text: 'ไม่สามารถโหลดข้อมูลงานได้' });
-        navigate(-1);
+      .then(res => {
+        setEvent(res.data);
+        setLoading(false);
       })
-      .finally(() => setLoading(false));
-  }, [eventId]);
+      .catch(err => {
+        console.error('Error loading event:', err);
+        Swal.fire({ 
+          icon: 'error', 
+          title: 'ไม่พบข้อมูลงาน', 
+          text: 'ไม่สามารถโหลดข้อมูลงานได้' 
+        });
+        setLoading(false);
+        navigate(-1);
+      });
+  }, [eventId, navigate]);
 
   // ฟังก์ชันคัดลอก
   const handleCopy = () => {

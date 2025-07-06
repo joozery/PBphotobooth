@@ -10,16 +10,68 @@ export default function WishGalleryList() {
   const navigate = useNavigate();
   const [images, setImages] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [currentIdx, setCurrentIdx] = useState(0);
   const [downloadingAll, setDownloadingAll] = useState(false);
 
   useEffect(() => {
     if (eventId) {
-      axios.get(`${BASE_URL}/api/wishes?eventId=${eventId}`)
-        .then(res => setImages(res.data))
-        .catch(() => setImages([]))
+      setLoading(true);
+      setError(null);
+      
+      console.log("🔍 Calling API:", `${BASE_URL}/api/wishes?eventId=${eventId}&showAll=true`);
+      
+      axios.get(`${BASE_URL}/api/wishes?eventId=${eventId}&showAll=true`)
+        .then(res => {
+          console.log("✅ API Response:", res.data);
+          console.log("✅ Response length:", res.data?.length || 0);
+          console.log("✅ First item:", res.data?.[0]);
+          
+          // ตอนนี้ API จะส่งข้อมูล objects ที่มี image_url
+          if (Array.isArray(res.data)) {
+            console.log("✅ Mapping to image URLs...");
+            const imageUrls = res.data.map(wish => {
+              console.log("✅ Processing wish:", wish);
+              return wish.image_url;
+            }).filter(url => {
+              console.log("✅ Filtering URL:", url);
+              return url;
+            });
+            console.log("✅ Final image URLs:", imageUrls);
+            setImages(imageUrls);
+          } else {
+            console.log("❌ Response is not an array:", res.data);
+            setImages([]);
+          }
+          setError(null);
+        })
+        .catch(err => {
+          console.error("❌ โหลดคำอวยพรผิดพลาด:", err);
+          console.error("Error details:", err.response?.data || err.message);
+          
+          // ลองใช้ API เดิมถ้า API ใหม่ไม่ทำงาน
+          return axios.get(`${BASE_URL}/api/wishes?eventId=${eventId}`)
+            .then(res => {
+              console.log("Fallback API Response:", res.data);
+              if (Array.isArray(res.data)) {
+                setImages(res.data.filter(url => url));
+                setError(null);
+              } else {
+                setImages([]);
+                setError("ไม่พบข้อมูลคำอวยพร");
+              }
+            })
+            .catch(fallbackErr => {
+              console.error("❌ Fallback API ก็ผิดพลาด:", fallbackErr);
+              setImages([]);
+              setError(`ไม่สามารถโหลดคำอวยพรได้: ${fallbackErr.response?.status || fallbackErr.message}`);
+            });
+        })
         .finally(() => setLoading(false));
+    } else {
+      setError("ไม่พบ Event ID");
+      setLoading(false);
     }
   }, [eventId]);
 
@@ -70,7 +122,37 @@ export default function WishGalleryList() {
     setDownloadingAll(false);
   };
 
-  if (loading) return <div className="text-center py-10">กำลังโหลด...</div>;
+  if (loading) return (
+    <div className="min-h-screen bg-gradient-to-br from-pink-50 to-yellow-50 font-prompt p-6">
+      <div className="text-center py-20">
+        <div className="text-lg">กำลังโหลดคำอวยพร...</div>
+        <div className="mt-2 text-sm text-gray-500">Event ID: {eventId}</div>
+      </div>
+    </div>
+  );
+
+  if (error) return (
+    <div className="min-h-screen bg-gradient-to-br from-pink-50 to-yellow-50 font-prompt p-6">
+      <div className="max-w-5xl mx-auto mb-2 flex">
+        <button
+          onClick={() => navigate(-1)}
+          className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded shadow text-sm font-medium"
+        >
+          ← กลับ
+        </button>
+      </div>
+      <div className="text-center py-20">
+        <div className="text-lg text-red-600 mb-4">เกิดข้อผิดพลาด</div>
+        <div className="text-sm text-gray-600 mb-4">{error}</div>
+        <button
+          onClick={() => window.location.reload()}
+          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded shadow"
+        >
+          ลองใหม่
+        </button>
+      </div>
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 to-yellow-50 font-prompt p-6">
@@ -97,7 +179,14 @@ export default function WishGalleryList() {
       )}
       <div className="max-w-5xl mx-auto grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
         {images.length === 0 && (
-          <div className="col-span-full text-center text-gray-400">ยังไม่มีคำอวยพร</div>
+          <div className="col-span-full text-center text-gray-400">
+            <div>ยังไม่มีคำอวยพร</div>
+            <div className="text-xs mt-2">API: {BASE_URL}/api/wishes?eventId={eventId}&showAll=true</div>
+            <div className="text-xs">Event ID: {eventId}</div>
+            <div className="text-xs">จำนวนรูป: {images.length}</div>
+            <div className="text-xs">Error: {error || 'ไม่มี'}</div>
+            <div className="text-xs">Loading: {loading ? 'ใช่' : 'ไม่'}</div>
+          </div>
         )}
         {images.map((url, idx) => (
           <div

@@ -13,7 +13,7 @@ export default function WeddingLanding() {
 
   useEffect(() => {
     axios.get(`${BASE_URL}/api/events`).then(res => {
-      const latest = res.data && res.data.length > 0 ? res.data[res.data.length - 1] : null;
+      const latest = res.data && res.data.length > 0 ? res.data[0] : null;
       if (latest) {
         setCover(latest.cover_image);
         setEvent(latest);

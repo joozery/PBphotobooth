@@ -71,6 +71,7 @@ export default function WishForm() {
         setEvent(res.data);
       } catch (err) {
         console.error("❌ โหลดข้อมูล event ผิดพลาด:", err);
+        // ไม่ redirect ให้ user ใช้งานต่อได้
       }
     };
     if (eventId) fetchEvent();

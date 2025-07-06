@@ -1,58 +1,114 @@
 // src/pages/EventDetail.jsx
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import { FaPenNib, FaReceipt, FaRegEye } from "react-icons/fa";
-import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
-import bgFlower from "../assets/bgflower.jpg";
 import { useTranslation } from 'react-i18next';
-import i18n from '../i18n';
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL;
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://pbphoto-api-fae29207c672.herokuapp.com";
 
 export default function EventDetail() {
   const { eventId } = useParams();
   const navigate = useNavigate();
   const [event, setEvent] = useState(null);
-  const { t } = useTranslation();
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const { t, i18n } = useTranslation();
+
+  // ฟังก์ชันสำหรับเปลี่ยนภาษา
+  const changeLanguage = (lng) => {
+    i18n.changeLanguage(lng);
+  };
+
+  // ฟังก์ชันสำหรับเรียก API
+  const fetchEvent = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      console.log(`🔄 Fetching event ${eventId}`);
+      
+      const response = await axios.get(`${BASE_URL}/api/events/${eventId}`);
+      
+      console.log(`✅ Event ${eventId} fetched successfully`);
+      setEvent(response.data);
+    } catch (err) {
+      console.error(`❌ Error fetching event:`, err);
+      setError('ไม่สามารถโหลดข้อมูลงานได้ กรุณาลองใหม่อีกครั้ง');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchEvent = async () => {
-      try {
-        const res = await axios.get(`${BASE_URL}/api/events/${eventId}`);
-        setEvent(res.data);
-        console.log("🌈 Event Data:", res.data);
-      } catch (err) {
-        console.error("❌ ไม่พบข้อมูลงาน:", err);
-      }
-    };
-
-    fetchEvent();
+    if (eventId) {
+      fetchEvent();
+    }
   }, [eventId]);
 
-  useEffect(() => {
-    console.log("🌈 Event Data:", event);
-  }, [event]);
+  if (loading) {
+    return (
+      <div className="w-screen h-screen flex items-center justify-center bg-gray-100">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">{t('กำลังโหลดข้อมูล...')}</p>
+        </div>
+      </div>
+    );
+  }
 
-  if (!event) return <div className="p-6">{t('กำลังโหลดข้อมูล...')}</div>;
+  if (error) {
+    return (
+      <div className="w-screen h-screen flex items-center justify-center bg-gray-100">
+        <div className="text-center">
+          <p className="text-red-600 mb-4">{error}</p>
+          <button 
+            onClick={fetchEvent}
+            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+          >
+            ลองใหม่
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!event) {
+    return (
+      <div className="w-screen h-screen flex items-center justify-center bg-gray-100">
+        <p className="text-gray-600">{t('ไม่พบข้อมูลงาน')}</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="w-screen h-screen flex items-center justify-center font-prompt bg-[#eee]">
+    <div className="w-screen h-screen font-prompt flex justify-center items-center bg-[#eee]">
       <div
-        className="w-full max-w-lg h-[100svh] relative bg-cover bg-center bg-no-repeat flex flex-col justify-end shadow-xl"
+        className="w-full max-w-xl h-[100svh] bg-cover bg-center bg-no-repeat flex flex-col justify-end shadow-xl rounded-none border border-white relative"
         style={{
-          backgroundImage: `url(${event.cover_image || bgFlower})`,
+          backgroundImage: `url(${event.cover_image || "/default-bg.jpg"})`,
         }}
       >
-        {/* 🔘 ปุ่มเปลี่ยนภาษา */}
-        <div className="absolute top-4 right-4 z-20 flex gap-2">
-          <button onClick={() => i18n.changeLanguage('th')} className={`px-2 py-1 rounded text-xs font-bold ${i18n.language === 'th' ? 'bg-gray-800 text-white' : 'bg-white text-gray-800 border'}`}>TH</button>
-          <button onClick={() => i18n.changeLanguage('en')} className={`px-2 py-1 rounded text-xs font-bold ${i18n.language === 'en' ? 'bg-gray-800 text-white' : 'bg-white text-gray-800 border'}`}>EN</button>
+        {/* Language Switcher */}
+        <div className="absolute top-4 right-4 flex gap-2 z-20">
+          <button
+            onClick={() => changeLanguage('th')}
+            className={`px-3 py-1 text-xs rounded ${i18n.language === 'th' ? 'bg-white text-black' : 'bg-black bg-opacity-50 text-white'}`}
+          >
+            TH
+          </button>
+          <button
+            onClick={() => changeLanguage('en')}
+            className={`px-3 py-1 text-xs rounded ${i18n.language === 'en' ? 'bg-white text-black' : 'bg-black bg-opacity-50 text-white'}`}
+          >
+            EN
+          </button>
         </div>
-        {/* 🔘 Action Buttons */}
-        <div className="w-full px-6 z-10 flex flex-col gap-3  pt-4 pb-6 ">
+
+        {/* Buttons Container - ย้ายไปด้านล่าง */}
+        <div className="w-full px-6 pb-6 z-10 flex flex-col gap-3">
           {event.show_wish_button === 1 && (
             <button
-            onClick={() => navigate(`/wish/${eventId}`)}
+              onClick={() => navigate(`/wish/${eventId}`)}
               className="w-full py-3 rounded-full shadow-lg flex items-center justify-center gap-2 text-sm font-semibold"
               style={{
                 backgroundColor: event.wish_button_bg || "#1d4ed8",

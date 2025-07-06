@@ -52,32 +52,30 @@ export default function ManageEventSlips() {
 
   const exportToExcel = async (eventId, eventName) => {
     try {
-      // ถ้ายังไม่มีข้อมูลรายละเอียด ให้ดึงมา
-      if (!slipDetails[eventId]) {
-        await fetchSlipDetails(eventId);
-        // รอให้ state อัพเดท
-        setTimeout(() => {
-          exportToExcel(eventId, eventName);
-        }, 500);
+      // ดึงข้อมูลรายละเอียดสลิปใหม่ทุกครั้ง
+      const response = await axios.get(`${BASE_URL}/api/slips/event/${eventId}`);
+      const details = response.data || [];
+
+      // ตรวจสอบว่ามีข้อมูลหรือไม่
+      if (details.length === 0) {
+        toast.error('ไม่มีข้อมูลสลิปสำหรับงานนี้');
         return;
       }
 
-      const details = slipDetails[eventId] || [];
-
       const data = details.map((d) => ({
         "ชื่อผู้โอน": d.name,
-        "ยอดโอน (บาท)": d.amount,
+        "ยอดโอน (บาท)": parseFloat(d.amount) || 0,
         "ฝั่ง": d.side === 'bride' ? 'เจ้าสาว' : 'เจ้าบ่าว',
         "วันที่": new Date(d.created_at).toLocaleDateString('th-TH')
       }));
 
       const ws = XLSX.utils.json_to_sheet(data);
 
-      // เพิ่ม summary row
-      const total = details.reduce((sum, d) => sum + d.amount, 0);
-      const totalBride = details.filter(d => d.side === 'bride').reduce((sum, d) => sum + d.amount, 0);
-      const totalGroom = details.filter(d => d.side === 'groom').reduce((sum, d) => sum + d.amount, 0);
-      
+      // คำนวณยอดสรุปจากข้อมูลจริง
+      const total = details.reduce((sum, d) => sum + (parseFloat(d.amount) || 0), 0);
+      const totalBride = details.filter(d => d.side === 'bride').reduce((sum, d) => sum + (parseFloat(d.amount) || 0), 0);
+      const totalGroom = details.filter(d => d.side === 'groom').reduce((sum, d) => sum + (parseFloat(d.amount) || 0), 0);
+
       XLSX.utils.sheet_add_aoa(ws, [
         ["", "", "", ""],
         ["สรุปยอด", "", "", ""],

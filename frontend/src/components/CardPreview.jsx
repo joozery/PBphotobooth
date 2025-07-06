@@ -30,7 +30,8 @@ const BASE_URL =
   import.meta.env.VITE_API_BASE_URL ||
   "https://pbphoto-api-fae29207c672.herokuapp.com";
 
-const REMOVE_BG_API_KEY = "CNxCKtW7ASjw1GMNHPmo56Uz";
+// ✅ API Key สำหรับ remove.bg - อัปเดตแล้ว
+const REMOVE_BG_API_KEY = "xvYozMuww7VJsi1qQL6tosY7";
 
 export default function CardPreview() {
   const messageRef = useRef();
@@ -208,22 +209,43 @@ export default function CardPreview() {
       const formData = new FormData();
       formData.append("image_file", file);
       formData.append("size", "auto");
+      
       const res = await fetch("https://api.remove.bg/v1.0/removebg", {
         method: "POST",
         headers: { "X-Api-Key": REMOVE_BG_API_KEY },
         body: formData,
       });
+      
       if (!res.ok) {
-        alert("ลบพื้นหลังไม่สำเร็จ: " + (await res.text()));
+        const errorText = await res.text();
+        let errorMessage = "ลบพื้นหลังไม่สำเร็จ";
+        
+        try {
+          const errorData = JSON.parse(errorText);
+          if (errorData.errors && errorData.errors[0]) {
+            if (errorData.errors[0].code === "insufficient_credits") {
+              errorMessage = "ไม่สามารถลบพื้นหลังได้: API Credits หมดแล้ว\nกรุณาติดต่อผู้ดูแลระบบ";
+            } else {
+              errorMessage = `ลบพื้นหลังไม่สำเร็จ: ${errorData.errors[0].title}`;
+            }
+          }
+        } catch (e) {
+          errorMessage = `ลบพื้นหลังไม่สำเร็จ: ${errorText}`;
+        }
+        
+        alert(errorMessage);
         setLoadingRemoveBg(false);
         return;
       }
+      
       const resultBlob = await res.blob();
       const url = URL.createObjectURL(resultBlob);
       setImageURL(url); // set ให้ userImage เป็นรูปที่ไดคัทแล้ว
       localStorage.setItem("wishImage", url); // เพิ่มบันทึก url ที่ไดคัทแล้ว
+      alert("ลบพื้นหลังสำเร็จ!");
     } catch (err) {
-      alert("เกิดข้อผิดพลาดในการลบพื้นหลัง");
+      console.error("Remove background error:", err);
+      alert("เกิดข้อผิดพลาดในการลบพื้นหลัง\nกรุณาลองใหม่อีกครั้ง");
     }
     setLoadingRemoveBg(false);
   };
@@ -713,8 +735,9 @@ export default function CardPreview() {
             {/* ปุ่มลบ BG */}
             <button
               onClick={handleRemoveBg}
-              className="bg-red-500 text-white text-xs px-3 py-1 rounded shadow-sm"
+              className="bg-red-500 text-white text-xs px-3 py-1 rounded shadow-sm disabled:bg-gray-400 disabled:cursor-not-allowed"
               disabled={loadingRemoveBg}
+              title="ฟีเจอร์ลบพื้นหลัง (ต้องใช้ API Credits)"
             >
               {loadingRemoveBg ? "กำลังลบ BG..." : "ลบ BG (ไดคัท)"}
             </button>
