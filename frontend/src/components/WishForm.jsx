@@ -21,6 +21,7 @@ import wineIcon from "../assets/icons/wine.png";
 import womancolorIcon from "../assets/icons/womancolor.png";
 import woomanthaiIcon from "../assets/icons/woomanthai.png";
 import { useTranslation } from 'react-i18next';
+import Swal from 'sweetalert2';
 
 const BASE_URL =
   import.meta.env.VITE_API_BASE_URL ||
@@ -58,11 +59,12 @@ export default function WishForm() {
   const [side, setSide] = useState("groom");
   const [name, setName] = useState("");
   const [message, setMessage] = useState("");
-  const [agree, setAgree] = useState(true);
   const [image, setImage] = useState(null);
   // const [imageFile, setImageFile] = useState(null);
   const [event, setEvent] = useState(null);
   const [frameShape, setFrameShape] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [progress, setProgress] = useState(0);
 
   useEffect(() => {
     const fetchEvent = async () => {
@@ -116,13 +118,14 @@ export default function WishForm() {
       return;
     }
 
+    setLoading(true);
+    setProgress(0);
     try {
       // ✅ ส่ง profile_image ไป backend
       const formData = new FormData();
       formData.append("name", name);
       formData.append("message", message);
       formData.append("side", side);
-      formData.append("agree", agree.toString());
       formData.append("eventId", eventId);
       
       // แปลง base64 เป็นไฟล์
@@ -132,8 +135,15 @@ export default function WishForm() {
         formData.append("profile_image", blob, "profile.jpg");
       }
 
+      // ใช้ onUploadProgress เพื่ออัพเดท progress
       const res = await axios.post(`${BASE_URL}/api/wishes`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
+        headers: { 'Content-Type': 'multipart/form-data' },
+        onUploadProgress: (progressEvent) => {
+          if (progressEvent.total) {
+            const percent = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+            setProgress(percent);
+          }
+        }
       });
 
       if (res.status === 200 || res.status === 201) {
@@ -142,17 +152,21 @@ export default function WishForm() {
         localStorage.setItem("wishMessage", message);
         localStorage.setItem("eventId", eventId);
         localStorage.setItem("side", side);
-        localStorage.setItem("agree", agree.toString());
         if (image) {
           localStorage.setItem("wishImage", image); // เก็บไว้ preview
         }
-        navigate(`/template/${eventId}`);
+        setProgress(100);
+        setTimeout(() => {
+          setLoading(false);
+          navigate(`/template/${eventId}`);
+        }, 300);
       } else {
         alert("❌ ส่งคำอวยพรไม่สำเร็จ");
       }
     } catch (err) {
       console.error("❌ ส่งคำอวยพร error:", err);
       alert("❌ เกิดข้อผิดพลาดในการเชื่อมต่อ API");
+      setLoading(false);
     }
   };
 
@@ -310,41 +324,33 @@ export default function WishForm() {
             </div>
           </div>
 
-          {/* ✅ Checkbox */}
-          <div className="grid grid-cols-2 gap-2 mb-6">
-  <button
-    onClick={() => setAgree(true)}
-    className={`text-sm px-4 py-2 rounded-full border transition ${
-      agree
-        ? "bg-yellow-400 text-white border-yellow-500 shadow"
-        : "bg-white text-gray-600 border-gray-300 hover:bg-gray-100"
-    }`}
-  >
-    {t('แสดงข้อความของคุณในสไลด์โชว์')}
-  </button>
-  <button
-    onClick={() => setAgree(false)}
-    className={`text-sm px-4 py-2 rounded-full border transition ${
-      !agree
-        ? "bg-gray-400 text-white border-gray-500 shadow"
-        : "bg-white text-gray-600 border-gray-300 hover:bg-gray-100"
-    }`}
-  >
-    {t('ไม่แสดงข้อความของคุณในสไลด์โชว์')}
-  </button>
-</div>
-
           {/* ✅ Submit Button */}
           <button
-            onClick={handleSubmit}
-            className="w-full py-3 rounded-full text-sm font-semibold transition shadow-lg"
+            onClick={loading ? undefined : handleSubmit}
+            className="w-full py-3 rounded-full text-sm font-semibold transition shadow-lg flex items-center justify-center"
             style={{
               backgroundColor: buttonBg,
               color: buttonTextColor,
+              opacity: loading ? 0.7 : 1,
+              cursor: loading ? 'not-allowed' : 'pointer',
             }}
+            disabled={loading}
           >
-            {t('ต่อไป →')}
+            {loading ? (
+              <>
+                <span className="mr-2">{t('กำลังส่ง...')}</span>
+                <span>{progress}%</span>
+              </>
+            ) : t('ต่อไป →')}
           </button>
+          {loading && (
+            <div className="w-full mt-2 h-2 bg-gray-200 rounded-full overflow-hidden">
+              <div
+                className="h-2 bg-yellow-400 transition-all duration-200"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
+          )}
         </div>
       </div>
     </div>

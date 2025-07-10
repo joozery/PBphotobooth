@@ -90,10 +90,6 @@ export default function WishGallerySlideshow() {
       <div className="absolute bottom-6 right-8 bg-black/60 text-white text-lg px-4 py-2 rounded-full z-10 shadow">
         {current + 1} / {images.length}
       </div>
-      {/* แสดงสถานะ auto-refresh */}
-      <div className="absolute top-6 right-8 bg-green-600/80 text-white text-sm px-3 py-1 rounded-full z-10 shadow">
-        🔄 Auto-refresh
-      </div>
     </div>
   );
 } 

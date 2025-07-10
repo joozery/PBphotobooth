@@ -7,6 +7,24 @@ import { useTranslation } from 'react-i18next';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://pbphoto-api-fae29207c672.herokuapp.com";
 
+// รายการธนาคารหลักในไทย
+const bankOptions = [
+  { key: "kbank", label: "ธนาคารกสิกรไทย" },
+  { key: "bbl", label: "ธนาคารกรุงเทพ" },
+  { key: "scb", label: "ธนาคารไทยพาณิชย์" },
+  { key: "ktb", label: "ธนาคารกรุงไทย" },
+  { key: "bay", label: "ธนาคารกรุงศรีอยุธยา" },
+  { key: "tmb", label: "ธนาคารทหารไทย" },
+  { key: "gsb", label: "ธนาคารออมสิน" },
+  { key: "ghb", label: "ธนาคารอาคารสงเคราะห์" },
+  { key: "uob", label: "ธนาคารยูโอบี" },
+  { key: "lhb", label: "ธนาคารแลนด์ แอนด์ เฮาส์" },
+  { key: "kk", label: "ธนาคารเกียรตินาคิน" },
+  { key: "tisco", label: "ธนาคารทิสโก้" },
+  { key: "cimb", label: "ธนาคารซีไอเอ็มบี ไทย" },
+  { key: "ibank", label: "ธนาคารอิสลามแห่งประเทศไทย" },
+];
+
 export default function UploadSlipForm() {
   const navigate = useNavigate();
   const { eventId } = useParams();
@@ -39,14 +57,29 @@ export default function UploadSlipForm() {
       });
   }, [eventId, navigate]);
 
-  // ฟังก์ชันคัดลอก
-  const handleCopy = () => {
+  // ฟังก์ชันคัดลอกพร้อมเพย์
+  const handleCopyPromptPay = () => {
     const number = side === 'groom' ? event?.promptpay_groom : event?.promptpay_bride;
     if (!number) return;
     navigator.clipboard.writeText(number);
     Swal.fire({
       icon: "success",
       title: "คัดลอกหมายเลขพร้อมเพย์แล้ว!",
+      toast: true,
+      position: "top-end",
+      showConfirmButton: false,
+      timer: 1500,
+      timerProgressBar: true,
+    });
+  };
+
+  // ฟังก์ชันคัดลอกเลขบัญชี
+  const handleCopyAccountNumber = (accountNumber) => {
+    if (!accountNumber) return;
+    navigator.clipboard.writeText(accountNumber);
+    Swal.fire({
+      icon: "success",
+      title: "คัดลอกเลขบัญชีแล้ว!",
       toast: true,
       position: "top-end",
       showConfirmButton: false,
@@ -122,6 +155,33 @@ export default function UploadSlipForm() {
     }
   };
 
+  // ตรวจสอบว่ามีข้อมูลพร้อมเพย์หรือไม่
+  const hasPromptPay = (side) => {
+    if (side === 'groom') {
+      return event?.promptpay_groom && event.promptpay_groom.trim() !== '';
+    } else {
+      return event?.promptpay_bride && event.promptpay_bride.trim() !== '';
+    }
+  };
+
+  // ตรวจสอบว่ามีข้อมูลบัญชีธนาคารหรือไม่
+  const hasBankAccount = (side) => {
+    if (side === 'groom') {
+      return event?.groom_account_number && event.groom_account_number.trim() !== '';
+    } else {
+      return event?.bride_account_number && event.bride_account_number.trim() !== '';
+    }
+  };
+
+  // ตรวจสอบว่ามี QR Code หรือไม่
+  const hasQRCode = (side) => {
+    if (side === 'groom') {
+      return event?.groom_qr_code && event.groom_qr_code.trim() !== '';
+    } else {
+      return event?.bride_qr_code && event.bride_qr_code.trim() !== '';
+    }
+  };
+
   if (loading) return <div className="p-6">{t('กำลังโหลดข้อมูล...')}</div>;
   if (!event) return <div className="p-6">{t('ไม่พบข้อมูลงาน')}</div>;
 
@@ -134,64 +194,130 @@ export default function UploadSlipForm() {
             <button onClick={() => navigate(-1)} className="text-blue-600 text-xl mr-2">←</button>
             <h2 className="text-lg font-semibold text-blue-700">{t('แนบสลิปพร้อมเพย์')}</h2>
           </div>
-          {/* QR Section */}
-          <div className="bg-gray-50 rounded-lg p-4 flex flex-col items-center mb-2 mx-6">
-            <img src={getQR(side === 'groom' ? event.promptpay_groom : event.promptpay_bride)} alt="QR" className="w-40 h-40 object-contain mb-2" />
-            <div className="text-xs text-gray-700 mb-1">{t('ชื่อบัญชี')}: {side === 'groom' ? event.groom_label || t('เจ้าบ่าว') : event.bride_label || t('เจ้าสาว')}</div>
-            <div className="text-xs text-gray-700 mb-1">หมายเลขพร้อมเพย์: {side === 'groom' ? event.promptpay_groom : event.promptpay_bride}</div>
-            <button className="text-blue-600 text-xs underline" onClick={handleCopy}>คัดลอก</button>
-          </div>
-          {/* Slip Upload */}
-          <div className="mx-6">
-            <label className="block text-sm font-medium mb-1 text-gray-600">รูปสลิปของคุณ</label>
-            <div className="flex items-center gap-2">
-              <input
-                type="file"
-                accept="image/*"
-                className="hidden"
-                id="slip-upload"
-                onChange={e => setSlip(e.target.files[0])}
-              />
-              <label htmlFor="slip-upload" className="bg-blue-600 text-white px-4 py-2 rounded shadow cursor-pointer">
-                + แนบสลิป
+
+          {/* Payment Methods Section */}
+          <div className="flex-1 overflow-y-auto px-6">
+            {/* Side Selection */}
+            <div className="flex gap-4 mb-4">
+              <label className="flex items-center gap-1 text-sm">
+                <input type="radio" checked={side === 'groom'} onChange={() => setSide('groom')} />
+                {event.groom_label ? event.groom_label : t('เจ้าบ่าว')}
               </label>
-              {slip && <span className="text-xs text-green-600">{slip.name}</span>}
+              <label className="flex items-center gap-1 text-sm">
+                <input type="radio" checked={side === 'bride'} onChange={() => setSide('bride')} />
+                {event.bride_label ? event.bride_label : t('เจ้าสาว')}
+              </label>
+            </div>
+
+            {/* PromptPay Section - แสดงเฉพาะเมื่อมีข้อมูล */}
+            {hasPromptPay(side) && (
+              <div className="bg-gray-50 rounded-lg p-4 flex flex-col items-center mb-4">
+                <h3 className="text-sm font-medium text-gray-700 mb-2">พร้อมเพย์</h3>
+                <img 
+                  src={getQR(side === 'groom' ? event.promptpay_groom : event.promptpay_bride)} 
+                  alt="QR" 
+                  className="w-40 h-40 object-contain mb-2" 
+                />
+                <div className="text-xs text-gray-700 mb-1">
+                  {t('ชื่อบัญชี')}: {side === 'groom' ? event.groom_label || t('เจ้าบ่าว') : event.bride_label || t('เจ้าสาว')}
+                </div>
+                <div className="text-xs text-gray-700 mb-2">
+                  หมายเลขพร้อมเพย์: {side === 'groom' ? event.promptpay_groom : event.promptpay_bride}
+                </div>
+                <button 
+                  className="text-blue-600 text-xs underline" 
+                  onClick={handleCopyPromptPay}
+                >
+                  คัดลอกหมายเลขพร้อมเพย์
+                </button>
+              </div>
+            )}
+
+            {/* Bank Account Section - แสดงเฉพาะเมื่อมีข้อมูล */}
+            {hasBankAccount(side) && (
+              <div className="bg-blue-50 rounded-lg p-4 mb-4">
+                <h3 className="text-sm font-medium text-blue-700 mb-2">บัญชีธนาคาร</h3>
+                <div className="space-y-2">
+                  <div className="text-xs text-gray-700">
+                    <span className="font-medium">ธนาคาร:</span> {
+                      bankOptions.find(bank => bank.key === (side === 'groom' ? event.groom_bank : event.bride_bank))?.label || 
+                      (side === 'groom' ? event.groom_bank : event.bride_bank)
+                    }
+                  </div>
+                  <div className="text-xs text-gray-700">
+                    <span className="font-medium">ชื่อบัญชี:</span> {side === 'groom' ? event.groom_account_name : event.bride_account_name}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-gray-700">
+                      <span className="font-medium">เลขบัญชี:</span> {side === 'groom' ? event.groom_account_number : event.bride_account_number}
+                    </span>
+                    <button 
+                      className="text-blue-600 text-xs underline" 
+                      onClick={() => handleCopyAccountNumber(side === 'groom' ? event.groom_account_number : event.bride_account_number)}
+                    >
+                      คัดลอก
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* QR Code Section - แสดงเฉพาะเมื่อมี QR Code */}
+            {hasQRCode(side) && (
+              <div className="bg-green-50 rounded-lg p-4 flex flex-col items-center mb-4">
+                <h3 className="text-sm font-medium text-green-700 mb-2">QR Code ธนาคาร</h3>
+                <img 
+                  src={side === 'groom' ? event.groom_qr_code : event.bride_qr_code} 
+                  alt="Bank QR" 
+                  className="w-40 h-40 object-contain mb-2" 
+                />
+              </div>
+            )}
+
+            {/* Slip Upload */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium mb-1 text-gray-600">รูปสลิปของคุณ</label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  id="slip-upload"
+                  onChange={e => setSlip(e.target.files[0])}
+                />
+                <label htmlFor="slip-upload" className="bg-blue-600 text-white px-4 py-2 rounded shadow cursor-pointer">
+                  + แนบสลิป
+                </label>
+                {slip && <span className="text-xs text-green-600">{slip.name}</span>}
+              </div>
+            </div>
+
+            {/* Name */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium mb-1 text-gray-600">{t('ชื่อ')}</label>
+              <input
+                type="text"
+                className="w-full border rounded px-3 py-2 text-sm focus:ring-2 focus:ring-yellow-300 transition"
+                value={name}
+                onChange={e => setName(e.target.value)}
+                placeholder="ชื่อของคุณ"
+              />
+            </div>
+
+            {/* Amount */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium mb-1 text-gray-600">{t('จำนวนเงิน')}</label>
+              <input
+                type="number"
+                className="w-full border rounded px-3 py-2 text-sm focus:ring-2 focus:ring-yellow-300 transition"
+                value={amount}
+                onChange={e => setAmount(e.target.value)}
+                placeholder="0.00"
+                min="0"
+              />
             </div>
           </div>
-          {/* Name */}
-          <div className="mx-6">
-            <label className="block text-sm font-medium mb-1 text-gray-600">{t('ชื่อ')}</label>
-            <input
-              type="text"
-              className="w-full border rounded px-3 py-2 text-sm focus:ring-2 focus:ring-yellow-300 transition"
-              value={name}
-              onChange={e => setName(e.target.value)}
-              placeholder="ชื่อของคุณ"
-            />
-          </div>
-          {/* Side */}
-          <div className="flex gap-4 mb-2 mx-6">
-            <label className="flex items-center gap-1 text-sm">
-              <input type="radio" checked={side === 'groom'} onChange={() => setSide('groom')} />
-              {event.groom_label ? event.groom_label : t('เจ้าบ่าว')}
-            </label>
-            <label className="flex items-center gap-1 text-sm">
-              <input type="radio" checked={side === 'bride'} onChange={() => setSide('bride')} />
-              {event.bride_label ? event.bride_label : t('เจ้าสาว')}
-            </label>
-          </div>
-          {/* Amount */}
-          <div className="mx-6">
-            <label className="block text-sm font-medium mb-1 text-gray-600">{t('จำนวนเงิน')}</label>
-            <input
-              type="number"
-              className="w-full border rounded px-3 py-2 text-sm focus:ring-2 focus:ring-yellow-300 transition"
-              value={amount}
-              onChange={e => setAmount(e.target.value)}
-              placeholder="0.00"
-              min="0"
-            />
-          </div>
+
           {/* Buttons */}
           <div className="flex gap-2 mt-6 w-full px-6 pb-6">
             <button

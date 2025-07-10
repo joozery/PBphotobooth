@@ -66,6 +66,24 @@ const BASE_URL =
   import.meta.env.VITE_API_BASE_URL ||
   "https://pbphoto-api-fae29207c672.herokuapp.com";
 
+// รายการธนาคารหลักในไทย
+const bankOptions = [
+  { key: "kbank", label: "ธนาคารกสิกรไทย" },
+  { key: "bbl", label: "ธนาคารกรุงเทพ" },
+  { key: "scb", label: "ธนาคารไทยพาณิชย์" },
+  { key: "ktb", label: "ธนาคารกรุงไทย" },
+  { key: "bay", label: "ธนาคารกรุงศรีอยุธยา" },
+  { key: "tmb", label: "ธนาคารทหารไทย" },
+  { key: "gsb", label: "ธนาคารออมสิน" },
+  { key: "ghb", label: "ธนาคารอาคารสงเคราะห์" },
+  { key: "uob", label: "ธนาคารยูโอบี" },
+  { key: "lhb", label: "ธนาคารแลนด์ แอนด์ เฮาส์" },
+  { key: "kk", label: "ธนาคารเกียรตินาคิน" },
+  { key: "tisco", label: "ธนาคารทิสโก้" },
+  { key: "cimb", label: "ธนาคารซีไอเอ็มบี ไทย" },
+  { key: "ibank", label: "ธนาคารอิสลามแห่งประเทศไทย" },
+];
+
 function CreateEvent() {
   const { eventId } = useParams();
   const [form, setForm] = useState({
@@ -89,6 +107,14 @@ function CreateEvent() {
     bride_icon: "FaUser",
     promptpay_groom: "",
     promptpay_bride: "",
+    // เพิ่ม bank account settings
+    showBankAccount: true,
+    groom_bank: "",
+    groom_account_number: "",
+    groom_account_name: "",
+    bride_bank: "",
+    bride_account_number: "",
+    bride_account_name: "",
   });
 
   const [coverImage, setCoverImage] = useState(null);
@@ -107,6 +133,12 @@ function CreateEvent() {
   const [groomIconFile, setGroomIconFile] = useState(null);
   const [brideIconKey, setBrideIconKey] = useState("");
   const [brideIconFile, setBrideIconFile] = useState(null);
+
+  // เพิ่ม state สำหรับ QR Code
+  const [groomQRCode, setGroomQRCode] = useState(null);
+  const [previewGroomQR, setPreviewGroomQR] = useState(null);
+  const [brideQRCode, setBrideQRCode] = useState(null);
+  const [previewBrideQR, setPreviewBrideQR] = useState(null);
 
   const [templateOptions, setTemplateOptions] = useState([]);
 
@@ -178,6 +210,14 @@ function CreateEvent() {
             bride_icon: data.bride_icon || "FaUser",
             promptpay_groom: data.promptpay_groom || "",
             promptpay_bride: data.promptpay_bride || "",
+            // เพิ่ม bank account settings
+            showBankAccount: !!data.show_bank_account,
+            groom_bank: data.groom_bank || "",
+            groom_account_number: data.groom_account_number || "",
+            groom_account_name: data.groom_account_name || "",
+            bride_bank: data.bride_bank || "",
+            bride_account_number: data.bride_account_number || "",
+            bride_account_name: data.bride_account_name || "",
           });
 
           if (data.cover_image) {
@@ -186,6 +226,14 @@ function CreateEvent() {
 
           if (data.cover_image2) {
             setPreviewUrl2(data.cover_image2);
+          }
+
+          // โหลด QR Code ที่มีอยู่
+          if (data.groom_qr_code) {
+            setPreviewGroomQR(data.groom_qr_code);
+          }
+          if (data.bride_qr_code) {
+            setPreviewBrideQR(data.bride_qr_code);
           }
 
           // โหลด template ที่เลือกไว้ใน event
@@ -249,6 +297,24 @@ function CreateEvent() {
     }
   };
 
+  // อัพโหลด QR Code ฝ่ายเจ้าบ่าว
+  const handleGroomQRChange = (e) => {
+    const file = e.target.files[0];
+    setGroomQRCode(file);
+    if (file) {
+      setPreviewGroomQR(URL.createObjectURL(file));
+    }
+  };
+
+  // อัพโหลด QR Code ฝ่ายเจ้าสาว
+  const handleBrideQRChange = (e) => {
+    const file = e.target.files[0];
+    setBrideQRCode(file);
+    if (file) {
+      setPreviewBrideQR(URL.createObjectURL(file));
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -290,6 +356,14 @@ function CreateEvent() {
 
       if (!eventId || coverImage2) {
         formData.append("cover2", coverImage2);
+      }
+
+      // เพิ่ม QR Code ไฟล์
+      if (!eventId || groomQRCode) {
+        formData.append("groomQRCode", groomQRCode);
+      }
+      if (!eventId || brideQRCode) {
+        formData.append("brideQRCode", brideQRCode);
       }
 
       const selectedTemplateIds = templateOptions
@@ -731,6 +805,152 @@ function CreateEvent() {
               />
             </div>
           </div>
+
+          {/* ตั้งค่าเลขบัญชีธนาคาร */}
+          <hr className="my-8" />
+          <div className="flex items-center gap-2 mb-4">
+            <input
+              type="checkbox"
+              name="showBankAccount"
+              checked={form.showBankAccount}
+              onChange={handleChange}
+              className="w-4 h-4"
+            />
+            <h3 className="text-lg font-semibold text-gray-700">
+              แสดงข้อมูลบัญชีธนาคาร
+            </h3>
+          </div>
+          <p className="text-sm text-gray-600 mb-4">
+            ข้อมูลบัญชีธนาคารสำหรับรับเงินโอนจากแขก
+          </p>
+          
+          <div className="grid md:grid-cols-2 gap-6">
+            {/* ฝ่ายเจ้าบ่าว */}
+            <div className="space-y-4 p-4 border rounded-lg bg-blue-50">
+              <h4 className="font-medium text-blue-700">ข้อมูลบัญชีฝ่ายเจ้าบ่าว</h4>
+              
+              <div>
+                <label className="block text-sm font-medium mb-1">ธนาคาร</label>
+                <select
+                  name="groom_bank"
+                  value={form.groom_bank}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 border rounded"
+                >
+                  <option value="">-- เลือกธนาคาร --</option>
+                  {bankOptions.map(bank => (
+                    <option key={bank.key} value={bank.key}>{bank.label}</option>
+                  ))}
+                </select>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium mb-1">เลขบัญชี</label>
+                <input
+                  type="text"
+                  name="groom_account_number"
+                  value={form.groom_account_number}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 border rounded"
+                  placeholder="เช่น 123-4-56789-0"
+                />
+              </div>
+              
+                             <div>
+                 <label className="block text-sm font-medium mb-1">ชื่อบัญชี</label>
+                 <input
+                   type="text"
+                   name="groom_account_name"
+                   value={form.groom_account_name}
+                   onChange={handleChange}
+                   className="w-full px-4 py-2 border rounded"
+                   placeholder="เช่น นาย สมชาย ใจดี"
+                 />
+               </div>
+               
+               <div>
+                 <label className="block text-sm font-medium mb-1">อัพโหลด QR Code</label>
+                 <input
+                   type="file"
+                   accept="image/*"
+                   onChange={handleGroomQRChange}
+                   className="w-full px-4 py-2 border rounded"
+                 />
+                 {previewGroomQR && (
+                   <div className="mt-3">
+                     <img
+                       src={previewGroomQR}
+                       alt="Groom QR Code"
+                       className="max-h-32 w-auto rounded-md shadow-md border"
+                     />
+                   </div>
+                 )}
+               </div>
+             </div>
+
+            {/* ฝ่ายเจ้าสาว */}
+            <div className="space-y-4 p-4 border rounded-lg bg-pink-50">
+              <h4 className="font-medium text-pink-700">ข้อมูลบัญชีฝ่ายเจ้าสาว</h4>
+              
+              <div>
+                <label className="block text-sm font-medium mb-1">ธนาคาร</label>
+                <select
+                  name="bride_bank"
+                  value={form.bride_bank}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 border rounded"
+                >
+                  <option value="">-- เลือกธนาคาร --</option>
+                  {bankOptions.map(bank => (
+                    <option key={bank.key} value={bank.key}>{bank.label}</option>
+                  ))}
+                </select>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium mb-1">เลขบัญชี</label>
+                <input
+                  type="text"
+                  name="bride_account_number"
+                  value={form.bride_account_number}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 border rounded"
+                  placeholder="เช่น 987-6-54321-0"
+                />
+              </div>
+              
+                             <div>
+                 <label className="block text-sm font-medium mb-1">ชื่อบัญชี</label>
+                 <input
+                   type="text"
+                   name="bride_account_name"
+                   value={form.bride_account_name}
+                   onChange={handleChange}
+                   className="w-full px-4 py-2 border rounded"
+                   placeholder="เช่น นางสาว สมหญิง ใจดี"
+                 />
+               </div>
+               
+               <div>
+                 <label className="block text-sm font-medium mb-1">อัพโหลด QR Code</label>
+                 <input
+                   type="file"
+                   accept="image/*"
+                   onChange={handleBrideQRChange}
+                   className="w-full px-4 py-2 border rounded"
+                 />
+                 {previewBrideQR && (
+                   <div className="mt-3">
+                     <img
+                       src={previewBrideQR}
+                       alt="Bride QR Code"
+                       className="max-h-32 w-auto rounded-md shadow-md border"
+                     />
+                   </div>
+                 )}
+               </div>
+             </div>
+           </div>
 
           <div className="mt-6">
             <h3 className="text-lg font-semibold mb-2 text-gray-700">
