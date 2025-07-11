@@ -133,13 +133,14 @@ export default function WishGallery() {
 
   // Filter wishes based on search and filters
   const filteredWishes = wishes.filter(wish => {
+    // เฉพาะ wish ที่มี image_url จริงเท่านั้น
+    if (!wish.image_url || typeof wish.image_url !== 'string' || wish.image_url.trim() === '') return false;
     const matchesSearch = wish.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          wish.message?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesSide = filterSide === "all" || wish.side === filterSide;
     const matchesShow = filterShow === "all" || 
                        (filterShow === "show" && wish.show_in_slideshow) ||
                        (filterShow === "hide" && !wish.show_in_slideshow);
-    
     return matchesSearch && matchesSide && matchesShow;
   });
 
@@ -283,11 +284,18 @@ export default function WishGallery() {
                 className="relative group bg-white rounded-lg shadow-md hover:shadow-lg transition-all duration-200 overflow-hidden"
               >
                 <div className="aspect-square relative">
-                  <img
-                    src={wish.image_url}
-                    alt={`คำอวยพรจาก ${wish.name}`}
-                    className="w-full h-full object-cover"
-                  />
+                  {wish.image_url ? (
+                    <img
+                      src={wish.image_url}
+                      alt={`คำอวยพรจาก ${wish.name}`}
+                      className="w-full h-full object-cover"
+                      onError={e => { e.target.onerror = null; e.target.style.display = 'none'; e.target.parentNode && (e.target.parentNode.innerHTML = '<div class=\'w-full h-full flex items-center justify-center text-gray-400 bg-gray-100\'>ไม่มีรูป</div>'); }}
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-gray-400 bg-gray-100">
+                      ไม่มีรูป
+                    </div>
+                  )}
                   
                   {/* Overlay with actions */}
                   <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all duration-200 flex items-center justify-center">

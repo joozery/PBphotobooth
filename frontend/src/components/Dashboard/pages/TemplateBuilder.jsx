@@ -14,6 +14,7 @@ export default function TemplateBuilder({ templateId }) {
   const [frames, setFrames] = useState([]);
   const [textboxes, setTextboxes] = useState([]);
   const [selectedBg, setSelectedBg] = useState("");
+  const [originalBg, setOriginalBg] = useState(""); // เก็บค่า background เดิม
   const [selectedTextbox, setSelectedTextbox] = useState("");
   const [textboxProps, setTextboxProps] = useState({
     x: 50,
@@ -53,6 +54,7 @@ export default function TemplateBuilder({ templateId }) {
       const tpl = res.data;
       setTemplateName(tpl.name);
       setSelectedBg(tpl.background);
+      setOriginalBg(tpl.background); // เก็บค่า background เดิม
       setSelectedTextbox(tpl.textbox);
       setSelectedFrame(tpl.frame);
       setElements(tpl.elements || []);
@@ -181,6 +183,13 @@ export default function TemplateBuilder({ templateId }) {
     }
   };
 
+  // ฟังก์ชันรีเซ็ท - คืนค่า background กลับมา
+  const handleReset = () => {
+    if (originalBg) {
+      setSelectedBg(originalBg);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col font-prompt">
       <div className="bg-white shadow p-4 flex gap-4 items-center flex-wrap">
@@ -207,6 +216,27 @@ export default function TemplateBuilder({ templateId }) {
             </option>
           ))}
         </select>
+        {/* ปุ่มลบ Background */}
+        {selectedBg && (
+          <button
+            onClick={() => {
+              setSelectedBg("");
+              setSelected(null);
+            }}
+            className="bg-red-500 text-white px-3 py-2 rounded cursor-pointer"
+          >
+            ลบ Background
+          </button>
+        )}
+        {/* ปุ่มรีเซ็ท */}
+        {originalBg && (
+          <button
+            onClick={handleReset}
+            className="bg-orange-500 text-white px-3 py-2 rounded flex items-center gap-2"
+          >
+            <FaUndo /> รีเซ็ท Background
+          </button>
+        )}
         <select
           onChange={(e) => setSelectedTextbox(e.target.value)}
           className="px-3 py-2 rounded border"

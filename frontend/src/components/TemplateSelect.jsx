@@ -196,15 +196,19 @@ export default function TemplateSelect() {
                           textAlign: "center",
                           width: `${el.width}px`,
                           height: "100%",
+                          display: 'flex',
+                          flexDirection: 'column',
+                          justifyContent: 'center',
+                          alignItems: 'center',
                         }}
                         className="text-wrap break-words pointer-events-none"
                       >
-                        <p className="leading-snug break-words text-base whitespace-pre-line">
+                        <span className="leading-snug break-words text-base whitespace-pre-line block">
                           {message}
-                        </p>
-                        <p className="ml-3 font-semibold text-[12px] text-gray-500">
+                        </span>
+                        <span className="mt-2 font-semibold text-[12px] text-gray-500 block">
                           – {name}
-                        </p>
+                        </span>
                       </div>
                     ) : (
                       <img
