@@ -970,7 +970,7 @@ export default function CardPreview() {
                     cropHeight: 0,
                   });
                 }
-                // รีเซ็ตข้อความให้อยู่ใน textbox
+                // รีเซ็ตข้อความให้อยู่ใน textbox (ตำแหน่งเริ่มต้น template)
                 if (textElement) {
                   const newPos = {
                     x: textElement.x,
@@ -1044,8 +1044,6 @@ export default function CardPreview() {
                 <option value="crown">มงกุฎ</option>
                 <option value="star6">ดาว 6 แฉก</option>
                 <option value="star8">ดาว 8 แฉก</option>
-                <option value="rounded">สี่เหลี่ยมมน</option>
-                <option value="double">เฟรมซ้อน</option>
               </select>
             </div>
 
