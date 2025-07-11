@@ -365,6 +365,7 @@ export default function WishConfirm() {
                     ctx.moveTo(w / 2, h * 0.8);
                     ctx.bezierCurveTo(w * 1.1, h * 0.5, w * 0.8, h * 0.05, w / 2, h * 0.3);
                     ctx.bezierCurveTo(w * 0.2, h * 0.05, -w * 0.1, h * 0.5, w / 2, h * 0.8);
+                    ctx.closePath();
                   } else if (frameShape === "hexagon") {
                     const cx = w / 2;
                     const cy = h / 2;
@@ -376,6 +377,7 @@ export default function WishConfirm() {
                         cy + r * Math.sin((i * 2 * Math.PI) / 6)
                       );
                     }
+                    ctx.closePath();
                   } else if (frameShape === "cloud") {
                     ctx.arc(w * 0.3, h * 0.7, w * 0.18, Math.PI * 0.5, Math.PI * 1.5);
                     ctx.arc(w * 0.5, h * 0.5, w * 0.22, Math.PI, Math.PI * 2);
@@ -415,6 +417,85 @@ export default function WishConfirm() {
                   }}
                   draggable={false}
                 />
+                {showStroke && (
+                  <Shape
+                    sceneFunc={(ctx, shape) => {
+                      const w = imgProps.width;
+                      const h = imgProps.height;
+                      ctx.beginPath();
+                      if (frameShape === "circle") {
+                        const radius = Math.min(w, h) / 2;
+                        ctx.arc(w / 2, h / 2, radius, 0, Math.PI * 2, false);
+                      } else if (frameShape === "star") {
+                        const cx = w / 2;
+                        const cy = h / 2;
+                        const spikes = 5;
+                        const outerRadius = Math.min(w, h) / 2;
+                        const innerRadius = outerRadius / 2.5;
+                        let rot = (Math.PI / 2) * 3;
+                        let step = Math.PI / spikes;
+                        ctx.moveTo(cx, cy - outerRadius);
+                        for (let i = 0; i < spikes; i++) {
+                          ctx.lineTo(
+                            cx + Math.cos(rot) * outerRadius,
+                            cy + Math.sin(rot) * outerRadius
+                          );
+                          rot += step;
+                          ctx.lineTo(
+                            cx + Math.cos(rot) * innerRadius,
+                            cy + Math.sin(rot) * innerRadius
+                          );
+                          rot += step;
+                        }
+                        ctx.lineTo(cx, cy - outerRadius);
+                      } else if (frameShape === "heart") {
+                        ctx.moveTo(w / 2, h * 0.8);
+                        ctx.bezierCurveTo(w * 1.1, h * 0.5, w * 0.8, h * 0.05, w / 2, h * 0.3);
+                        ctx.bezierCurveTo(w * 0.2, h * 0.05, -w * 0.1, h * 0.5, w / 2, h * 0.8);
+                        ctx.closePath();
+                      } else if (frameShape === "hexagon") {
+                        const cx = w / 2;
+                        const cy = h / 2;
+                        const r = Math.min(w, h) / 2;
+                        ctx.moveTo(cx + r * Math.cos(0), cy + r * Math.sin(0));
+                        for (let i = 1; i <= 6; i++) {
+                          ctx.lineTo(
+                            cx + r * Math.cos((i * 2 * Math.PI) / 6),
+                            cy + r * Math.sin((i * 2 * Math.PI) / 6)
+                          );
+                        }
+                        ctx.closePath();
+                      } else if (frameShape === "cloud") {
+                        ctx.arc(w * 0.3, h * 0.7, w * 0.18, Math.PI * 0.5, Math.PI * 1.5);
+                        ctx.arc(w * 0.5, h * 0.5, w * 0.22, Math.PI, Math.PI * 2);
+                        ctx.arc(w * 0.7, h * 0.7, w * 0.18, Math.PI * 1.5, Math.PI * 0.5);
+                        ctx.closePath();
+                      } else if (frameShape === "zigzag") {
+                        const steps = 8;
+                        const stepW = w / steps;
+                        ctx.moveTo(0, h);
+                        for (let i = 0; i < steps; i++) {
+                          ctx.lineTo(stepW * i + stepW / 2, h - (i % 2 === 0 ? 20 : 0));
+                          ctx.lineTo(stepW * (i + 1), h);
+                        }
+                        ctx.lineTo(w, 0);
+                        ctx.lineTo(0, 0);
+                        ctx.closePath();
+                      } else {
+                        ctx.moveTo(0, 0);
+                        ctx.lineTo(w, 0);
+                        ctx.lineTo(w, h);
+                        ctx.lineTo(0, h);
+                        ctx.closePath();
+                      }
+                      ctx.closePath();
+                      ctx.fillStrokeShape(shape);
+                    }}
+                    stroke="#fff"
+                    strokeWidth={12}
+                    listening={false}
+                  />
+                )}
               </Group>
             )}
             {frameImage && template && (
@@ -441,87 +522,6 @@ export default function WishConfirm() {
                 shadowOpacity={0.5}
                 listening={false}
                 cornerRadius={frameShape === "circle" ? imgProps.width / 2 : 0}
-              />
-            )}
-            {/* Stroke (ขอบ) วาดก่อน Group เพื่อไม่ถูก clip และตรงกับ frameShape */}
-            {showStroke && (
-              <Shape
-                sceneFunc={(ctx, shape) => {
-                  const w = imgProps.width;
-                  const h = imgProps.height;
-                  ctx.beginPath();
-                  if (frameShape === "circle") {
-                    const radius = Math.min(w, h) / 2;
-                    ctx.arc(imgProps.x + w / 2, imgProps.y + h / 2, radius, 0, Math.PI * 2, false);
-                  } else if (frameShape === "star") {
-                    const cx = imgProps.x + w / 2;
-                    const cy = imgProps.y + h / 2;
-                    const spikes = 5;
-                    const outerRadius = Math.min(w, h) / 2;
-                    const innerRadius = outerRadius / 2.5;
-                    let rot = (Math.PI / 2) * 3;
-                    let step = Math.PI / spikes;
-                    ctx.moveTo(cx, cy - outerRadius);
-                    for (let i = 0; i < spikes; i++) {
-                      ctx.lineTo(
-                        cx + Math.cos(rot) * outerRadius,
-                        cy + Math.sin(rot) * outerRadius
-                      );
-                      rot += step;
-                      ctx.lineTo(
-                        cx + Math.cos(rot) * innerRadius,
-                        cy + Math.sin(rot) * innerRadius
-                      );
-                      rot += step;
-                    }
-                    ctx.lineTo(cx, cy - outerRadius);
-                  } else if (frameShape === "heart") {
-                    ctx.moveTo(imgProps.x + w / 2, imgProps.y + h * 0.8);
-                    ctx.bezierCurveTo(imgProps.x + w * 1.1, imgProps.y + h * 0.5, imgProps.x + w * 0.8, imgProps.y + h * 0.05, imgProps.x + w / 2, imgProps.y + h * 0.3);
-                    ctx.bezierCurveTo(imgProps.x + w * 0.2, imgProps.y + h * 0.05, imgProps.x - w * 0.1, imgProps.y + h * 0.5, imgProps.x + w / 2, imgProps.y + h * 0.8);
-                    ctx.closePath();
-                  } else if (frameShape === "hexagon") {
-                    const cx = imgProps.x + w / 2;
-                    const cy = imgProps.y + h / 2;
-                    const r = Math.min(w, h) / 2;
-                    ctx.moveTo(cx + r * Math.cos(0), cy + r * Math.sin(0));
-                    for (let i = 1; i <= 6; i++) {
-                      ctx.lineTo(
-                        cx + r * Math.cos((i * 2 * Math.PI) / 6),
-                        cy + r * Math.sin((i * 2 * Math.PI) / 6)
-                      );
-                    }
-                    ctx.closePath();
-                  } else if (frameShape === "cloud") {
-                    ctx.arc(imgProps.x + w * 0.3, imgProps.y + h * 0.7, w * 0.18, Math.PI * 0.5, Math.PI * 1.5);
-                    ctx.arc(imgProps.x + w * 0.5, imgProps.y + h * 0.5, w * 0.22, Math.PI, Math.PI * 2);
-                    ctx.arc(imgProps.x + w * 0.7, imgProps.y + h * 0.7, w * 0.18, Math.PI * 1.5, Math.PI * 0.5);
-                    ctx.closePath();
-                  } else if (frameShape === "zigzag") {
-                    const steps = 8;
-                    const stepW = w / steps;
-                    ctx.moveTo(imgProps.x, imgProps.y + h);
-                    for (let i = 0; i < steps; i++) {
-                      ctx.lineTo(imgProps.x + stepW * i + stepW / 2, imgProps.y + h - (i % 2 === 0 ? 20 : 0));
-                      ctx.lineTo(imgProps.x + stepW * (i + 1), imgProps.y + h);
-                    }
-                    ctx.lineTo(imgProps.x + w, imgProps.y);
-                    ctx.lineTo(imgProps.x, imgProps.y);
-                    ctx.closePath();
-                  } else {
-                    // default: สี่เหลี่ยม
-                    ctx.moveTo(imgProps.x, imgProps.y);
-                    ctx.lineTo(imgProps.x + w, imgProps.y);
-                    ctx.lineTo(imgProps.x + w, imgProps.y + h);
-                    ctx.lineTo(imgProps.x, imgProps.y + h);
-                    ctx.closePath();
-                  }
-                  ctx.closePath();
-                  ctx.fillStrokeShape(shape);
-                }}
-                stroke="#000"
-                strokeWidth={4}
-                listening={false}
               />
             )}
           </Layer>

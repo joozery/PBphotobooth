@@ -11,7 +11,8 @@ export default function ThankYou() {
   const { eventId } = useParams();
   const [cover, setCover] = useState("");
   const [event, setEvent] = useState(null);
-  const { t } = useTranslation();
+  const [, forceUpdate] = useState({}); // เพิ่ม state สำหรับ force update
+  const { t, i18n } = useTranslation();
 
   useEffect(() => {
     if (eventId) {
@@ -24,18 +25,40 @@ export default function ThankYou() {
           console.error("❌ โหลด cover_image ไม่สำเร็จ:", err);
         });
     }
-  }, [eventId]);
+  }, [eventId, i18n.language]); // เพิ่ม i18n.language ใน dependency
+
+  // ฟังก์ชันสำหรับเลือกข้อความปุ่มตามภาษา
+  const getWishButtonText = () => {
+    if (!event) return '';
+    if (i18n.language === 'en') {
+      return event.wish_button_text_en || event.wish_button_text || 'เริ่มเขียนคำอวยพร';
+    }
+    return event.wish_button_text || 'เริ่มเขียนคำอวยพร';
+  };
+
+  const getSlipButtonText = () => {
+    if (!event) return '';
+    if (i18n.language === 'en') {
+      return event.slip_button_text_en || event.slip_button_text || 'แนบสลิปพร้อมเพย์';
+    }
+    return event.slip_button_text || 'แนบสลิปพร้อมเพย์';
+  };
+
+  const getViewWishesButtonText = () => {
+    if (!event) return '';
+    if (i18n.language === 'en') {
+      return event.view_wishes_button_text_en || event.view_wishes_button_text || 'ดูรูป card อวยพรทั้งหมด';
+    }
+    return event.view_wishes_button_text || 'ดูรูป card อวยพรทั้งหมด';
+  };
 
   // ปุ่มจาก event setting หรือ default
-  const wishButtonText = event?.wish_button_text || "เริ่มเขียนคำอวยพร";
   const wishButtonBg = event?.wish_button_bg || "#1d4ed8";
   const wishButtonTextColor = event?.wish_button_text_color || "#ffffff";
 
-  const slipButtonText = event?.slip_button_text || "แนบสลิปพร้อมเพย์";
   const slipButtonBg = event?.slip_button_bg || "#ffffff";
   const slipButtonTextColor = event?.slip_button_text_color || "#1d4ed8";
 
-  const viewWishesButtonText = event?.view_wishes_button_text || "ดูรูป card อวยพรทั้งหมด";
   const viewWishesButtonBg = event?.view_wishes_button_bg || "#f97316";
   const viewWishesButtonTextColor = event?.view_wishes_button_text_color || "#ffffff";
 
@@ -57,14 +80,14 @@ export default function ThankYou() {
             style={{ backgroundColor: viewWishesButtonBg, color: viewWishesButtonTextColor }}
             onClick={() => navigate(`/wish-gallery-list/${eventId}`)}
           >
-            <FaImage /> {t(viewWishesButtonText)}
+            <FaImage /> {getViewWishesButtonText()}
           </button>
           <button
             onClick={() => navigate(`/upload-slip/${eventId}`)}
             className="w-full py-2 rounded-full font-semibold shadow hover:opacity-90 transition"
             style={{ backgroundColor: slipButtonBg, color: slipButtonTextColor }}
           >
-            {t(slipButtonText)}
+            {getSlipButtonText()}
           </button>
           <button
             onClick={() => navigate(`/event/${eventId}`)}

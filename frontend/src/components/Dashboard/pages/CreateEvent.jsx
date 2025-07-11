@@ -91,14 +91,17 @@ function CreateEvent() {
     eventDate: "",
     showWishButton: true,
     wishButtonText: "เริ่มเขียนคำอวยพร",
+    wishButtonTextEn: "Start writing a wish",
     wishButtonBg: "#1d4ed8",
     wishButtonTextColor: "#ffffff",
     showSlipButton: true,
     slipButtonText: "แนบสลิปพร้อมเพย์",
+    slipButtonTextEn: "Upload PromptPay slip",
     slipButtonBg: "#ffffff",
     slipButtonTextColor: "#1d4ed8",
     showViewWishesButton: true,
     viewWishesButtonText: "ดูรูป card อวยพรทั้งหมด",
+    viewWishesButtonTextEn: "View all wish cards",
     viewWishesButtonBg: "#f97316",
     viewWishesButtonTextColor: "#ffffff",
     groom_label: "ฝ่ายเจ้าบ่าว",
@@ -194,14 +197,17 @@ function CreateEvent() {
             eventDate: formatDate(data.event_date),
             showWishButton: !!data.show_wish_button,
             wishButtonText: data.wish_button_text,
+            wishButtonTextEn: data.wish_button_text_en || "Start writing a wish",
             wishButtonBg: data.wish_button_bg,
             wishButtonTextColor: data.wish_button_text_color,
             showSlipButton: !!data.show_slip_button,
             slipButtonText: data.slip_button_text,
+            slipButtonTextEn: data.slip_button_text_en || "Upload PromptPay slip",
             slipButtonBg: data.slip_button_bg,
             slipButtonTextColor: data.slip_button_text_color,
             showViewWishesButton: !!data.show_view_wishes_button,
             viewWishesButtonText: data.view_wishes_button_text,
+            viewWishesButtonTextEn: data.view_wishes_button_text_en || "View all wish cards",
             viewWishesButtonBg: data.view_wishes_button_bg,
             viewWishesButtonTextColor: data.view_wishes_button_text_color,
             groom_label: data.groom_label || "ฝ่ายเจ้าบ่าว",
@@ -321,8 +327,16 @@ function CreateEvent() {
 
     try {
       const formData = new FormData();
+      
+      // Debug: ดูข้อมูลที่จะส่ง
+      console.log('🔍 Form data before sending:', form);
+      console.log('🔍 Wish button text EN:', form.wishButtonTextEn);
+      console.log('🔍 Slip button text EN:', form.slipButtonTextEn);
+      console.log('🔍 View wishes button text EN:', form.viewWishesButtonTextEn);
+      
       Object.entries(form).forEach(([key, value]) => {
         formData.append(key, value);
+        console.log(`📤 Sending ${key}:`, value);
       });
 
       formData.set("promptpay_groom", form.promptpay_groom || "");
@@ -361,9 +375,14 @@ function CreateEvent() {
       // เพิ่ม QR Code ไฟล์
       if (!eventId || groomQRCode) {
         formData.append("groomQRCode", groomQRCode);
+      } else if (previewGroomQR) {
+        // ถ้าไม่ได้อัปโหลดใหม่ แต่มี url เดิม ให้ส่ง url เดิมไปด้วย
+        formData.append("groom_qr_code_url", previewGroomQR);
       }
       if (!eventId || brideQRCode) {
         formData.append("brideQRCode", brideQRCode);
+      } else if (previewBrideQR) {
+        formData.append("bride_qr_code_url", previewBrideQR);
       }
 
       const selectedTemplateIds = templateOptions
@@ -512,6 +531,15 @@ function CreateEvent() {
                 onChange={handleChange}
               />
 
+              <input
+                type="text"
+                name="wishButtonTextEn"
+                className="w-full px-3 py-2 border rounded"
+                placeholder="Wish button text (EN)"
+                value={form.wishButtonTextEn}
+                onChange={handleChange}
+              />
+
               <div className="flex items-center gap-4">
                 <div>
                   <label className="text-xs block">สีพื้นหลัง</label>
@@ -569,6 +597,15 @@ function CreateEvent() {
                 className="w-full px-3 py-2 border rounded"
                 placeholder="ข้อความบนปุ่มแนบสลิป"
                 value={form.slipButtonText}
+                onChange={handleChange}
+              />
+
+              <input
+                type="text"
+                name="slipButtonTextEn"
+                className="w-full px-3 py-2 border rounded"
+                placeholder="Slip button text (EN)"
+                value={form.slipButtonTextEn}
                 onChange={handleChange}
               />
 
@@ -630,6 +667,15 @@ function CreateEvent() {
               className="w-full px-3 py-2 border rounded"
               placeholder="ข้อความบนปุ่มดูรูป card อวยพรทั้งหมด"
               value={form.viewWishesButtonText}
+              onChange={handleChange}
+            />
+
+            <input
+              type="text"
+              name="viewWishesButtonTextEn"
+              className="w-full px-3 py-2 border rounded"
+              placeholder="View wishes button text (EN)"
+              value={form.viewWishesButtonTextEn}
               onChange={handleChange}
             />
 

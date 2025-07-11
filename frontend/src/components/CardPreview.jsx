@@ -38,6 +38,7 @@ export default function CardPreview() {
   const navigate = useNavigate();
   const [template, setTemplate] = useState(null);
   const [imageURL, setImageURL] = useState("/sample-image.png");
+  const [originalImageURL, setOriginalImageURL] = useState("/sample-image.png"); // เก็บรูปต้นฉบับ
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [scale, setScale] = useState(1);
   const [wishName, setWishName] = useState("");
@@ -83,8 +84,9 @@ export default function CardPreview() {
 
   const groupRef = useRef();
 
-  const [showShadow, setShowShadow] = useState(false);
-  const [showStroke, setShowStroke] = useState(false);
+  // --- ลบ state และ UI สำหรับเงา ---
+  // const [showShadow, setShowShadow] = useState(false); // <-- ลบ
+  const [showStroke, setShowStroke] = useState(true); // เพิ่มกลับมาและให้เป็น true เป็นค่าเริ่มต้น
 
   useEffect(() => {
     const savedTemplateId = localStorage.getItem("templateId");
@@ -95,13 +97,22 @@ export default function CardPreview() {
     const savedMessage = localStorage.getItem("wishMessage");
     const savedEventId = localStorage.getItem("eventId");
 
-    if (savedImage) setImageURL(savedImage); // ใช้ profile_image สำหรับ preview
+    if (savedImage) {
+      setImageURL(savedImage); // ใช้ profile_image สำหรับ preview
+      setOriginalImageURL(savedImage); // เก็บรูปต้นฉบับไว้
+    }
     if (savedPos) setPosition(JSON.parse(savedPos));
     if (savedScale) setScale(parseFloat(savedScale));
     if (savedName) setWishName(savedName);
     if (savedMessage) setWishMessage(savedMessage);
     if (savedEventId) setEventId(savedEventId);
     if (savedTemplateId) fetchTemplate(parseInt(savedTemplateId));
+    
+    // โหลด showStroke จาก localStorage
+    const savedShowStroke = localStorage.getItem("showStroke");
+    if (savedShowStroke !== null) {
+      setShowStroke(savedShowStroke === "true");
+    }
   }, []);
 
   const fetchTemplate = async (id) => {
@@ -203,7 +214,7 @@ export default function CardPreview() {
     setLoadingRemoveBg(true);
     try {
       // แปลง base64 เป็นไฟล์ (ถ้ามี base64)
-      const dataUrl = imageURL;
+      const dataUrl = originalImageURL; // ใช้รูปต้นฉบับแทน
       const blob = await (await fetch(dataUrl)).blob();
       const file = new File([blob], "wish-image.png", { type: blob.type });
       const formData = new FormData();
@@ -251,8 +262,12 @@ export default function CardPreview() {
   };
 
   useEffect(() => {
-    localStorage.setItem("showShadow", showShadow ? "true" : "false");
-  }, [showShadow]);
+    localStorage.setItem("showShadow", showBackground ? "true" : "false");
+  }, [showBackground]);
+  // --- ลบ state showStroke และ checkbox UI ---
+  // useEffect(() => {
+  //   localStorage.setItem("showStroke", showStroke ? "true" : "false");
+  // }, [showStroke]);
   useEffect(() => {
     localStorage.setItem("showStroke", showStroke ? "true" : "false");
   }, [showStroke]);
@@ -301,104 +316,8 @@ export default function CardPreview() {
                   />
                 )}
                 {/* Shadow (เงา) วาดก่อน Group เพื่อไม่ถูก clip */}
-                {showShadow && (
-                  <Rect
-                    x={imgProps.x}
-                    y={imgProps.y}
-                    width={imgProps.width}
-                    height={imgProps.height}
-                    fill="transparent"
-                    shadowColor="#888"
-                    shadowBlur={24}
-                    shadowOffsetX={12}
-                    shadowOffsetY={12}
-                    shadowOpacity={0.5}
-                    listening={false}
-                    cornerRadius={frameShape === "circle" ? imgProps.width / 2 : 0}
-                  />
-                )}
-                {/* Stroke (ขอบ) วาดก่อน Group เพื่อไม่ถูก clip และตรงกับ frameShape */}
-                {showStroke && (
-                  <Shape
-                    sceneFunc={(ctx, shape) => {
-                      const w = imgProps.width;
-                      const h = imgProps.height;
-                      ctx.beginPath();
-                      if (frameShape === "circle") {
-                        const radius = Math.min(w, h) / 2;
-                        ctx.arc(imgProps.x + w / 2, imgProps.y + h / 2, radius, 0, Math.PI * 2, false);
-                      } else if (frameShape === "star") {
-                        const cx = imgProps.x + w / 2;
-                        const cy = imgProps.y + h / 2;
-                        const spikes = 5;
-                        const outerRadius = Math.min(w, h) / 2;
-                        const innerRadius = outerRadius / 2.5;
-                        let rot = (Math.PI / 2) * 3;
-                        let step = Math.PI / spikes;
-                        ctx.moveTo(cx, cy - outerRadius);
-                        for (let i = 0; i < spikes; i++) {
-                          ctx.lineTo(
-                            cx + Math.cos(rot) * outerRadius,
-                            cy + Math.sin(rot) * outerRadius
-                          );
-                          rot += step;
-                          ctx.lineTo(
-                            cx + Math.cos(rot) * innerRadius,
-                            cy + Math.sin(rot) * innerRadius
-                          );
-                          rot += step;
-                        }
-                        ctx.lineTo(cx, cy - outerRadius);
-                      } else if (frameShape === "heart") {
-                        // วาดหัวใจ
-                        ctx.moveTo(imgProps.x + w / 2, imgProps.y + h * 0.8);
-                        ctx.bezierCurveTo(imgProps.x + w * 1.1, imgProps.y + h * 0.5, imgProps.x + w * 0.8, imgProps.y + h * 0.05, imgProps.x + w / 2, imgProps.y + h * 0.3);
-                        ctx.bezierCurveTo(imgProps.x + w * 0.2, imgProps.y + h * 0.05, imgProps.x - w * 0.1, imgProps.y + h * 0.5, imgProps.x + w / 2, imgProps.y + h * 0.8);
-                        ctx.closePath();
-                      } else if (frameShape === "hexagon") {
-                        const cx = imgProps.x + w / 2;
-                        const cy = imgProps.y + h / 2;
-                        const r = Math.min(w, h) / 2;
-                        ctx.moveTo(cx + r * Math.cos(0), cy + r * Math.sin(0));
-                        for (let i = 1; i <= 6; i++) {
-                          ctx.lineTo(
-                            cx + r * Math.cos((i * 2 * Math.PI) / 6),
-                            cy + r * Math.sin((i * 2 * Math.PI) / 6)
-                          );
-                        }
-                        ctx.closePath();
-                      } else if (frameShape === "cloud") {
-                        ctx.arc(imgProps.x + w * 0.3, imgProps.y + h * 0.7, w * 0.18, Math.PI * 0.5, Math.PI * 1.5);
-                        ctx.arc(imgProps.x + w * 0.5, imgProps.y + h * 0.5, w * 0.22, Math.PI, Math.PI * 2);
-                        ctx.arc(imgProps.x + w * 0.7, imgProps.y + h * 0.7, w * 0.18, Math.PI * 1.5, Math.PI * 0.5);
-                        ctx.closePath();
-                      } else if (frameShape === "zigzag") {
-                        const steps = 8;
-                        const stepW = w / steps;
-                        ctx.moveTo(imgProps.x, imgProps.y + h);
-                        for (let i = 0; i < steps; i++) {
-                          ctx.lineTo(imgProps.x + stepW * i + stepW / 2, imgProps.y + h - (i % 2 === 0 ? 20 : 0));
-                          ctx.lineTo(imgProps.x + stepW * (i + 1), imgProps.y + h);
-                        }
-                        ctx.lineTo(imgProps.x + w, imgProps.y);
-                        ctx.lineTo(imgProps.x, imgProps.y);
-                        ctx.closePath();
-                      } else {
-                        // default: สี่เหลี่ยม
-                        ctx.moveTo(imgProps.x, imgProps.y);
-                        ctx.lineTo(imgProps.x + w, imgProps.y);
-                        ctx.lineTo(imgProps.x + w, imgProps.y + h);
-                        ctx.lineTo(imgProps.x, imgProps.y + h);
-                        ctx.closePath();
-                      }
-                      ctx.closePath();
-                      ctx.fillStrokeShape(shape);
-                    }}
-                    stroke="#000"
-                    strokeWidth={4}
-                    listening={false}
-                  />
-                )}
+                {/* --- ลบ state และ UI สำหรับเงา --- */}
+                {/* --- ปรับ Shape (เฟรม) ให้ stroke เป็นสีขาวและหนา --- */}
                 {userImage && template && imageElement && (
                   <Group
                     ref={groupRef}
@@ -473,7 +392,6 @@ export default function CardPreview() {
                         }
                         ctx.closePath();
                       } else if (frameShape === "cloud") {
-                        ctx.arc(w * 0.3, h * 0.7, w * 0.18, Math.PI * 0.5, Math.PI * 1.5);
                         ctx.arc(w * 0.5, h * 0.5, w * 0.22, Math.PI, Math.PI * 2);
                         ctx.arc(w * 0.7, h * 0.7, w * 0.18, Math.PI * 1.5, Math.PI * 0.5);
                         ctx.closePath();
@@ -487,6 +405,154 @@ export default function CardPreview() {
                         }
                         ctx.lineTo(w, 0);
                         ctx.lineTo(0, 0);
+                        ctx.closePath();
+                      } else if (frameShape === "oval") {
+                        const cx = w / 2;
+                        const cy = h / 2;
+                        const rx = w * 0.6;
+                        const ry = h * 0.6;
+                        ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
+                      } else if (frameShape === "diamond") {
+                        const cx = w / 2;
+                        const cy = h / 2;
+                        const size = Math.min(w, h) * 0.8;
+                        ctx.moveTo(cx, cy - size);
+                        ctx.lineTo(cx + size, cy);
+                        ctx.lineTo(cx, cy + size);
+                        ctx.lineTo(cx - size, cy);
+                        ctx.closePath();
+                      } else if (frameShape === "triangle") {
+                        const cx = w / 2;
+                        const cy = h * 0.8;
+                        const size = Math.min(w, h) * 0.8;
+                        ctx.moveTo(cx, cy - size);
+                        ctx.lineTo(cx + size * 0.866, cy + size * 0.5);
+                        ctx.lineTo(cx - size * 0.866, cy + size * 0.5);
+                        ctx.closePath();
+                      } else if (frameShape === "octagon") {
+                        const cx = w / 2;
+                        const cy = h / 2;
+                        const r = Math.min(w, h) * 0.6;
+                        ctx.moveTo(cx + r * Math.cos(0), cy + r * Math.sin(0));
+                        for (let i = 1; i <= 8; i++) {
+                          ctx.lineTo(
+                            cx + r * Math.cos((i * 2 * Math.PI) / 8),
+                            cy + r * Math.sin((i * 2 * Math.PI) / 8)
+                          );
+                        }
+                        ctx.closePath();
+                      } else if (frameShape === "flower") {
+                        const cx = w / 2;
+                        const cy = h / 2;
+                        const petals = 8;
+                        const outerRadius = Math.min(w, h) * 0.6;
+                        const innerRadius = outerRadius * 0.3;
+                        for (let i = 0; i < petals; i++) {
+                          const angle = (i * 2 * Math.PI) / petals;
+                          const nextAngle = ((i + 1) * 2 * Math.PI) / petals;
+                          const midAngle = (angle + nextAngle) / 2;
+                          ctx.moveTo(cx + innerRadius * Math.cos(angle), cy + innerRadius * Math.sin(angle));
+                          ctx.quadraticCurveTo(
+                            cx + outerRadius * Math.cos(midAngle),
+                            cy + outerRadius * Math.sin(midAngle),
+                            cx + innerRadius * Math.cos(nextAngle),
+                            cy + innerRadius * Math.sin(nextAngle)
+                          );
+                        }
+                      } else if (frameShape === "butterfly") {
+                        const cx = w / 2;
+                        const cy = h / 2;
+                        const size = Math.min(w, h) * 0.6;
+                        ctx.moveTo(cx, cy);
+                        ctx.quadraticCurveTo(cx - size * 0.8, cy - size * 0.5, cx - size, cy);
+                        ctx.quadraticCurveTo(cx - size * 0.8, cy + size * 0.5, cx, cy);
+                        ctx.moveTo(cx, cy);
+                        ctx.quadraticCurveTo(cx + size * 0.8, cy - size * 0.5, cx + size, cy);
+                        ctx.quadraticCurveTo(cx + size * 0.8, cy + size * 0.5, cx, cy);
+                      } else if (frameShape === "crown") {
+                        const cx = w / 2;
+                        const cy = h * 0.7;
+                        const width = w * 0.8;
+                        const height = h * 0.6;
+                        ctx.moveTo(cx - width / 2, cy + height / 2);
+                        ctx.lineTo(cx - width / 2, cy - height / 3);
+                        ctx.lineTo(cx - width / 4, cy - height / 2);
+                        ctx.lineTo(cx, cy - height / 3);
+                        ctx.lineTo(cx + width / 4, cy - height / 2);
+                        ctx.lineTo(cx + width / 2, cy - height / 3);
+                        ctx.lineTo(cx + width / 2, cy + height / 2);
+                        ctx.closePath();
+                      } else if (frameShape === "star6") {
+                        const cx = w / 2;
+                        const cy = h / 2;
+                        const spikes = 6;
+                        const outerRadius = Math.min(w, h) * 0.6;
+                        const innerRadius = outerRadius * 0.4;
+                        let rot = (Math.PI / 2) * 3;
+                        let step = Math.PI / spikes;
+                        ctx.moveTo(cx, cy - outerRadius);
+                        for (let i = 0; i < spikes; i++) {
+                          ctx.lineTo(
+                            cx + Math.cos(rot) * outerRadius,
+                            cy + Math.sin(rot) * outerRadius
+                          );
+                          rot += step;
+                          ctx.lineTo(
+                            cx + Math.cos(rot) * innerRadius,
+                            cy + Math.sin(rot) * innerRadius
+                          );
+                          rot += step;
+                        }
+                        ctx.lineTo(cx, cy - outerRadius);
+                      } else if (frameShape === "star8") {
+                        const cx = w / 2;
+                        const cy = h / 2;
+                        const spikes = 8;
+                        const outerRadius = Math.min(w, h) * 0.6;
+                        const innerRadius = outerRadius * 0.4;
+                        let rot = (Math.PI / 2) * 3;
+                        let step = Math.PI / spikes;
+                        ctx.moveTo(cx, cy - outerRadius);
+                        for (let i = 0; i < spikes; i++) {
+                          ctx.lineTo(
+                            cx + Math.cos(rot) * outerRadius,
+                            cy + Math.sin(rot) * outerRadius
+                          );
+                          rot += step;
+                          ctx.lineTo(
+                            cx + Math.cos(rot) * innerRadius,
+                            cy + Math.sin(rot) * innerRadius
+                          );
+                          rot += step;
+                        }
+                        ctx.lineTo(cx, cy - outerRadius);
+                      } else if (frameShape === "rounded") {
+                        const radius = Math.min(w, h) * 0.1;
+                        ctx.moveTo(radius, 0);
+                        ctx.lineTo(w - radius, 0);
+                        ctx.quadraticCurveTo(w, 0, w, radius);
+                        ctx.lineTo(w, h - radius);
+                        ctx.quadraticCurveTo(w, h, w - radius, h);
+                        ctx.lineTo(radius, h);
+                        ctx.quadraticCurveTo(0, h, 0, h - radius);
+                        ctx.lineTo(0, radius);
+                        ctx.quadraticCurveTo(0, 0, radius, 0);
+                        ctx.closePath();
+                      } else if (frameShape === "double") {
+                        const outerMargin = 20;
+                        const outerW = w + outerMargin * 2;
+                        const outerH = h + outerMargin * 2;
+                        const outerX = -outerMargin;
+                        const outerY = -outerMargin;
+                        ctx.moveTo(outerX, outerY);
+                        ctx.lineTo(outerX + outerW, outerY);
+                        ctx.lineTo(outerX + outerW, outerY + outerH);
+                        ctx.lineTo(outerX, outerY + outerH);
+                        ctx.closePath();
+                        ctx.moveTo(0, 0);
+                        ctx.lineTo(w, 0);
+                        ctx.lineTo(w, h);
+                        ctx.lineTo(0, h);
                         ctx.closePath();
                       } else {
                         ctx.moveTo(0, 0);
@@ -505,6 +571,232 @@ export default function CardPreview() {
                       width={imgProps.width}
                       height={imgProps.height}
                     />
+                    {showStroke && (
+                      <Shape
+                        sceneFunc={(ctx, shape) => {
+                          const w = imgProps.width;
+                          const h = imgProps.height;
+                          ctx.beginPath();
+                          if (frameShape === "circle") {
+                            const radius = Math.min(w, h) / 2;
+                            ctx.arc(w / 2, h / 2, radius, 0, Math.PI * 2, false);
+                          } else if (frameShape === "star") {
+                            const cx = w / 2;
+                            const cy = h / 2;
+                            const spikes = 5;
+                            const outerRadius = Math.min(w, h) / 2;
+                            const innerRadius = outerRadius / 2.5;
+                            let rot = (Math.PI / 2) * 3;
+                            let step = Math.PI / spikes;
+                            ctx.moveTo(cx, cy - outerRadius);
+                            for (let i = 0; i < spikes; i++) {
+                              ctx.lineTo(
+                                cx + Math.cos(rot) * outerRadius,
+                                cy + Math.sin(rot) * outerRadius
+                              );
+                              rot += step;
+                              ctx.lineTo(
+                                cx + Math.cos(rot) * innerRadius,
+                                cy + Math.sin(rot) * innerRadius
+                              );
+                              rot += step;
+                            }
+                            ctx.lineTo(cx, cy - outerRadius);
+                          } else if (frameShape === "heart") {
+                            ctx.moveTo(w / 2, h * 0.8);
+                            ctx.bezierCurveTo(w * 1.1, h * 0.5, w * 0.8, h * 0.05, w / 2, h * 0.3);
+                            ctx.bezierCurveTo(w * 0.2, h * 0.05, -w * 0.1, h * 0.5, w / 2, h * 0.8);
+                            ctx.closePath();
+                          } else if (frameShape === "hexagon") {
+                            const cx = w / 2;
+                            const cy = h / 2;
+                            const r = Math.min(w, h) / 2;
+                            ctx.moveTo(cx + r * Math.cos(0), cy + r * Math.sin(0));
+                            for (let i = 1; i <= 6; i++) {
+                              ctx.lineTo(
+                                cx + r * Math.cos((i * 2 * Math.PI) / 6),
+                                cy + r * Math.sin((i * 2 * Math.PI) / 6)
+                              );
+                            }
+                            ctx.closePath();
+                          } else if (frameShape === "cloud") {
+                            ctx.arc(w * 0.5, h * 0.5, w * 0.22, Math.PI, Math.PI * 2);
+                            ctx.arc(w * 0.7, h * 0.7, w * 0.18, Math.PI * 1.5, Math.PI * 0.5);
+                            ctx.closePath();
+                          } else if (frameShape === "zigzag") {
+                            const steps = 8;
+                            const stepW = w / steps;
+                            ctx.moveTo(0, h);
+                            for (let i = 0; i < steps; i++) {
+                              ctx.lineTo(stepW * i + stepW / 2, h - (i % 2 === 0 ? 20 : 0));
+                              ctx.lineTo(stepW * (i + 1), h);
+                            }
+                            ctx.lineTo(w, 0);
+                            ctx.lineTo(0, 0);
+                            ctx.closePath();
+                          } else if (frameShape === "oval") {
+                            const cx = w / 2;
+                            const cy = h / 2;
+                            const rx = w * 0.6;
+                            const ry = h * 0.6;
+                            ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
+                          } else if (frameShape === "diamond") {
+                            const cx = w / 2;
+                            const cy = h / 2;
+                            const size = Math.min(w, h) * 0.8;
+                            ctx.moveTo(cx, cy - size);
+                            ctx.lineTo(cx + size, cy);
+                            ctx.lineTo(cx, cy + size);
+                            ctx.lineTo(cx - size, cy);
+                            ctx.closePath();
+                          } else if (frameShape === "triangle") {
+                            const cx = w / 2;
+                            const cy = h * 0.8;
+                            const size = Math.min(w, h) * 0.8;
+                            ctx.moveTo(cx, cy - size);
+                            ctx.lineTo(cx + size * 0.866, cy + size * 0.5);
+                            ctx.lineTo(cx - size * 0.866, cy + size * 0.5);
+                            ctx.closePath();
+                          } else if (frameShape === "octagon") {
+                            const cx = w / 2;
+                            const cy = h / 2;
+                            const r = Math.min(w, h) * 0.6;
+                            ctx.moveTo(cx + r * Math.cos(0), cy + r * Math.sin(0));
+                            for (let i = 1; i <= 8; i++) {
+                              ctx.lineTo(
+                                cx + r * Math.cos((i * 2 * Math.PI) / 8),
+                                cy + r * Math.sin((i * 2 * Math.PI) / 8)
+                              );
+                            }
+                            ctx.closePath();
+                          } else if (frameShape === "flower") {
+                            const cx = w / 2;
+                            const cy = h / 2;
+                            const petals = 8;
+                            const outerRadius = Math.min(w, h) * 0.6;
+                            const innerRadius = outerRadius * 0.3;
+                            for (let i = 0; i < petals; i++) {
+                              const angle = (i * 2 * Math.PI) / petals;
+                              const nextAngle = ((i + 1) * 2 * Math.PI) / petals;
+                              const midAngle = (angle + nextAngle) / 2;
+                              ctx.moveTo(cx + innerRadius * Math.cos(angle), cy + innerRadius * Math.sin(angle));
+                              ctx.quadraticCurveTo(
+                                cx + outerRadius * Math.cos(midAngle),
+                                cy + outerRadius * Math.sin(midAngle),
+                                cx + innerRadius * Math.cos(nextAngle),
+                                cy + innerRadius * Math.sin(nextAngle)
+                              );
+                            }
+                          } else if (frameShape === "butterfly") {
+                            const cx = w / 2;
+                            const cy = h / 2;
+                            const size = Math.min(w, h) * 0.6;
+                            ctx.moveTo(cx, cy);
+                            ctx.quadraticCurveTo(cx - size * 0.8, cy - size * 0.5, cx - size, cy);
+                            ctx.quadraticCurveTo(cx - size * 0.8, cy + size * 0.5, cx, cy);
+                            ctx.moveTo(cx, cy);
+                            ctx.quadraticCurveTo(cx + size * 0.8, cy - size * 0.5, cx + size, cy);
+                            ctx.quadraticCurveTo(cx + size * 0.8, cy + size * 0.5, cx, cy);
+                          } else if (frameShape === "crown") {
+                            const cx = w / 2;
+                            const cy = h * 0.7;
+                            const width = w * 0.8;
+                            const height = h * 0.6;
+                            ctx.moveTo(cx - width / 2, cy + height / 2);
+                            ctx.lineTo(cx - width / 2, cy - height / 3);
+                            ctx.lineTo(cx - width / 4, cy - height / 2);
+                            ctx.lineTo(cx, cy - height / 3);
+                            ctx.lineTo(cx + width / 4, cy - height / 2);
+                            ctx.lineTo(cx + width / 2, cy - height / 3);
+                            ctx.lineTo(cx + width / 2, cy + height / 2);
+                            ctx.closePath();
+                          } else if (frameShape === "star6") {
+                            const cx = w / 2;
+                            const cy = h / 2;
+                            const spikes = 6;
+                            const outerRadius = Math.min(w, h) * 0.6;
+                            const innerRadius = outerRadius * 0.4;
+                            let rot = (Math.PI / 2) * 3;
+                            let step = Math.PI / spikes;
+                            ctx.moveTo(cx, cy - outerRadius);
+                            for (let i = 0; i < spikes; i++) {
+                              ctx.lineTo(
+                                cx + Math.cos(rot) * outerRadius,
+                                cy + Math.sin(rot) * outerRadius
+                              );
+                              rot += step;
+                              ctx.lineTo(
+                                cx + Math.cos(rot) * innerRadius,
+                                cy + Math.sin(rot) * innerRadius
+                              );
+                              rot += step;
+                            }
+                            ctx.lineTo(cx, cy - outerRadius);
+                          } else if (frameShape === "star8") {
+                            const cx = w / 2;
+                            const cy = h / 2;
+                            const spikes = 8;
+                            const outerRadius = Math.min(w, h) * 0.6;
+                            const innerRadius = outerRadius * 0.4;
+                            let rot = (Math.PI / 2) * 3;
+                            let step = Math.PI / spikes;
+                            ctx.moveTo(cx, cy - outerRadius);
+                            for (let i = 0; i < spikes; i++) {
+                              ctx.lineTo(
+                                cx + Math.cos(rot) * outerRadius,
+                                cy + Math.sin(rot) * outerRadius
+                              );
+                              rot += step;
+                              ctx.lineTo(
+                                cx + Math.cos(rot) * innerRadius,
+                                cy + Math.sin(rot) * innerRadius
+                              );
+                              rot += step;
+                            }
+                            ctx.lineTo(cx, cy - outerRadius);
+                          } else if (frameShape === "rounded") {
+                            const radius = Math.min(w, h) * 0.1;
+                            ctx.moveTo(imgProps.x + radius, imgProps.y);
+                            ctx.lineTo(imgProps.x + w - radius, imgProps.y);
+                            ctx.quadraticCurveTo(imgProps.x + w, imgProps.y, imgProps.x + w, imgProps.y + radius);
+                            ctx.lineTo(imgProps.x + w, imgProps.y + h - radius);
+                            ctx.quadraticCurveTo(imgProps.x + w, imgProps.y + h, imgProps.x + w - radius, imgProps.y + h);
+                            ctx.lineTo(imgProps.x + radius, imgProps.y + h);
+                            ctx.quadraticCurveTo(imgProps.x, imgProps.y + h, imgProps.x, imgProps.y + h - radius);
+                            ctx.lineTo(imgProps.x, imgProps.y + radius);
+                            ctx.quadraticCurveTo(imgProps.x, imgProps.y, imgProps.x + radius, imgProps.y);
+                            ctx.closePath();
+                          } else if (frameShape === "double") {
+                            const outerMargin = 20;
+                            const outerW = w + outerMargin * 2;
+                            const outerH = h + outerMargin * 2;
+                            const outerX = imgProps.x - outerMargin;
+                            const outerY = imgProps.y - outerMargin;
+                            ctx.moveTo(outerX, outerY);
+                            ctx.lineTo(outerX + outerW, outerY);
+                            ctx.lineTo(outerX + outerW, outerY + outerH);
+                            ctx.lineTo(outerX, outerY + outerH);
+                            ctx.closePath();
+                            ctx.moveTo(imgProps.x, imgProps.y);
+                            ctx.lineTo(imgProps.x + w, imgProps.y);
+                            ctx.lineTo(imgProps.x + w, imgProps.y + h);
+                            ctx.lineTo(imgProps.x, imgProps.y + h);
+                            ctx.closePath();
+                          } else {
+                            ctx.moveTo(0, 0);
+                            ctx.lineTo(w, 0);
+                            ctx.lineTo(w, h);
+                            ctx.lineTo(0, h);
+                            ctx.closePath();
+                          }
+                          ctx.closePath();
+                          ctx.fillStrokeShape(shape);
+                        }}
+                        stroke="#fff"
+                        strokeWidth={12}
+                        listening={false}
+                      />
+                    )}
                   </Group>
                 )}
                 {selected === "image" && userImage && (
@@ -689,9 +981,16 @@ export default function CardPreview() {
                   setTextWidth(textElement.width || 300);
                   setFontSize(textElement.fontSize || 24);
                 }
+                // รีเซ็ตรูปผู้ใช้กลับเป็นรูปต้นฉบับ
+                setImageURL(originalImageURL);
+                localStorage.setItem("wishImage", originalImageURL);
+                
                 setFontFamily("Prompt");
                 setFontColor("#333333");
                 setFrameShape("rectangle");
+                setShowBackground(true); // รีเซ็ท background ให้แสดง
+                setShowStroke(true); // รีเซ็ทเส้นขอบกลับเป็น true
+                localStorage.setItem("showStroke", "true"); // รีเซ็ท localStorage
                 setWishNamePos({
                   x: (textElement?.x || 0) + 42,
                   y: (textElement?.y || 0) + 20,
@@ -703,7 +1002,8 @@ export default function CardPreview() {
             </button>
           </div>
           {/* เพิ่ม checkbox สำหรับเงาและขอบ */}
-          <div className="flex gap-4 items-center mb-4">
+          {/* --- ลบ checkbox UI สำหรับเงา --- */}
+          {/* <div className="flex gap-4 items-center mb-4">
             <label className="flex items-center gap-1 text-sm">
               <input type="checkbox" checked={showShadow} onChange={e => setShowShadow(e.target.checked)} />
               เพิ่มเงา
@@ -711,6 +1011,12 @@ export default function CardPreview() {
             <label className="flex items-center gap-1 text-sm">
               <input type="checkbox" checked={showStroke} onChange={e => setShowStroke(e.target.checked)} />
               เพิ่มเส้นขอบ
+            </label>
+          </div> */}
+          <div className="flex gap-4 items-center mb-4">
+            <label className="flex items-center gap-1 text-sm">
+              <input type="checkbox" checked={showStroke} onChange={e => setShowStroke(e.target.checked)} />
+              เส้นขอบสีขาว
             </label>
           </div>
           <div className="flex flex-wrap justify-center gap-2 mb-4">
@@ -729,6 +1035,17 @@ export default function CardPreview() {
                 <option value="hexagon">หกเหลี่ยม</option>
                 <option value="cloud">เมฆ</option>
                 <option value="zigzag">ฟันปลา</option>
+                <option value="oval">ไข่</option>
+                <option value="diamond">เพชร</option>
+                <option value="triangle">สามเหลี่ยม</option>
+                <option value="octagon">แปดเหลี่ยม</option>
+                <option value="flower">ดอกไม้</option>
+                <option value="butterfly">ผีเสื้อ</option>
+                <option value="crown">มงกุฎ</option>
+                <option value="star6">ดาว 6 แฉก</option>
+                <option value="star8">ดาว 8 แฉก</option>
+                <option value="rounded">สี่เหลี่ยมมน</option>
+                <option value="double">เฟรมซ้อน</option>
               </select>
             </div>
 
@@ -749,13 +1066,14 @@ export default function CardPreview() {
                 value={fontFamily}
                 onChange={(e) => setFontFamily(e.target.value)}
                 className="text-sm border rounded p-1"
+                style={{ fontFamily: fontFamily }} // เพิ่ม preview ฟอนต์
               >
-                <option value="Prompt">Prompt</option>
-                <option value="Kanit">Kanit</option>
-                <option value="Sarabun">Sarabun</option>
-                <option value="Arial">Arial</option>
-                <option value="Tahoma">Tahoma</option>
-                <option value="Sriracha">Sriracha</option>{" "}
+                <option value="Prompt" style={{ fontFamily: "Prompt" }}>Prompt</option>
+                <option value="Kanit" style={{ fontFamily: "Kanit" }}>Kanit</option>
+                <option value="Sarabun" style={{ fontFamily: "Sarabun" }}>Sarabun</option>
+                <option value="Arial" style={{ fontFamily: "Arial" }}>Arial</option>
+                <option value="Tahoma" style={{ fontFamily: "Tahoma" }}>Tahoma</option>
+                <option value="Sriracha" style={{ fontFamily: "Sriracha" }}>Sriracha</option>{" "}
                 {/* เพิ่มฟอนต์ Sriracha */}
               </select>
             </div>

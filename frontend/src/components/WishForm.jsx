@@ -209,6 +209,13 @@ export default function WishForm() {
           <h1 className="text-center text-lg font-semibold text-black-600 mb-4">
             ส่งคำอวยพรของคุณ
           </h1>
+          <button
+            type="button"
+            className="mb-4 px-4 py-2 rounded bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium shadow"
+            onClick={() => navigate(-1)}
+          >
+            ← ย้อนกลับ
+          </button>
 
           {/* 📷 Image */}
           <div className="rounded-lg p-4 border border-dashed mb-4 bg-gray-50">

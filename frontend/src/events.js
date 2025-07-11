@@ -9,8 +9,10 @@ const storage = multer.memoryStorage();
 const uploadFields = multer({ storage }).fields([
   { name: "cover", maxCount: 1 },
   { name: "cover2", maxCount: 1 },
-  { name: "groom_icon_image", maxCount: 1 }, // เพิ่ม
-  { name: "bride_icon_image", maxCount: 1 }, // เพิ่ม
+  { name: "groom_icon_image", maxCount: 1 },
+  { name: "bride_icon_image", maxCount: 1 },
+  { name: "groomQRCode", maxCount: 1 }, // เพิ่ม QR Code ฝ่ายเจ้าบ่าว
+  { name: "brideQRCode", maxCount: 1 }, // เพิ่ม QR Code ฝ่ายเจ้าสาว
 ]);
 const uploadSingle = multer({ storage }).single("image");
 
@@ -22,16 +24,19 @@ router.post("/", uploadFields, async (req, res) => {
       eventDate,
       showWishButton,
       wishButtonText,
+      wishButtonTextEn,
       wishButtonBg,
       wishButtonTextColor,
 
       showSlipButton,
       slipButtonText,
+      slipButtonTextEn,
       slipButtonBg,
       slipButtonTextColor,
 
       showViewWishesButton,
       viewWishesButtonText,
+      viewWishesButtonTextEn,
       viewWishesButtonBg,
       viewWishesButtonTextColor,
 
@@ -39,18 +44,29 @@ router.post("/", uploadFields, async (req, res) => {
       bride_label,
       groom_icon,
       bride_icon,
-      promptpay_groom, // เพิ่ม
-      promptpay_bride, // เพิ่ม
+      promptpay_groom,
+      promptpay_bride,
+      
+      // เพิ่มฟิลด์ใหม่สำหรับข้อมูลธนาคาร
+      showBankAccount,
+      groom_bank,
+      groom_account_number,
+      groom_account_name,
+      bride_bank,
+      bride_account_number,
+      bride_account_name,
     } = req.body;
 
     let coverImageUrl = null;
-    let coverImage2Url = null; // ✅ เพิ่มตรงนี้
+    let coverImage2Url = null;
     const templateIds = JSON.parse(req.body.templateIds || "[]");
 
     let groomIconImageUrl = req.body.groom_icon_image || null;
     let brideIconImageUrl = req.body.bride_icon_image || null;
+    let groomQRCodeUrl = null;
+    let brideQRCodeUrl = null;
 
-    // groom_icon_image
+    // อัปโหลด groom_icon_image
     if (
       req.files &&
       req.files.groom_icon_image &&
@@ -69,7 +85,7 @@ router.post("/", uploadFields, async (req, res) => {
       groomIconImageUrl = result.secure_url;
     }
 
-    // bride_icon_image
+    // อัปโหลด bride_icon_image
     if (
       req.files &&
       req.files.bride_icon_image &&
@@ -86,6 +102,44 @@ router.post("/", uploadFields, async (req, res) => {
         stream.end(req.files.bride_icon_image[0].buffer);
       });
       brideIconImageUrl = result.secure_url;
+    }
+
+    // อัปโหลด groom QR Code
+    if (
+      req.files &&
+      req.files.groomQRCode &&
+      req.files.groomQRCode[0]
+    ) {
+      const result = await new Promise((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream(
+          { folder: "event_qrcodes" },
+          (error, result) => {
+            if (error) return reject(error);
+            resolve(result);
+          }
+        );
+        stream.end(req.files.groomQRCode[0].buffer);
+      });
+      groomQRCodeUrl = result.secure_url;
+    }
+
+    // อัปโหลด bride QR Code
+    if (
+      req.files &&
+      req.files.brideQRCode &&
+      req.files.brideQRCode[0]
+    ) {
+      const result = await new Promise((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream(
+          { folder: "event_qrcodes" },
+          (error, result) => {
+            if (error) return reject(error);
+            resolve(result);
+          }
+        );
+        stream.end(req.files.brideQRCode[0].buffer);
+      });
+      brideQRCodeUrl = result.secure_url;
     }
 
     // ✅ อัปโหลดภาพหน้าปกขึ้น Cloudinary
@@ -122,12 +176,14 @@ router.post("/", uploadFields, async (req, res) => {
     const sql = `
       INSERT INTO events (
         title, event_date, cover_image,
-        show_wish_button, wish_button_text, wish_button_bg, wish_button_text_color,
-        show_slip_button, slip_button_text, slip_button_bg, slip_button_text_color,
-        show_view_wishes_button, view_wishes_button_text, view_wishes_button_bg, view_wishes_button_text_color,
+        show_wish_button, wish_button_text, wish_button_text_en, wish_button_bg, wish_button_text_color,
+        show_slip_button, slip_button_text, slip_button_text_en, slip_button_bg, slip_button_text_color,
+        show_view_wishes_button, view_wishes_button_text, view_wishes_button_text_en, view_wishes_button_bg, view_wishes_button_text_color,
         groom_label, bride_label, groom_icon, groom_icon_image, bride_icon_image, cover_image2,
-        promptpay_groom, promptpay_bride
-       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        promptpay_groom, promptpay_bride,
+        show_bank_account, groom_bank, groom_account_number, groom_account_name, groom_qr_code,
+        bride_bank, bride_account_number, bride_account_name, bride_qr_code
+       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `;
 
     const values = [
@@ -136,14 +192,17 @@ router.post("/", uploadFields, async (req, res) => {
       coverImageUrl,
       showWishButton === "true",
       wishButtonText,
+      wishButtonTextEn || "Start writing a wish",
       wishButtonBg,
       wishButtonTextColor,
       showSlipButton === "true",
       slipButtonText,
+      slipButtonTextEn || "Upload PromptPay slip",
       slipButtonBg,
       slipButtonTextColor,
       showViewWishesButton === "true",
       viewWishesButtonText,
+      viewWishesButtonTextEn || "View all wish cards",
       viewWishesButtonBg,
       viewWishesButtonTextColor,
       groom_label,
@@ -154,6 +213,15 @@ router.post("/", uploadFields, async (req, res) => {
       coverImage2Url,
       promptpay_groom || null,
       promptpay_bride || null,
+      showBankAccount === "true",
+      groom_bank || null,
+      groom_account_number || null,
+      groom_account_name || null,
+      groomQRCodeUrl,
+      bride_bank || null,
+      bride_account_number || null,
+      bride_account_name || null,
+      brideQRCodeUrl,
     ];
 
     const result = await db.query(sql, values);
@@ -242,16 +310,19 @@ router.put("/:id", uploadFields, async (req, res) => {
       eventDate,
       showWishButton,
       wishButtonText,
+      wishButtonTextEn,
       wishButtonBg,
       wishButtonTextColor,
 
       showSlipButton,
       slipButtonText,
+      slipButtonTextEn,
       slipButtonBg,
       slipButtonTextColor,
 
       showViewWishesButton,
       viewWishesButtonText,
+      viewWishesButtonTextEn,
       viewWishesButtonBg,
       viewWishesButtonTextColor,
 
@@ -259,8 +330,17 @@ router.put("/:id", uploadFields, async (req, res) => {
       bride_label,
       groom_icon,
       bride_icon,
-      promptpay_groom, // ✅ เพิ่มตรงนี้
-      promptpay_bride, // ✅ เพิ่มตรงนี้
+      promptpay_groom,
+      promptpay_bride,
+      
+      // เพิ่มฟิลด์ใหม่สำหรับข้อมูลธนาคาร
+      showBankAccount,
+      groom_bank,
+      groom_account_number,
+      groom_account_name,
+      bride_bank,
+      bride_account_number,
+      bride_account_name,
     } = req.body;
 
     let coverImageUrl = req.body.cover_image || null;
@@ -268,6 +348,8 @@ router.put("/:id", uploadFields, async (req, res) => {
 
     let groomIconImageUrl = req.body.groom_icon_image || null;
     let brideIconImageUrl = req.body.bride_icon_image || null;
+    let groomQRCodeUrl = req.body.groom_qr_code || null;
+    let brideQRCodeUrl = req.body.bride_qr_code || null;
 
     // groom_icon_image
     if (
@@ -305,6 +387,48 @@ router.put("/:id", uploadFields, async (req, res) => {
         stream.end(req.files.bride_icon_image[0].buffer);
       });
       brideIconImageUrl = result.secure_url;
+    }
+
+    // อัปโหลด groom QR Code
+    if (
+      req.files &&
+      req.files.groomQRCode &&
+      req.files.groomQRCode[0]
+    ) {
+      const result = await new Promise((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream(
+          { folder: "event_qrcodes" },
+          (error, result) => {
+            if (error) return reject(error);
+            resolve(result);
+          }
+        );
+        stream.end(req.files.groomQRCode[0].buffer);
+      });
+      groomQRCodeUrl = result.secure_url;
+    } else if (req.body.groom_qr_code_url) {
+      groomQRCodeUrl = req.body.groom_qr_code_url;
+    }
+
+    // อัปโหลด bride QR Code
+    if (
+      req.files &&
+      req.files.brideQRCode &&
+      req.files.brideQRCode[0]
+    ) {
+      const result = await new Promise((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream(
+          { folder: "event_qrcodes" },
+          (error, result) => {
+            if (error) return reject(error);
+            resolve(result);
+          }
+        );
+        stream.end(req.files.brideQRCode[0].buffer);
+      });
+      brideQRCodeUrl = result.secure_url;
+    } else if (req.body.bride_qr_code_url) {
+      brideQRCodeUrl = req.body.bride_qr_code_url;
     }
 
     // ✅ ถ้ามีไฟล์ใหม่ ให้อัปโหลดขึ้น Cloudinary
@@ -365,11 +489,13 @@ router.put("/:id", uploadFields, async (req, res) => {
     const sql = `
       UPDATE events SET
         title = ?, event_date = ?, cover_image = ?,
-        show_wish_button = ?, wish_button_text = ?, wish_button_bg = ?, wish_button_text_color = ?,
-        show_slip_button = ?, slip_button_text = ?, slip_button_bg = ?, slip_button_text_color = ?,
-        show_view_wishes_button = ?, view_wishes_button_text = ?, view_wishes_button_bg = ?, view_wishes_button_text_color = ?,
-        groom_label = ?, bride_label = ?, groom_icon = ?, bride_icon = ? , groom_icon_image = ?, bride_icon_image = ?, cover_image2 = ?,
-        promptpay_groom = ?, promptpay_bride = ?
+        show_wish_button = ?, wish_button_text = ?, wish_button_text_en = ?, wish_button_bg = ?, wish_button_text_color = ?,
+        show_slip_button = ?, slip_button_text = ?, slip_button_text_en = ?, slip_button_bg = ?, slip_button_text_color = ?,
+        show_view_wishes_button = ?, view_wishes_button_text = ?, view_wishes_button_text_en = ?, view_wishes_button_bg = ?, view_wishes_button_text_color = ?,
+        groom_label = ?, bride_label = ?, groom_icon = ?, bride_icon = ?, groom_icon_image = ?, bride_icon_image = ?, cover_image2 = ?,
+        promptpay_groom = ?, promptpay_bride = ?,
+        show_bank_account = ?, groom_bank = ?, groom_account_number = ?, groom_account_name = ?, groom_qr_code = ?,
+        bride_bank = ?, bride_account_number = ?, bride_account_name = ?, bride_qr_code = ?
       WHERE id = ?
     `;
 
@@ -379,14 +505,17 @@ router.put("/:id", uploadFields, async (req, res) => {
       coverImageUrl,
       showWishButton === "true",
       wishButtonText,
+      wishButtonTextEn || "Start writing a wish",
       wishButtonBg,
       wishButtonTextColor,
       showSlipButton === "true",
       slipButtonText,
+      slipButtonTextEn || "Upload PromptPay slip",
       slipButtonBg,
       slipButtonTextColor,
       showViewWishesButton === "true",
       viewWishesButtonText,
+      viewWishesButtonTextEn || "View all wish cards",
       viewWishesButtonBg,
       viewWishesButtonTextColor,
       groom_label,
@@ -398,6 +527,15 @@ router.put("/:id", uploadFields, async (req, res) => {
       coverImage2Url,
       promptpay_groom || null,
       promptpay_bride || null,
+      showBankAccount === "true",
+      groom_bank || null,
+      groom_account_number || null,
+      groom_account_name || null,
+      groomQRCodeUrl,
+      bride_bank || null,
+      bride_account_number || null,
+      bride_account_name || null,
+      brideQRCodeUrl,
       req.params.id,
     ];
 
@@ -482,39 +620,50 @@ router.post("/wishes/image", uploadSingle, async (req, res) => {
   }
 });
 
-// GET /api/wishes?eventId=:eventId - ดึงคำอวยพรของงาน (รองรับทั้ง slideshow และ dashboard)
+// GET /api/wishes?eventId=:eventId - ดึงคำอวยพรของงาน (สำหรับ slideshow และ gallery)
 router.get("/wishes", async (req, res) => {
   try {
-    const { eventId, showAll } = req.query;
+    const { eventId } = req.query;
     if (!eventId) {
       return res.status(400).json({ error: "Missing eventId parameter" });
     }
 
-    let sql;
-    if (showAll === 'true') {
-      // สำหรับ Dashboard - ดูทั้งหมด
-      sql = `
-        SELECT id, image_url, name, message, side, show_in_slideshow, created_at
-        FROM wishes 
-        WHERE event_id = ?
-        ORDER BY created_at DESC
-      `;
-      const results = await db.query(sql, [eventId]);
-      res.json(results);
-    } else {
-      // สำหรับ Slideshow - เฉพาะที่แสดงได้
-      sql = `
-        SELECT image_url, name, message, side, show_in_slideshow
-        FROM wishes 
-        WHERE event_id = ? AND show_in_slideshow = 1
-        ORDER BY created_at ASC
-      `;
-      const results = await db.query(sql, [eventId]);
-      const imageUrls = results.map(wish => wish.image_url).filter(url => url);
-      res.json(imageUrls);
-    }
+    const sql = `
+      SELECT image_url, name, message, side, show_in_slideshow
+      FROM wishes 
+      WHERE event_id = ? AND show_in_slideshow = 1
+      ORDER BY created_at ASC
+    `;
+    
+    const results = await db.query(sql, [eventId]);
+    // ส่งกลับเฉพาะ image_url สำหรับ slideshow
+    const imageUrls = results.map(wish => wish.image_url).filter(url => url);
+    res.json(imageUrls);
   } catch (err) {
     console.error("❌ Fetch wishes error:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+// GET /api/wishes/all?eventId=:eventId - ดึงคำอวยพรทั้งหมดของงาน (สำหรับ dashboard)
+router.get("/wishes/all", async (req, res) => {
+  try {
+    const { eventId } = req.query;
+    if (!eventId) {
+      return res.status(400).json({ error: "Missing eventId parameter" });
+    }
+
+    const sql = `
+      SELECT id, image_url, name, message, side, show_in_slideshow, created_at
+      FROM wishes 
+      WHERE event_id = ?
+      ORDER BY created_at DESC
+    `;
+    
+    const results = await db.query(sql, [eventId]);
+    res.json(results);
+  } catch (err) {
+    console.error("❌ Fetch all wishes error:", err);
     res.status(500).json({ error: "Server error" });
   }
 });

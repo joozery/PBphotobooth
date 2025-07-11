@@ -13,11 +13,15 @@ export default function EventDetail() {
   const [event, setEvent] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [, forceUpdate] = useState({}); // เพิ่ม state สำหรับ force update
   const { t, i18n } = useTranslation();
 
   // ฟังก์ชันสำหรับเปลี่ยนภาษา
   const changeLanguage = (lng) => {
+    console.log('🔄 Changing language to:', lng);
     i18n.changeLanguage(lng);
+    forceUpdate({}); // บังคับให้ component re-render
+    console.log('✅ Language changed to:', i18n.language);
   };
 
   // ฟังก์ชันสำหรับเรียก API
@@ -30,6 +34,11 @@ export default function EventDetail() {
       const response = await axios.get(`${BASE_URL}/api/events/${eventId}`);
       
       console.log(`✅ Event ${eventId} fetched successfully`);
+      console.log('🔍 Full event data:', response.data);
+      console.log('🔍 Wish button text EN from API:', response.data.wish_button_text_en);
+      console.log('🔍 Slip button text EN from API:', response.data.slip_button_text_en);
+      console.log('🔍 View wishes button text EN from API:', response.data.view_wishes_button_text_en);
+      
       setEvent(response.data);
     } catch (err) {
       console.error(`❌ Error fetching event:`, err);
@@ -43,7 +52,7 @@ export default function EventDetail() {
     if (eventId) {
       fetchEvent();
     }
-  }, [eventId]);
+  }, [eventId, i18n.language]); // เพิ่ม i18n.language ใน dependency
 
   if (loading) {
     return (
@@ -79,6 +88,36 @@ export default function EventDetail() {
       </div>
     );
   }
+
+  const getWishButtonText = () => {
+    if (!event) return '';
+    console.log('🔍 Debug - Language:', i18n.language);
+    console.log('🔍 Debug - Event wish_button_text_en:', event.wish_button_text_en);
+    console.log('🔍 Debug - Event wish_button_text:', event.wish_button_text);
+    
+    if (i18n.language === 'en') {
+      return event.wish_button_text_en || event.wish_button_text || 'เริ่มเขียนคำอวยพร';
+    }
+    return event.wish_button_text || 'เริ่มเขียนคำอวยพร';
+  };
+  const getSlipButtonText = () => {
+    if (!event) return '';
+    console.log('🔍 Debug - Slip button EN:', event.slip_button_text_en);
+    
+    if (i18n.language === 'en') {
+      return event.slip_button_text_en || event.slip_button_text || 'แนบสลิปพร้อมเพย์';
+    }
+    return event.slip_button_text || 'แนบสลิปพร้อมเพย์';
+  };
+  const getViewWishesButtonText = () => {
+    if (!event) return '';
+    console.log('🔍 Debug - View wishes button EN:', event.view_wishes_button_text_en);
+    
+    if (i18n.language === 'en') {
+      return event.view_wishes_button_text_en || event.view_wishes_button_text || 'ดูรูป card อวยพรทั้งหมด';
+    }
+    return event.view_wishes_button_text || 'ดูรูป card อวยพรทั้งหมด';
+  };
 
   return (
     <div className="w-screen h-screen font-prompt flex justify-center items-center bg-[#eee]">
@@ -116,7 +155,7 @@ export default function EventDetail() {
               }}
             >
               <FaPenNib className="text-base" />
-              {t(event.wish_button_text || "เริ่มเขียนคำอวยพร")}
+              {getWishButtonText()}
             </button>
           )}
 
@@ -130,7 +169,7 @@ export default function EventDetail() {
               }}
             >
               <FaReceipt className="text-base" />
-              {t(event.slip_button_text || "แนบสลิปพร้อมเพย์")}
+              {getSlipButtonText()}
             </button>
           )}
 
@@ -144,7 +183,7 @@ export default function EventDetail() {
               }}
             >
               <FaRegEye className="text-base" />
-              {t(event.view_wishes_button_text || "ดูรูป card อวยพรทั้งหมด")}
+              {getViewWishesButtonText()}
             </button>
           )}
         </div>
