@@ -33,6 +33,13 @@ const BASE_URL =
 // ✅ API Key สำหรับ remove.bg - อัปเดตแล้ว
 const REMOVE_BG_API_KEY = "xvYozMuww7VJsi1qQL6tosY7";
 
+const fontOptions = [
+  { label: "Prompt", value: "Prompt, sans-serif" },
+  { label: "Kanit", value: "Kanit, sans-serif" },
+  { label: "Sarabun", value: "Sarabun, sans-serif" },
+  // เพิ่มฟอนต์อื่นๆ ตามต้องการ
+];
+
 export default function CardPreview() {
   const messageRef = useRef();
   const navigate = useNavigate();
@@ -1058,21 +1065,27 @@ export default function CardPreview() {
             </button>
 
             {/* เปลี่ยนฟอนต์ */}
+            {/* ลบ custom dropdown และใช้ <select> แบบเดิม */}
             <div className="flex items-center gap-1">
               <label className="text-sm">ฟอนต์:</label>
               <select
                 value={fontFamily}
                 onChange={(e) => setFontFamily(e.target.value)}
                 className="text-sm border rounded p-1"
-                style={{ fontFamily: fontFamily }} // เพิ่ม preview ฟอนต์
+                style={{ fontFamily: fontFamily }}
               >
                 <option value="Prompt" style={{ fontFamily: "Prompt" }}>Prompt</option>
                 <option value="Kanit" style={{ fontFamily: "Kanit" }}>Kanit</option>
                 <option value="Sarabun" style={{ fontFamily: "Sarabun" }}>Sarabun</option>
+                <option value="Bebas Neue" style={{ fontFamily: "Bebas Neue" }}>Bebas Neue</option>
+                <option value="Dancing Script" style={{ fontFamily: "Dancing Script" }}>Dancing Script</option>
+                <option value="Italianno" style={{ fontFamily: "Italianno" }}>Italianno</option>
+                <option value="Pattaya" style={{ fontFamily: "Pattaya" }}>Pattaya</option>
+                <option value="Playpen Sans Thai" style={{ fontFamily: "Playpen Sans Thai" }}>Playpen Sans Thai</option>
+                <option value="Taviraj" style={{ fontFamily: "Taviraj" }}>Taviraj</option>
                 <option value="Arial" style={{ fontFamily: "Arial" }}>Arial</option>
                 <option value="Tahoma" style={{ fontFamily: "Tahoma" }}>Tahoma</option>
-                <option value="Sriracha" style={{ fontFamily: "Sriracha" }}>Sriracha</option>{" "}
-                {/* เพิ่มฟอนต์ Sriracha */}
+                <option value="Sriracha" style={{ fontFamily: "Sriracha" }}>Sriracha</option>
               </select>
             </div>
 
