@@ -47,7 +47,7 @@ function MainContent({ selectedPage, onSelectPage }) {
   content = <WishGallery onSelectPage={onSelectPage} />;
       break;
     default:
-      content = <DashboardOverview />;
+      content = <DashboardOverview onSelectPage={onSelectPage} />;
   }
 
   return (

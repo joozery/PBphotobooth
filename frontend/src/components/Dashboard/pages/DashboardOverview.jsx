@@ -11,11 +11,11 @@ import {
   CartesianGrid,
 } from 'recharts';
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://pbphoto-api-fae29207c672.herokuapp.com";
 
-function DashboardOverview() {
+function DashboardOverview({ onSelectPage }) {
   const [eventCount, setEventCount] = useState(0);
   const [wishCount, setWishCount] = useState(0);
   const [slipSummary, setSlipSummary] = useState({ total: 0, total_bride: 0, total_groom: 0, total_slips: 0 });
@@ -128,19 +128,19 @@ function DashboardOverview() {
 
       {/* Quick Links */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
-        <button onClick={() => navigate('/dashboard?page=events')} className="bg-purple-100 hover:bg-purple-200 text-purple-800 font-semibold py-3 rounded-xl shadow flex flex-col items-center gap-2">
+        <button onClick={() => onSelectPage('events')} className="bg-purple-100 hover:bg-purple-200 text-purple-800 font-semibold py-3 rounded-xl shadow flex flex-col items-center gap-2">
           <FaCalendarAlt className="text-2xl" />
           จัดการงานอีเว้นต์
         </button>
-        <button onClick={() => navigate('/dashboard?page=wish-gallery')} className="bg-pink-100 hover:bg-pink-200 text-pink-800 font-semibold py-3 rounded-xl shadow flex flex-col items-center gap-2">
+        <button onClick={() => onSelectPage('wish-gallery')} className="bg-pink-100 hover:bg-pink-200 text-pink-800 font-semibold py-3 rounded-xl shadow flex flex-col items-center gap-2">
           <FaEnvelopeOpenText className="text-2xl" />
           ดูคำอวยพร
         </button>
-        <button onClick={() => navigate('/dashboard?page=slip-summary')} className="bg-green-100 hover:bg-green-200 text-green-800 font-semibold py-3 rounded-xl shadow flex flex-col items-center gap-2">
+        <button onClick={() => onSelectPage('slip-summary')} className="bg-green-100 hover:bg-green-200 text-green-800 font-semibold py-3 rounded-xl shadow flex flex-col items-center gap-2">
           <FaMoneyBillWave className="text-2xl" />
           ดูยอดสลิป
         </button>
-        <button onClick={() => navigate('/dashboard?page=settings-event')} className="bg-blue-100 hover:bg-blue-200 text-blue-800 font-semibold py-3 rounded-xl shadow flex flex-col items-center gap-2">
+        <button onClick={() => onSelectPage('settings-event')} className="bg-blue-100 hover:bg-blue-200 text-blue-800 font-semibold py-3 rounded-xl shadow flex flex-col items-center gap-2">
           <FaCog className="text-2xl" />
           ตั้งค่าระบบ
         </button>
