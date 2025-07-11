@@ -40,6 +40,36 @@ const fontOptions = [
   // เพิ่มฟอนต์อื่นๆ ตามต้องการ
 ];
 
+// ฟอนต์แต่ละตัวรองรับน้ำหนักต่างกัน
+const fontWeightMap = {
+  'Prompt':    [100,200,300,400,500,600,700,800,900],
+  'Kanit':     [100,200,300,400,500,600,700,800,900],
+  'Sarabun':   [100,200,300,400,500,600,700,800],
+  'Bebas Neue': [400],
+  'Birthstone Bounce': [400,500],
+  'Dancing Script': [400,500,600,700],
+  'Italianno': [400],
+  'Pattaya':   [400],
+  'Playpen Sans Thai': [100,200,300,400,500,600,700,800],
+  'Taviraj':   [100,200,300,400,500,600,700,800,900],
+  'Arial':     [400,700],
+  'Tahoma':    [400,700],
+  'Sriracha':  [400],
+};
+
+const fontWeightLabel = w => {
+  if (w === 100) return 'บาง (100)';
+  if (w === 200) return 'ExtraLight (200)';
+  if (w === 300) return 'Light (300)';
+  if (w === 400) return 'ปกติ (400)';
+  if (w === 500) return 'Medium (500)';
+  if (w === 600) return 'SemiBold (600)';
+  if (w === 700) return 'หนา (700)';
+  if (w === 800) return 'ExtraBold (800)';
+  if (w === 900) return 'หนามาก (900)';
+  return w;
+};
+
 export default function CardPreview() {
   const messageRef = useRef();
   const navigate = useNavigate();
@@ -94,6 +124,7 @@ export default function CardPreview() {
   // --- ลบ state และ UI สำหรับเงา ---
   // const [showShadow, setShowShadow] = useState(false); // <-- ลบ
   const [showStroke, setShowStroke] = useState(true); // เพิ่มกลับมาและให้เป็น true เป็นค่าเริ่มต้น
+  const [fontWeight, setFontWeight] = useState(400); // ค่าเริ่มต้น
 
   useEffect(() => {
     const savedTemplateId = localStorage.getItem("templateId");
@@ -278,6 +309,15 @@ export default function CardPreview() {
   useEffect(() => {
     localStorage.setItem("showStroke", showStroke ? "true" : "false");
   }, [showStroke]);
+
+  // เมื่อเปลี่ยนฟอนต์ ถ้า fontWeight เดิมไม่รองรับ ให้เลือกค่าที่ใกล้เคียงที่สุด
+  useEffect(() => {
+    const allowed = fontWeightMap[fontFamily] || [400];
+    if (!allowed.includes(fontWeight)) {
+      // เลือก 400 ถ้ามี, ถ้าไม่มีเลือกตัวแรก
+      setFontWeight(allowed.includes(400) ? 400 : allowed[0]);
+    }
+  }, [fontFamily]);
 
   return (
     <div className="w-screen h-[100svh] bg-gray-100 font-prompt flex justify-center items-center">
@@ -831,6 +871,7 @@ export default function CardPreview() {
                     fontSize={fontSize}
                     fontFamily={fontFamily}
                     fill={fontColor}
+                    fontWeight={fontWeight}
                     wrap="word"
                     align="center"
                     draggable
@@ -871,6 +912,7 @@ export default function CardPreview() {
                     width={wishNameWidth}
                     fontSize={wishNameFontSize}
                     fill={fontColor}
+                    fontWeight={fontWeight}
                     fontStyle="600"
                     align="left"
                     draggable
@@ -1078,6 +1120,7 @@ export default function CardPreview() {
                 <option value="Kanit" style={{ fontFamily: "Kanit" }}>Kanit</option>
                 <option value="Sarabun" style={{ fontFamily: "Sarabun" }}>Sarabun</option>
                 <option value="Bebas Neue" style={{ fontFamily: "Bebas Neue" }}>Bebas Neue</option>
+                <option value="Birthstone Bounce" style={{ fontFamily: "Birthstone Bounce" }}>Birthstone Bounce</option>
                 <option value="Dancing Script" style={{ fontFamily: "Dancing Script" }}>Dancing Script</option>
                 <option value="Italianno" style={{ fontFamily: "Italianno" }}>Italianno</option>
                 <option value="Pattaya" style={{ fontFamily: "Pattaya" }}>Pattaya</option>
@@ -1086,6 +1129,16 @@ export default function CardPreview() {
                 <option value="Arial" style={{ fontFamily: "Arial" }}>Arial</option>
                 <option value="Tahoma" style={{ fontFamily: "Tahoma" }}>Tahoma</option>
                 <option value="Sriracha" style={{ fontFamily: "Sriracha" }}>Sriracha</option>
+              </select>
+              <label className="text-sm ml-2">น้ำหนักฟอนต์:</label>
+              <select
+                value={fontWeight}
+                onChange={e => setFontWeight(Number(e.target.value))}
+                className="text-sm border rounded p-1"
+              >
+                {(fontWeightMap[fontFamily] || [400]).map(w => (
+                  <option key={w} value={w}>{fontWeightLabel(w)}</option>
+                ))}
               </select>
             </div>
 
