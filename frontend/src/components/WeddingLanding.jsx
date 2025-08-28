@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import bgFlower from "../assets/bgflower.jpg";
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://pbphoto-api-fae29207c672.herokuapp.com";
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://72-60-43-104.sslip.io";
 
 export default function WeddingLanding() {
   const navigate = useNavigate();

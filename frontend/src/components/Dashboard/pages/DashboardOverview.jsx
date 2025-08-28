@@ -13,7 +13,7 @@ import {
 import axios from 'axios';
 import { useNavigate, Link } from 'react-router-dom';
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://pbphoto-api-fae29207c672.herokuapp.com";
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://72-60-43-104.sslip.io";
 
 function DashboardOverview({ onSelectPage }) {
   const [eventCount, setEventCount] = useState(0);

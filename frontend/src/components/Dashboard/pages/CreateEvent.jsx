@@ -64,7 +64,7 @@ const formatDate = (dateString) => {
 
 const BASE_URL =
   import.meta.env.VITE_API_BASE_URL ||
-  "https://pbphoto-api-fae29207c672.herokuapp.com";
+  "https://72-60-43-104.sslip.io";
 
 // รายการธนาคารหลักในไทย
 const bankOptions = [

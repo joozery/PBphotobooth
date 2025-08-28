@@ -4,7 +4,7 @@ import axios from "axios";
 import { FaTrash, FaEye, FaDownload, FaSearch } from "react-icons/fa";
 import Swal from "sweetalert2";
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://pbphoto-api-fae29207c672.herokuapp.com";
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://72-60-43-104.sslip.io";
 
 export default function WishGallery() {
   const { eventId } = useParams();
