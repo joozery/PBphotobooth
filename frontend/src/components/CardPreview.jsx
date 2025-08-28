@@ -360,49 +360,6 @@ export default function CardPreview() {
             ปรับแต่งตำแหน่งรูป (3/4)
           </div>
 
-          {/* Template Info Display */}
-          {template ? (
-            <div className="bg-blue-50 p-3 rounded-lg mb-4 border border-blue-200">
-              <div className="text-sm font-medium text-blue-800 mb-2 flex items-center gap-2">
-                <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
-                เทมเพลตที่เลือก: {template.name || `ID: ${template.id}`}
-              </div>
-              <div className="grid grid-cols-2 gap-2 text-xs text-gray-600">
-                <div className="flex items-center gap-1">
-                  <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-                  พื้นหลัง: {template.background ? "✓ มี" : "✗ ไม่มี"}
-                </div>
-                <div className="flex items-center gap-1">
-                  <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-                  กล่องข้อความ: {template.textbox ? "✓ มี" : "✗ ไม่มี"}
-                </div>
-                <div className="flex items-center gap-1">
-                  <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-                  เฟรม: {template.frame ? "✓ มี" : "✗ ไม่มี"}
-                </div>
-                <div className="flex items-center gap-1">
-                  <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-                  Elements: {template.elements?.length || 0} รายการ
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="bg-yellow-50 p-4 rounded-lg mb-4 text-center border border-yellow-200">
-              <div className="text-yellow-800 font-medium mb-2">
-                ⚠️ ยังไม่ได้เลือกเทมเพลต
-              </div>
-              <div className="text-yellow-700 text-sm mb-3">
-                กรุณาเลือกเทมเพลตก่อนเพื่อเริ่มปรับแต่ง
-              </div>
-              <button
-                onClick={() => navigate('/select-template')}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg text-sm font-medium transition-colors"
-              >
-                เลือกเทมเพลต
-              </button>
-            </div>
-          )}
-
           {/* Preview area */}
           <div className="relative w-full flex justify-center items-center overflow-hidden mb-3">
             <Stage width={420} height={280} className="border">
