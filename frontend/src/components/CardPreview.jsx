@@ -31,7 +31,7 @@ const BASE_URL =
   "https://72-60-43-104.sslip.io";
 
 // ✅ API Key สำหรับ remove.bg - อัปเดตแล้ว
-const REMOVE_BG_API_KEY = "xvYozMuww7VJsi1qQL6tosY7";
+const REMOVE_BG_API_KEY = "9gNoLohXd3QeYiqnGouJAB2v";
 
 const fontOptions = [
   { label: "Prompt", value: "Prompt, sans-serif" },
@@ -360,13 +360,103 @@ export default function CardPreview() {
             ปรับแต่งตำแหน่งรูป (3/4)
           </div>
 
+          {/* Template Info Display */}
+          {template ? (
+            <div className="bg-blue-50 p-3 rounded-lg mb-4 border border-blue-200">
+              <div className="text-sm font-medium text-blue-800 mb-2 flex items-center gap-2">
+                <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+                เทมเพลตที่เลือก: {template.name || `ID: ${template.id}`}
+              </div>
+              <div className="grid grid-cols-2 gap-2 text-xs text-gray-600">
+                <div className="flex items-center gap-1">
+                  <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                  พื้นหลัง: {template.background ? "✓ มี" : "✗ ไม่มี"}
+                </div>
+                <div className="flex items-center gap-1">
+                  <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                  กล่องข้อความ: {template.textbox ? "✓ มี" : "✗ ไม่มี"}
+                </div>
+                <div className="flex items-center gap-1">
+                  <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                  เฟรม: {template.frame ? "✓ มี" : "✗ ไม่มี"}
+                </div>
+                <div className="flex items-center gap-1">
+                  <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                  Elements: {template.elements?.length || 0} รายการ
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="bg-yellow-50 p-4 rounded-lg mb-4 text-center border border-yellow-200">
+              <div className="text-yellow-800 font-medium mb-2">
+                ⚠️ ยังไม่ได้เลือกเทมเพลต
+              </div>
+              <div className="text-yellow-700 text-sm mb-3">
+                กรุณาเลือกเทมเพลตก่อนเพื่อเริ่มปรับแต่ง
+              </div>
+              <button
+                onClick={() => navigate('/select-template')}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg text-sm font-medium transition-colors"
+              >
+                เลือกเทมเพลต
+              </button>
+            </div>
+          )}
+
           {/* Preview area */}
           <div className="relative w-full flex justify-center items-center overflow-hidden mb-3">
             <Stage width={420} height={280} className="border">
               <Layer>
+                {/* Background */}
                 {bgImage && showBackground && (
                   <KonvaImage image={bgImage} width={420} height={280} />
                 )}
+                
+                {/* Template Background (ถ้ามี) */}
+                {template?.background && (
+                  <KonvaImage
+                    image={bgImage}
+                    width={420}
+                    height={280}
+                    opacity={0.8}
+                  />
+                )}
+
+                {/* Template Elements - แสดง elements ที่โหลดมาจาก template */}
+                {template && template.elements && template.elements.map((element, index) => {
+                  if (element.type === 'image') {
+                    return (
+                      <Rect
+                        key={`element-${index}`}
+                        x={element.x}
+                        y={element.y}
+                        width={element.width}
+                        height={element.height}
+                        stroke="#3B82F6"
+                        strokeWidth={2}
+                        fill="rgba(59, 130, 246, 0.1)"
+                        dash={[5, 5]}
+                      />
+                    );
+                  } else if (element.type === 'text') {
+                    return (
+                      <Rect
+                        key={`element-${index}`}
+                        x={element.x}
+                        y={element.y}
+                        width={element.width}
+                        height={element.height}
+                        stroke="#10B981"
+                        strokeWidth={2}
+                        fill="rgba(16, 185, 129, 0.1)"
+                        dash={[5, 5]}
+                      />
+                    );
+                  }
+                  return null;
+                })}
+
+                {/* Textbox Image */}
                 {textboxImage && template && (
                   <KonvaImage
                     image={textboxImage}
@@ -388,9 +478,8 @@ export default function CardPreview() {
                     })()}
                   />
                 )}
-                {/* Shadow (เงา) วาดก่อน Group เพื่อไม่ถูก clip */}
-                {/* --- ลบ state และ UI สำหรับเงา --- */}
-                {/* --- ปรับ Shape (เฟรม) ให้ stroke เป็นสีขาวและหนา --- */}
+
+                {/* User Image with Frame */}
                 {userImage && template && imageElement && (
                   <Group
                     ref={groupRef}
@@ -872,21 +961,8 @@ export default function CardPreview() {
                     )}
                   </Group>
                 )}
-                {selected === "image" && userImage && (
-                  <Transformer
-                    ref={tr => tr && tr.nodes([groupRef.current])}
-                    enabledAnchors={[
-                      "top-left", "top-right", "bottom-left", "bottom-right",
-                      "middle-left", "middle-right", "top-center", "bottom-center"
-                    ]}
-                    boundBoxFunc={(oldBox, newBox) => {
-                      if (newBox.width < 50 || newBox.height < 50) {
-                        return oldBox;
-                      }
-                      return newBox;
-                    }}
-                  />
-                )}
+
+                {/* Text Elements */}
                 {wishMessage && template && (
                   <Text
                     key={`wishMessage-${forceUpdate}`}
@@ -914,27 +990,8 @@ export default function CardPreview() {
                     }}
                   />
                 )}
-                {/* Debug Info (ย้ายออกมานอก Stage/Layer) */}
-                <div className="bg-gray-100 text-xs p-2 mb-2 rounded">
-                  <div>Font: {fontFamily}</div>
-                  <div>Weight: {fontWeight}</div>
-                  <div>Color: {fontColor}</div>
-                </div>
-                {selected === "text" && wishMessage && (
-                  <Transformer
-                    ref={tr => tr && tr.nodes([textRef.current])}
-                    enabledAnchors={[
-                      "top-left", "top-right", "bottom-left", "bottom-right",
-                      "middle-left", "middle-right", "top-center", "bottom-center"
-                    ]}
-                    boundBoxFunc={(oldBox, newBox) => {
-                      if (newBox.width < 50 || newBox.height < 20) {
-                        return oldBox;
-                      }
-                      return newBox;
-                    }}
-                  />
-                )}
+
+                {/* Wish Name */}
                 {wishName && template && (
                   <Text
                     key={`wishName-${forceUpdate}`}
@@ -965,6 +1022,40 @@ export default function CardPreview() {
                     }}
                   />
                 )}
+
+                {/* Transformers */}
+                {selected === "image" && userImage && (
+                  <Transformer
+                    ref={tr => tr && tr.nodes([groupRef.current])}
+                    enabledAnchors={[
+                      "top-left", "top-right", "bottom-left", "bottom-right",
+                      "middle-left", "middle-right", "top-center", "bottom-center"
+                    ]}
+                    boundBoxFunc={(oldBox, newBox) => {
+                      if (newBox.width < 50 || newBox.height < 50) {
+                        return oldBox;
+                      }
+                      return newBox;
+                    }}
+                  />
+                )}
+
+                {selected === "text" && wishMessage && (
+                  <Transformer
+                    ref={tr => tr && tr.nodes([textRef.current])}
+                    enabledAnchors={[
+                      "top-left", "top-right", "bottom-left", "bottom-right",
+                      "middle-left", "middle-right", "top-center", "bottom-center"
+                    ]}
+                    boundBoxFunc={(oldBox, newBox) => {
+                      if (newBox.width < 50 || newBox.height < 20) {
+                        return oldBox;
+                      }
+                      return newBox;
+                    }}
+                  />
+                )}
+
                 {selected === "wishName" && wishName && (
                   <Transformer
                     ref={tr => tr && tr.nodes([wishNameRef.current])}
@@ -980,27 +1071,8 @@ export default function CardPreview() {
                     }}
                   />
                 )}
-                {textboxImage && template && (
-                  <KonvaImage
-                    image={textboxImage}
-                    x={template.textbox_x + 10}
-                    y={template.textbox_y}
-                    scaleX={(() => {
-                      const scaleX =
-                        template.textbox_width / textboxImage.width;
-                      const scaleY =
-                        template.textbox_height / textboxImage.height;
-                      return Math.min(scaleX, scaleY);
-                    })()}
-                    scaleY={(() => {
-                      const scaleX =
-                        template.textbox_width / textboxImage.width;
-                      const scaleY =
-                        template.textbox_height / textboxImage.height;
-                      return Math.min(scaleX, scaleY);
-                    })()}
-                  />
-                )}
+
+                {/* Frame Image */}
                 {frameImage && template && (
                   <>
                     <KonvaImage
@@ -1079,116 +1151,147 @@ export default function CardPreview() {
                   y: (textElement?.y || 0) + 20,
                 });
               }}
-              className="bg-white border px-4 py-2 rounded shadow-sm text-sm flex items-center gap-1"
+              className="bg-white border px-4 py-2 rounded shadow-sm text-sm flex items-center gap-1 hover:bg-gray-50 transition-colors"
             >
               <MdRefresh /> รีเซ็ท
             </button>
           </div>
-          {/* เพิ่ม checkbox สำหรับเงาและขอบ */}
-          {/* --- ลบ checkbox UI สำหรับเงา --- */}
-          {/* <div className="flex gap-4 items-center mb-4">
-            <label className="flex items-center gap-1 text-sm">
-              <input type="checkbox" checked={showShadow} onChange={e => setShowShadow(e.target.checked)} />
-              เพิ่มเงา
-            </label>
-            <label className="flex items-center gap-1 text-sm">
-              <input type="checkbox" checked={showStroke} onChange={e => setShowStroke(e.target.checked)} />
-              เพิ่มเส้นขอบ
-            </label>
-          </div> */}
-          <div className="flex gap-4 items-center mb-4">
-            <label className="flex items-center gap-1 text-sm">
-              <input type="checkbox" checked={showStroke} onChange={e => setShowStroke(e.target.checked)} />
-              เส้นขอบสีขาว
-            </label>
+
+          {/* Template Debug Info */}
+          {/* Removed as per edit hint */}
+
+          {/* Customization Options Header */}
+          <div className="bg-blue-50 p-3 rounded-lg mb-4 border border-blue-200">
+            <div className="text-sm font-medium text-blue-800 mb-2">
+              🎨 ตัวเลือกการปรับแต่ง
+            </div>
+            <div className="text-xs text-blue-700">
+              เลือกตัวเลือกด้านล่างเพื่อปรับแต่งการแสดงผล
+            </div>
           </div>
-          <div className="flex flex-wrap justify-center gap-2 mb-4">
-            {/* เลือกรูปร่างเฟรม */}
-            <div className="flex items-center gap-1">
-              <label className="text-sm">เฟรม:</label>
-              <select
-                value={frameShape}
-                onChange={(e) => setFrameShape(e.target.value)}
-                className="text-sm border rounded p-1"
-              >
-                <option value="rectangle">สี่เหลี่ยม</option>
-                <option value="circle">วงกลม</option>
-                <option value="star">ดาว</option>
-                <option value="heart">หัวใจ</option>
-                <option value="hexagon">หกเหลี่ยม</option>
-                <option value="cloud">เมฆ</option>
-                <option value="zigzag">ฟันปลา</option>
-                <option value="oval">ไข่</option>
-                <option value="diamond">เพชร</option>
-                <option value="triangle">สามเหลี่ยม</option>
-                <option value="octagon">แปดเหลี่ยม</option>
-                <option value="flower">ดอกไม้</option>
-                <option value="butterfly">ผีเสื้อ</option>
-                <option value="crown">มงกุฎ</option>
-                <option value="star6">ดาว 6 แฉก</option>
-                <option value="star8">ดาว 8 แฉก</option>
-              </select>
+          
+          {/* Image Frame Options */}
+          <div className="bg-white p-4 rounded-lg border border-gray-200 mb-4">
+            <div className="text-sm font-medium text-gray-700 mb-3">🖼️ ตัวเลือกเฟรมรูปภาพ</div>
+            <div className="flex gap-4 items-center mb-4">
+              <label className="flex items-center gap-2 text-sm">
+                <input 
+                  type="checkbox" 
+                  checked={showStroke} 
+                  onChange={e => setShowStroke(e.target.checked)}
+                  className="w-4 h-4 text-blue-600"
+                />
+                <span>เส้นขอบสีขาว</span>
+              </label>
             </div>
+            
+            <div className="flex flex-wrap justify-center gap-3 mb-4">
+              {/* เลือกรูปร่างเฟรม */}
+              <div className="flex items-center gap-2">
+                <label className="text-sm font-medium text-gray-600">รูปร่างเฟรม:</label>
+                <select
+                  value={frameShape}
+                  onChange={(e) => setFrameShape(e.target.value)}
+                  className="text-sm border rounded-lg p-2 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="rectangle">สี่เหลี่ยม</option>
+                  <option value="circle">วงกลม</option>
+                  <option value="star">ดาว</option>
+                  <option value="heart">หัวใจ</option>
+                  <option value="hexagon">หกเหลี่ยม</option>
+                  <option value="cloud">เมฆ</option>
+                  <option value="zigzag">ฟันปลา</option>
+                  <option value="oval">ไข่</option>
+                  <option value="diamond">เพชร</option>
+                  <option value="triangle">สามเหลี่ยม</option>
+                  <option value="octagon">แปดเหลี่ยม</option>
+                  <option value="flower">ดอกไม้</option>
+                  <option value="butterfly">ผีเสื้อ</option>
+                  <option value="crown">มงกุฎ</option>
+                  <option value="star6">ดาว 6 แฉก</option>
+                  <option value="star8">ดาว 8 แฉก</option>
+                </select>
+              </div>
 
-            {/* ปุ่มลบ BG */}
-            <button
-              onClick={handleRemoveBg}
-              className="bg-red-500 text-white text-xs px-3 py-1 rounded shadow-sm disabled:bg-gray-400 disabled:cursor-not-allowed"
-              disabled={loadingRemoveBg}
-              title="ฟีเจอร์ลบพื้นหลัง (ต้องใช้ API Credits)"
-            >
-              {loadingRemoveBg ? "กำลังลบ BG..." : "ลบ BG (ไดคัท)"}
-            </button>
-
-            {/* เปลี่ยนฟอนต์ */}
-            {/* ลบ custom dropdown และใช้ <select> แบบเดิม */}
-            <div className="flex items-center gap-1">
-              <label className="text-sm">ฟอนต์:</label>
-              <select
-                value={fontFamily}
-                onChange={(e) => setFontFamily(e.target.value)}
-                className="text-sm border rounded p-1"
-                style={{ fontFamily: fontFamily }}
+              {/* ปุ่มลบ BG */}
+              <button
+                onClick={handleRemoveBg}
+                className="bg-red-500 hover:bg-red-600 text-white text-xs px-4 py-2 rounded-lg shadow-sm disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+                disabled={loadingRemoveBg}
+                title="ฟีเจอร์ลบพื้นหลัง (ต้องใช้ API Credits)"
               >
-                <option value="Prompt" style={{ fontFamily: "Prompt" }}>Prompt</option>
-                <option value="Kanit" style={{ fontFamily: "Kanit" }}>Kanit</option>
-                <option value="Sarabun" style={{ fontFamily: "Sarabun" }}>Sarabun</option>
-                <option value="Bebas Neue" style={{ fontFamily: "Bebas Neue" }}>Bebas Neue</option>
-                <option value="Birthstone Bounce" style={{ fontFamily: "Birthstone Bounce" }}>Birthstone Bounce</option>
-                <option value="Dancing Script" style={{ fontFamily: "Dancing Script" }}>Dancing Script</option>
-                <option value="Italianno" style={{ fontFamily: "Italianno" }}>Italianno</option>
-                <option value="Pattaya" style={{ fontFamily: "Pattaya" }}>Pattaya</option>
-                <option value="Playpen Sans Thai" style={{ fontFamily: "Playpen Sans Thai" }}>Playpen Sans Thai</option>
-                <option value="Taviraj" style={{ fontFamily: "Taviraj" }}>Taviraj</option>
-                <option value="Arial" style={{ fontFamily: "Arial" }}>Arial</option>
-                <option value="Tahoma" style={{ fontFamily: "Tahoma" }}>Tahoma</option>
-                <option value="Sriracha" style={{ fontFamily: "Sriracha" }}>Sriracha</option>
-              </select>
-              <label className="text-sm ml-2">น้ำหนักฟอนต์:</label>
-              <select
-                value={fontWeight}
-                onChange={e => {
-                  const newWeight = Number(e.target.value);
-                  console.log('Selecting fontWeight:', newWeight);
-                  setFontWeight(newWeight);
-                }}
-                className="text-sm border rounded p-1"
-              >
-                {(fontWeightMap[fontFamily] || [400]).map(w => (
-                  <option key={w} value={w}>{fontWeightLabel(w)}</option>
-                ))}
-              </select>
+                {loadingRemoveBg ? "กำลังลบ BG..." : "ลบ BG (ไดคัท)"}
+              </button>
             </div>
+          </div>
 
-            {/* เลือกสีฟอนต์ */}
-            <div className="flex items-center gap-1">
-              <label className="text-sm">สีฟอนต์:</label>
-              <input
-                type="color"
-                value={fontColor}
-                onChange={(e) => setFontColor(e.target.value)}
-                className="w-8 h-8 p-0 border rounded"
-              />
+          {/* Text Customization Options */}
+          <div className="bg-white p-4 rounded-lg border border-gray-200 mb-4">
+            <div className="text-sm font-medium text-gray-700 mb-3">📝 ตัวเลือกข้อความ</div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* เปลี่ยนฟอนต์ */}
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <label className="text-sm font-medium text-gray-600">ฟอนต์:</label>
+                  <select
+                    value={fontFamily}
+                    onChange={(e) => setFontFamily(e.target.value)}
+                    className="text-sm border rounded-lg p-2 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 flex-1"
+                    style={{ fontFamily: fontFamily }}
+                  >
+                    <option value="Prompt" style={{ fontFamily: "Prompt" }}>Prompt</option>
+                    <option value="Kanit" style={{ fontFamily: "Kanit" }}>Kanit</option>
+                    <option value="Sarabun" style={{ fontFamily: "Sarabun" }}>Sarabun</option>
+                    <option value="Bebas Neue" style={{ fontFamily: "Bebas Neue" }}>Bebas Neue</option>
+                    <option value="Birthstone Bounce" style={{ fontFamily: "Birthstone Bounce" }}>Birthstone Bounce</option>
+                    <option value="Dancing Script" style={{ fontFamily: "Dancing Script" }}>Dancing Script</option>
+                    <option value="Italianno" style={{ fontFamily: "Italianno" }}>Italianno</option>
+                    <option value="Pattaya" style={{ fontFamily: "Pattaya" }}>Pattaya</option>
+                    <option value="Playpen Sans Thai" style={{ fontFamily: "Playpen Sans Thai" }}>Playpen Sans Thai</option>
+                    <option value="Taviraj" style={{ fontFamily: "Taviraj" }}>Taviraj</option>
+                    <option value="Arial" style={{ fontFamily: "Arial" }}>Arial</option>
+                    <option value="Tahoma" style={{ fontFamily: "Tahoma" }}>Tahoma</option>
+                    <option value="Sriracha" style={{ fontFamily: "Sriracha" }}>Sriracha</option>
+                  </select>
+                </div>
+                
+                <div className="flex items-center gap-2">
+                  <label className="text-sm font-medium text-gray-600">น้ำหนักฟอนต์:</label>
+                  <select
+                    value={fontWeight}
+                    onChange={e => {
+                      const newWeight = Number(e.target.value);
+                      console.log('Selecting fontWeight:', newWeight);
+                      setFontWeight(newWeight);
+                    }}
+                    className="text-sm border rounded-lg p-2 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 flex-1"
+                  >
+                    {(fontWeightMap[fontFamily] || [400]).map(w => (
+                      <option key={w} value={w}>{fontWeightLabel(w)}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* เลือกสีฟอนต์ */}
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <label className="text-sm font-medium text-gray-600">สีฟอนต์:</label>
+                  <input
+                    type="color"
+                    value={fontColor}
+                    onChange={(e) => setFontColor(e.target.value)}
+                    className="w-12 h-10 p-1 border rounded-lg cursor-pointer"
+                  />
+                  <span className="text-xs text-gray-500">{fontColor}</span>
+                </div>
+                
+                <div className="text-xs text-gray-500">
+                  ตัวอย่าง: <span style={{ color: fontColor, fontFamily: fontFamily, fontWeight: fontWeight }}>
+                    ข้อความตัวอย่าง
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
