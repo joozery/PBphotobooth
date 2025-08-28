@@ -151,6 +151,12 @@ export default function CardPreview() {
     if (savedShowStroke !== null) {
       setShowStroke(savedShowStroke === "true");
     }
+
+    // โหลด fontWeight จาก localStorage
+    const savedFontWeight = localStorage.getItem("wishFontWeight");
+    if (savedFontWeight) {
+      setFontWeight(Number(savedFontWeight));
+    }
   }, []);
 
   const fetchTemplate = async (id) => {
@@ -178,6 +184,7 @@ export default function CardPreview() {
     localStorage.setItem("wishFontSize", fontSize.toString());
     localStorage.setItem("imgProps", JSON.stringify(imgProps));
     localStorage.setItem("wishNamePos", JSON.stringify(wishNamePos));
+    localStorage.setItem("wishFontWeight", fontWeight.toString());
     if (eventId) {
       navigate("/confirm");
     } else {
@@ -211,6 +218,10 @@ export default function CardPreview() {
       // โหลด frameShape
       const savedFrameShape = localStorage.getItem("wishFrameShape");
       if (savedFrameShape) setFrameShape(savedFrameShape);
+
+      // โหลด fontWeight
+      const savedFontWeight = localStorage.getItem("wishFontWeight");
+      if (savedFontWeight) setFontWeight(Number(savedFontWeight));
 
       // โหลด wishNamePos
       const savedNamePos = localStorage.getItem("wishNamePos");
@@ -317,7 +328,22 @@ export default function CardPreview() {
       // เลือก 400 ถ้ามี, ถ้าไม่มีเลือกตัวแรก
       setFontWeight(allowed.includes(400) ? 400 : allowed[0]);
     }
+    console.log('Font changed:', fontFamily, 'Weight:', fontWeight, 'Allowed:', allowed);
   }, [fontFamily]);
+
+  // Debug: log เมื่อ fontWeight เปลี่ยน
+  useEffect(() => {
+    console.log('FontWeight changed to:', fontWeight);
+    console.log('Current fontFamily:', fontFamily);
+    console.log('Current fontColor:', fontColor);
+  }, [fontWeight, fontFamily, fontColor]);
+
+  // Force re-render เมื่อเปลี่ยน font properties
+  const [forceUpdate, setForceUpdate] = useState(0);
+  
+  useEffect(() => {
+    setForceUpdate(prev => prev + 1);
+  }, [fontWeight, fontFamily, fontColor]);
 
   return (
     <div className="w-screen h-[100svh] bg-gray-100 font-prompt flex justify-center items-center">
@@ -486,8 +512,8 @@ export default function CardPreview() {
                             cx + r * Math.cos((i * 2 * Math.PI) / 8),
                             cy + r * Math.sin((i * 2 * Math.PI) / 8)
                           );
-                        }
-                        ctx.closePath();
+                      }
+                      ctx.closePath();
                       } else if (frameShape === "flower") {
                         const cx = w / 2;
                         const cy = h / 2;
@@ -615,72 +641,72 @@ export default function CardPreview() {
                     <KonvaImage
                       ref={imageRef}
                       image={userImage}
-                      width={imgProps.width}
-                      height={imgProps.height}
+                    width={imgProps.width}
+                    height={imgProps.height}
                     />
                     {showStroke && (
                       <Shape
                         sceneFunc={(ctx, shape) => {
-                          const w = imgProps.width;
-                          const h = imgProps.height;
-                          ctx.beginPath();
-                          if (frameShape === "circle") {
-                            const radius = Math.min(w, h) / 2;
-                            ctx.arc(w / 2, h / 2, radius, 0, Math.PI * 2, false);
-                          } else if (frameShape === "star") {
-                            const cx = w / 2;
-                            const cy = h / 2;
-                            const spikes = 5;
-                            const outerRadius = Math.min(w, h) / 2;
-                            const innerRadius = outerRadius / 2.5;
-                            let rot = (Math.PI / 2) * 3;
-                            let step = Math.PI / spikes;
-                            ctx.moveTo(cx, cy - outerRadius);
-                            for (let i = 0; i < spikes; i++) {
-                              ctx.lineTo(
-                                cx + Math.cos(rot) * outerRadius,
-                                cy + Math.sin(rot) * outerRadius
-                              );
-                              rot += step;
-                              ctx.lineTo(
-                                cx + Math.cos(rot) * innerRadius,
-                                cy + Math.sin(rot) * innerRadius
-                              );
-                              rot += step;
-                            }
-                            ctx.lineTo(cx, cy - outerRadius);
-                          } else if (frameShape === "heart") {
-                            ctx.moveTo(w / 2, h * 0.8);
-                            ctx.bezierCurveTo(w * 1.1, h * 0.5, w * 0.8, h * 0.05, w / 2, h * 0.3);
-                            ctx.bezierCurveTo(w * 0.2, h * 0.05, -w * 0.1, h * 0.5, w / 2, h * 0.8);
-                            ctx.closePath();
-                          } else if (frameShape === "hexagon") {
-                            const cx = w / 2;
-                            const cy = h / 2;
-                            const r = Math.min(w, h) / 2;
-                            ctx.moveTo(cx + r * Math.cos(0), cy + r * Math.sin(0));
-                            for (let i = 1; i <= 6; i++) {
-                              ctx.lineTo(
-                                cx + r * Math.cos((i * 2 * Math.PI) / 6),
-                                cy + r * Math.sin((i * 2 * Math.PI) / 6)
-                              );
-                            }
-                            ctx.closePath();
-                          } else if (frameShape === "cloud") {
-                            ctx.arc(w * 0.5, h * 0.5, w * 0.22, Math.PI, Math.PI * 2);
-                            ctx.arc(w * 0.7, h * 0.7, w * 0.18, Math.PI * 1.5, Math.PI * 0.5);
-                            ctx.closePath();
-                          } else if (frameShape === "zigzag") {
-                            const steps = 8;
-                            const stepW = w / steps;
-                            ctx.moveTo(0, h);
-                            for (let i = 0; i < steps; i++) {
-                              ctx.lineTo(stepW * i + stepW / 2, h - (i % 2 === 0 ? 20 : 0));
-                              ctx.lineTo(stepW * (i + 1), h);
-                            }
-                            ctx.lineTo(w, 0);
-                            ctx.lineTo(0, 0);
-                            ctx.closePath();
+                      const w = imgProps.width;
+                      const h = imgProps.height;
+                      ctx.beginPath();
+                      if (frameShape === "circle") {
+                        const radius = Math.min(w, h) / 2;
+                        ctx.arc(w / 2, h / 2, radius, 0, Math.PI * 2, false);
+                      } else if (frameShape === "star") {
+                        const cx = w / 2;
+                        const cy = h / 2;
+                        const spikes = 5;
+                        const outerRadius = Math.min(w, h) / 2;
+                        const innerRadius = outerRadius / 2.5;
+                        let rot = (Math.PI / 2) * 3;
+                        let step = Math.PI / spikes;
+                        ctx.moveTo(cx, cy - outerRadius);
+                        for (let i = 0; i < spikes; i++) {
+                          ctx.lineTo(
+                            cx + Math.cos(rot) * outerRadius,
+                            cy + Math.sin(rot) * outerRadius
+                          );
+                          rot += step;
+                          ctx.lineTo(
+                            cx + Math.cos(rot) * innerRadius,
+                            cy + Math.sin(rot) * innerRadius
+                          );
+                          rot += step;
+                        }
+                        ctx.lineTo(cx, cy - outerRadius);
+                      } else if (frameShape === "heart") {
+                        ctx.moveTo(w / 2, h * 0.8);
+                        ctx.bezierCurveTo(w * 1.1, h * 0.5, w * 0.8, h * 0.05, w / 2, h * 0.3);
+                        ctx.bezierCurveTo(w * 0.2, h * 0.05, -w * 0.1, h * 0.5, w / 2, h * 0.8);
+                        ctx.closePath();
+                      } else if (frameShape === "hexagon") {
+                        const cx = w / 2;
+                        const cy = h / 2;
+                        const r = Math.min(w, h) / 2;
+                        ctx.moveTo(cx + r * Math.cos(0), cy + r * Math.sin(0));
+                        for (let i = 1; i <= 6; i++) {
+                          ctx.lineTo(
+                            cx + r * Math.cos((i * 2 * Math.PI) / 6),
+                            cy + r * Math.sin((i * 2 * Math.PI) / 6)
+                          );
+                        }
+                        ctx.closePath();
+                      } else if (frameShape === "cloud") {
+                        ctx.arc(w * 0.5, h * 0.5, w * 0.22, Math.PI, Math.PI * 2);
+                        ctx.arc(w * 0.7, h * 0.7, w * 0.18, Math.PI * 1.5, Math.PI * 0.5);
+                        ctx.closePath();
+                      } else if (frameShape === "zigzag") {
+                        const steps = 8;
+                        const stepW = w / steps;
+                        ctx.moveTo(0, h);
+                        for (let i = 0; i < steps; i++) {
+                          ctx.lineTo(stepW * i + stepW / 2, h - (i % 2 === 0 ? 20 : 0));
+                          ctx.lineTo(stepW * (i + 1), h);
+                        }
+                        ctx.lineTo(w, 0);
+                        ctx.lineTo(0, 0);
+                        ctx.closePath();
                           } else if (frameShape === "oval") {
                             const cx = w / 2;
                             const cy = h / 2;
@@ -829,13 +855,13 @@ export default function CardPreview() {
                             ctx.lineTo(imgProps.x + w, imgProps.y + h);
                             ctx.lineTo(imgProps.x, imgProps.y + h);
                             ctx.closePath();
-                          } else {
-                            ctx.moveTo(0, 0);
-                            ctx.lineTo(w, 0);
-                            ctx.lineTo(w, h);
-                            ctx.lineTo(0, h);
-                            ctx.closePath();
-                          }
+                      } else {
+                        ctx.moveTo(0, 0);
+                        ctx.lineTo(w, 0);
+                        ctx.lineTo(w, h);
+                        ctx.lineTo(0, h);
+                        ctx.closePath();
+                      }
                           ctx.closePath();
                           ctx.fillStrokeShape(shape);
                         }}
@@ -863,6 +889,7 @@ export default function CardPreview() {
                 )}
                 {wishMessage && template && (
                   <Text
+                    key={`wishMessage-${forceUpdate}`}
                     ref={textRef}
                     text={wishMessage}
                     x={wishMessagePos?.x}
@@ -887,6 +914,12 @@ export default function CardPreview() {
                     }}
                   />
                 )}
+                {/* Debug Info (ย้ายออกมานอก Stage/Layer) */}
+                <div className="bg-gray-100 text-xs p-2 mb-2 rounded">
+                  <div>Font: {fontFamily}</div>
+                  <div>Weight: {fontWeight}</div>
+                  <div>Color: {fontColor}</div>
+                </div>
                 {selected === "text" && wishMessage && (
                   <Transformer
                     ref={tr => tr && tr.nodes([textRef.current])}
@@ -904,6 +937,7 @@ export default function CardPreview() {
                 )}
                 {wishName && template && (
                   <Text
+                    key={`wishName-${forceUpdate}`}
                     ref={wishNameRef}
                     fontFamily={fontFamily}
                     text={`– ${wishName}`}
@@ -913,7 +947,6 @@ export default function CardPreview() {
                     fontSize={wishNameFontSize}
                     fill={fontColor}
                     fontWeight={fontWeight}
-                    fontStyle="600"
                     align="left"
                     draggable
                     onDragEnd={e => {
@@ -1040,6 +1073,7 @@ export default function CardPreview() {
                 setShowBackground(true); // รีเซ็ท background ให้แสดง
                 setShowStroke(true); // รีเซ็ทเส้นขอบกลับเป็น true
                 localStorage.setItem("showStroke", "true"); // รีเซ็ท localStorage
+                setFontWeight(400); // รีเซ็ท fontWeight กลับเป็น 400
                 setWishNamePos({
                   x: (textElement?.x || 0) + 42,
                   y: (textElement?.y || 0) + 20,
@@ -1133,7 +1167,11 @@ export default function CardPreview() {
               <label className="text-sm ml-2">น้ำหนักฟอนต์:</label>
               <select
                 value={fontWeight}
-                onChange={e => setFontWeight(Number(e.target.value))}
+                onChange={e => {
+                  const newWeight = Number(e.target.value);
+                  console.log('Selecting fontWeight:', newWeight);
+                  setFontWeight(newWeight);
+                }}
                 className="text-sm border rounded p-1"
               >
                 {(fontWeightMap[fontFamily] || [400]).map(w => (
